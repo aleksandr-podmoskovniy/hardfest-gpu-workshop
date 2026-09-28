@@ -7,7 +7,7 @@
 3. [Speculation: принятие черновика и стоимость цикла](chapters/03-speculation.md).
 4. [Размещение: RAG, MIG/MPS/time-slicing и автоматизация](chapters/04-placement.md).
 
-[Карта всех 52 слайдов](SLIDES_MAP.md) · [Основной показ](../WORKSHOP.md)
+[Карта всех 52 слайдов](SLIDES_MAP.md) · [Основной показ](../README.md)
 
 ## Память — это несколько разных ограничений
 

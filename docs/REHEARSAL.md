@@ -33,7 +33,8 @@
 ## За час
 
 - [ ] Повторить read-only preflight; никакого `latest`/автообновления модулей.
-- [ ] Открыть WORKSHOP.md, Console, metrics, два терминала.
+- [ ] Открыть README.md, Console, metrics, три терминала (T0: команды, T1/T2: port-forward).
+- [ ] Проверить QR в начале README с телефона: открывается эта же страница GitHub.
 - [ ] Проверить VPN/SSO заранее; не выводить OAuth-коды и credential-файлы на экран.
 - [ ] Сверить текущие allocations, A/B готовы на разных H100.
 - [ ] Проверить smoke и port-forward, сделать свежий screenshot окружения.

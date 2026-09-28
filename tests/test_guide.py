@@ -4,6 +4,7 @@ import pathlib
 import re
 import sys
 import unittest
+import xml.etree.ElementTree as ET
 from unittest.mock import Mock, patch
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -26,6 +27,24 @@ maths = load("kv_math")
 
 
 class Guide(unittest.TestCase):
+    def test_readme_is_workshop_with_local_qr_at_top(self):
+        readme = (ROOT / "README.md").read_text()
+        url = "https://github.com/aleksandr-podmoskovniy/hardfest-gpu-workshop"
+        top = readme.split("# HardFest:", 1)[0]
+        self.assertIn('src="assets/workshop-qr.svg"', top)
+        self.assertIn(f'href="{url}"', top)
+        for section in ("## Маршрут", "## Что собираем", "## 00–07", "## 86–90"):
+            self.assertIn(section, readme)
+        svg = ET.parse(ROOT / "assets/workshop-qr.svg").getroot()
+        self.assertEqual(svg.find("{http://www.w3.org/2000/svg}desc").text, url)
+        self.assertNotIn("<script", (ROOT / "assets/workshop-qr.svg").read_text())
+
+    def test_workshop_has_one_canonical_source(self):
+        alias = (ROOT / "WORKSHOP.md").read_text()
+        self.assertIn("[README.md](README.md)", alias)
+        self.assertNotIn("## ", alias)
+        self.assertNotIn("```", alias)
+
     def test_every_slide_mapped_once(self):
         text = (ROOT / "docs/SLIDES_MAP.md").read_text()
         covered = []

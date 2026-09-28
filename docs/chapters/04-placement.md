@@ -1,6 +1,6 @@
 # Не каждой модели нужна целая карта
 
-[Speculation](03-speculation.md) · [Основной сценарий](../../WORKSHOP.md)
+[Speculation](03-speculation.md) · [Основной сценарий](../../README.md)
 
 ## Сначала разложим RAG на сервисы
 
