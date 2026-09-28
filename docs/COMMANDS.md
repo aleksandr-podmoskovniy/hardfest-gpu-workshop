@@ -1,4 +1,4 @@
-# Команды ведущего
+# Справочник команд
 
 Все команды выполнять из корня checkout. Python 3.10+, kubectl для живых действий. Wrapper использует kubeconfig/context/API из `.local/site.json`, а не глобальный context.
 
@@ -18,7 +18,7 @@ python3 scripts/check_docs.py
 python3 scripts/hf.py init-site
 ```
 
-Команда создаёт личный шаблон без credentials, не выбирает молча активный кластер и не перезаписывает существующий файл. Один раз заполнить [поля site](SETUP.md). В подготовленном checkout автора файл уже есть — этот шаг пропустить.
+Команда создаёт личный шаблон без credentials, не выбирает молча активный кластер и не перезаписывает существующий файл. Один раз заполнить [поля site](SETUP.md). Если файл уже создан и заполнен, пропустите этот шаг.
 
 ## Посмотреть — без изменений
 
@@ -56,7 +56,7 @@ python3 scripts/hf.py dataset a --input-fraction 0.5 --output-tokens 2048 \
   --documents 32 --out .local/long.jsonl
 ```
 
-Генератор передаётся в контейнер через stdin, читает его tokenizer; JSONL сохраняется на ноутбуке. Не нужно скачивать туда веса/CUDA/transformers или вручную угадывать mount path. Это подготовка до сцены. Сверить server `usage.prompt_tokens` первым запросом.
+Генератор передаётся в контейнер через stdin, читает его tokenizer; JSONL сохраняется на ноутбуке. Не нужно скачивать туда веса/CUDA/transformers или вручную угадывать mount path. Сверить server `usage.prompt_tokens` первым запросом.
 
 ## Два занятых терминала
 
@@ -74,7 +74,7 @@ python3 scripts/hf.py port-forward b-tuned 18002
 
 Они остаются работать до Ctrl+C. Остальное выполнять в T0; после смены B переподключить T2 к новому stage.
 
-## Полный замер до выступления
+## Полный сравнительный замер
 
 Свежие A/B engine, одинаковые условия; не выполнять тот же cold дважды без нового cache-state:
 
@@ -96,7 +96,7 @@ python3 scripts/hf.py apply b-cache --ack
 python3 scripts/hf.py start b-cache --ack
 ```
 
-Переподключить T2: `python3 scripts/hf.py port-forward b-cache 18002`. Затем аналогично stop b-cache → apply b-spec → start b-spec. Restart теряет EmptyDir compile-cache; время измерить заранее.
+Переподключить T2: `python3 scripts/hf.py port-forward b-cache 18002`. Затем аналогично stop b-cache → apply b-spec → start b-spec. При перезапуске теряется EmptyDir compile-cache; время загрузки и компиляции учитывайте отдельно от времени запросов.
 
 В конце остановить только созданные стадии. Для B достаточно одного stop — Deployment общий:
 

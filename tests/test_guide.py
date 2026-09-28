@@ -30,14 +30,41 @@ class Guide(unittest.TestCase):
     def test_readme_is_workshop_with_local_qr_at_top(self):
         readme = (ROOT / "README.md").read_text()
         url = "https://github.com/aleksandr-podmoskovniy/hardfest-gpu-workshop"
-        top = readme.split("# HardFest:", 1)[0]
+        title = "Инференс без простоя GPU: чиним LLM-сервис руками и делим карту на живом кластере"
+        self.assertIn("# " + title + "\n", readme)
+        self.assertIn("**Александр Подмосковный** · Флант / Deckhouse Platform", readme)
+        top = readme.split("# " + title, 1)[0]
         self.assertIn('src="assets/workshop-qr.svg"', top)
         self.assertIn(f'href="{url}"', top)
-        for section in ("## Маршрут", "## Что собираем", "## 00–07", "## 86–90"):
+        for section in ("## Содержание", "## Подготовка окружения", "## Схема стенда",
+                        "## 1. Время ответа", "## 10. Остановка"):
             self.assertIn(section, readme)
         svg = ET.parse(ROOT / "assets/workshop-qr.svg").getroot()
         self.assertEqual(svg.find("{http://www.w3.org/2000/svg}desc").text, url)
+        self.assertEqual(svg.find("{http://www.w3.org/2000/svg}title").text, title)
         self.assertNotIn("<script", (ROOT / "assets/workshop-qr.svg").read_text())
+
+    def test_participant_docs_do_not_contain_speaker_directions(self):
+        paths = [ROOT / "README.md", ROOT / "WORKSHOP.md"]
+        paths += list((ROOT / "labs").glob("*.md"))
+        paths += list((ROOT / "docs/chapters").glob("*.md"))
+        paths += [ROOT / "docs" / name for name in (
+            "COMMANDS.md", "SETUP.md", "THEORY.md", "REHEARSAL.md", "STATUS.md")]
+        forbidden = re.compile(
+            r"\*\*сказать|предложить аудитории|вопрос залу|предъявить аудитории|"
+            r"на сцене|до сцены|перед выступлением|ведущего|live-слот|"
+            r"^## \d{2}[–-]\d{2}", re.I | re.M)
+        for path in paths:
+            with self.subTest(path=path.relative_to(ROOT)):
+                self.assertIsNone(forbidden.search(path.read_text()))
+
+    def test_workshop_contents_targets_exist_in_readme(self):
+        readme = (ROOT / "README.md").read_text()
+        anchors = set(re.findall(r'<a id="([^"]+)"></a>', readme))
+        targets = re.findall(r"\]\(#([^)]+)\)", readme)
+        self.assertGreaterEqual(len(targets), 10)
+        self.assertTrue(set(targets).issubset(anchors))
+        self.assertLess(readme.index('id="placement"'), readme.index('id="platform"'))
 
     def test_workshop_has_one_canonical_source(self):
         alias = (ROOT / "WORKSHOP.md").read_text()

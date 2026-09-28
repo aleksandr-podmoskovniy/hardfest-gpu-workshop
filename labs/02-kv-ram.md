@@ -1,52 +1,51 @@
-# 2. KV-кэш в RAM
+# KV-кэш в RAM
 
-Гипотеза: повтор большого документа после вытеснения из HBM обходится дешевле полного prefill. Это **не** гипотеза о неограниченном контексте или переносе активных сессий по приоритету пользователя.
+**Цель:** проверить, дешевле ли возврат большого документа после вытеснения из GPU, чем полный повторный prefill.
 
-Профиль [gemma-b-cache.json](../manifests/profiles/gemma-b-cache.json) добавляет к tuned **один механизм**:
+**Предпосылки:** работающий B, готовый `.local/long.jsonl` из 32 документов, достаточный host memory limit и свободная RAM. [Настройка площадки](../docs/SETUP.md).
+
+## Профиль
+
+[gemma-b-cache.json](../manifests/profiles/gemma-b-cache.json) добавляет к tuned один механизм:
 
 ```json
 {"kv-transfer-config":{"kv_connector":"OffloadingConnector","kv_role":"kv_both","kv_connector_extra_config":{"cpu_bytes_to_use":68719476736}}}
 ```
 
-64 GiB — стартовый бюджет эксперимента, не автоматический вывод из марки H100. В данном connector бюджет общий на workers. Сопоставить его с доступной RAM и memory limit Pod. Это не `--cpu-offload-gb` и не размер выгружаемых весов. [Версионная документация](https://docs.vllm.ai/en/v0.30.0/features/kv_offloading_usage/).
+64 GiB — стартовый бюджет, не автоматический вывод из марки H100. Он общий на workers и должен помещаться в память процессов. Веса не выгружаются. [Версионная документация](https://docs.vllm.ai/en/v0.30.0/features/kv_offloading_usage/).
 
-## Эксперимент
+## Последовательность действий
 
-Для готового `.local/long.jsonl` из 32 документов есть точная последовательность запросов. Она может не поместиться в live-слот; сначала выполнить на репетиции. B свежий, port-forward T2 переподключён:
+1. Перезапустите B с tuned-профилем, переподключите port-forward.
+2. Выполните X → остальные 31 документ → X. Сохраните результат в `results/raw/cache-off`.
+3. Перезапустите B с cache-профилем, переподключите port-forward.
+4. Повторите ту же последовательность в `results/raw/cache-on`.
+5. Сопоставьте оба `x-return`: prefill, queue, TTFT, CPU store/load и состояние GPU-кэша.
 
-```bash
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long.jsonl \
-  --offset 0 --requests 1 --concurrency 1 --metrics --label x-first --out-dir results/raw/cache
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long.jsonl \
-  --offset 1 --requests 31 --concurrency 4 --cold --metrics --label other-docs --out-dir results/raw/cache
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long.jsonl \
-  --offset 0 --requests 1 --concurrency 1 --metrics --label x-return --out-dir results/raw/cache
-python3 scripts/report.py --directory results/raw/cache
-```
+[Полные команды для обеих серий](../README.md#ram). Обе серии начинают с нового engine; прогрев должен использовать отдельный префикс. Не смешивайте документы нагрузки и повтор X в один показатель ускорения.
 
-Сначала та же серия на tuned без CPU-tier, затем на cache с новым engine и отдельной папкой результатов. Не смешивать X и other-docs в одну цифру speedup. 31 документ — воспроизводимая нагрузка, **не гарантия eviction**: подтвердить вытеснение и CPU reload.
-
-1. Сохранить tuned-серию без CPU-tier: документ X → документы Y… → X.
-2. Остановить B; применить cache-профиль; запустить и переподключить port-forward.
-3. Прогреть engine отдельным документом, не X.
-4. Снять начальные counters. Выполнить X, дождаться его завершения и offload store.
-5. Нагрузить различными префиксами, чтобы X перестал целиком помещаться в GPU prefix cache. Не гадать по количеству документов: подтвердить по metrics/trace.
-6. Повторить точно X, сравнить CPU load counters, prefill, queue и client TTFT.
-7. Повторить серию; убедиться, что очереди и input lengths сопоставимы.
-
-```bash
-python3 scripts/hf.py stop b-tuned --ack
-python3 scripts/hf.py apply b-cache --ack
-python3 scripts/hf.py start b-cache --ack
-python3 scripts/hf.py logs b-cache
-```
-
-Для снимка метрик через port-forward:
+## Проверка
 
 ```bash
 curl --fail --max-time 15 http://127.0.0.1:18002/metrics
 ```
 
-Точные названия connector counters выписать из **работающего** `/metrics` на репетиции. Отсутствие instrumentation — причина пометить CPU-hit неподтверждённым, а не придумать имя метрики.
+Возьмите фактические имена connector counters из работающего exporter, а не из предположений. Нужны подтверждённые store, eviction и reload. 31 документ не гарантирует eviction; если X остался в GPU, измерен другой механизм.
 
-**Неуспех:** OOM host RAM, bandwidth/latency ухудшились, connector не поддержал модель, повтор остался GPU hit. Все эти результаты содержательны; RAM-offload не обязан ускорять холодный запрос.
+**Ожидаемый результат:** найденный в RAM префикс загружен на GPU, а время и объём повторного prefill можно сопоставить с контрольной серией. Само наличие connector в конфигурации не доказывает попадание.
+
+## Если результат не получен
+
+- Host OOM: проверьте CPU budget, cgroup limit и память остальных процессов.
+- Connector не поддержал модель: сохраните startup error и совместимую конфигурацию.
+- Повтор остался GPU hit: увеличьте разнообразие нагрузки в рамках доступных ресурсов и подтвердите eviction.
+- Нет counters/trace: отметьте CPU-hit как неподтверждённый.
+- Время выросло: измерьте цену передачи и конкуренцию за память. Offload не обязан ускорять холодный запрос.
+
+## Завершение
+
+```bash
+python3 scripts/hf.py stop b-cache --ack
+```
+
+Это останавливает только B и сохраняет модели/PVC. Следующий профиль применяется к тому же Deployment.
