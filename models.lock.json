@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "runtime": {
+    "version": "0.30.0",
+    "platform": "linux/amd64",
+    "image": "vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40"
+  },
+  "validation": {
+    "artifact_files_checked": true,
+    "full_weight_hashes_checked": false,
+    "cuda_launch_verified": false,
+    "note": "Imported evidence: file headers, tensor offsets and index references, not inference."
+  },
+  "models": {
+    "gemma": {
+      "repository": "google/gemma-4-31B-it",
+      "revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+      "safetensors_bytes": 62546338248,
+      "runtime_verified": false
+    },
+    "assistant": {
+      "repository": "google/gemma-4-31B-it-assistant",
+      "revision": "627c5ec1458b9086b841a91e0512fd31fd2fbbf1",
+      "safetensors_bytes": 939042560,
+      "runtime_verified": false
+    },
+    "qwen": {
+      "repository": "nvidia/Qwen3.8-Flash-Next-NVFP4",
+      "revision": "fc694b54fb0174e0913e6adf86691ef85a4ead47",
+      "safetensors_bytes": 132680249378,
+      "runtime_verified": false
+    },
+    "embedding": {
+      "repository": "Qwen/Qwen3-Embedding-0.6B",
+      "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+      "safetensors_bytes": 1191586416,
+      "runtime_verified": false
+    },
+    "reranker": {
+      "repository": "Qwen/Qwen3-Reranker-0.6B",
+      "revision": "e61197ed45024b0ed8a2d74b80b4d909f1255473",
+      "safetensors_bytes": 1191588280,
+      "runtime_verified": false
+    },
+    "stt": {
+      "repository": "openai/whisper-small",
+      "revision": "973afd24965f72e36ca33b3055d56a652f456b4d",
+      "safetensors_bytes": 966995080,
+      "runtime_verified": false
+    }
+  }
+}

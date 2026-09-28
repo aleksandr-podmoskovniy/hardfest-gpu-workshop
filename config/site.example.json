@@ -1,0 +1,44 @@
+{
+  "kubeconfig": "REPLACE_ABSOLUTE_PATH",
+  "context": "REPLACE_CONTEXT",
+  "expected_server": "https://REPLACE_API",
+  "namespace": "hardfest-demo",
+  "h100_node": "REPLACE_H100_NODE",
+  "mig_node": "REPLACE_A100_NODE",
+  "h100_device_class": "REPLACE_GENERATED_H100_DEVICECLASS",
+  "mig_device_class": "REPLACE_GENERATED_A100_MIG_DEVICECLASS",
+  "mps_device_class": "REPLACE_GENERATED_A100_MIG_MPS_DEVICECLASS",
+  "mps_percent": 25,
+  "mps_memory_limit": "REPLACE_MEASURED_MEMORY_LIMIT",
+  "context_tokens": 262144,
+  "reranker_config_verified": false,
+  "image": "vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40",
+  "image_pull_secrets": [],
+  "tolerations": [],
+  "models": {
+    "gemma": {
+      "pvc": "REPLACE_GEMMA_PVC",
+      "sub_path": "REPLACE_GEMMA_MODEL_SUBPATH"
+    },
+    "assistant": {
+      "pvc": "REPLACE_ASSISTANT_PVC",
+      "sub_path": "REPLACE_ASSISTANT_MODEL_SUBPATH"
+    },
+    "qwen": {
+      "pvc": "REPLACE_QWEN_PVC",
+      "sub_path": "REPLACE_QWEN_MODEL_SUBPATH"
+    },
+    "embedding": {
+      "pvc": "REPLACE_EMBEDDING_PVC",
+      "sub_path": "REPLACE_EMBEDDING_MODEL_SUBPATH"
+    },
+    "reranker": {
+      "pvc": "REPLACE_RERANKER_PVC",
+      "sub_path": "REPLACE_RERANKER_MODEL_SUBPATH"
+    },
+    "stt": {
+      "pvc": "REPLACE_STT_PVC",
+      "sub_path": "REPLACE_STT_MODEL_SUBPATH"
+    }
+  }
+}

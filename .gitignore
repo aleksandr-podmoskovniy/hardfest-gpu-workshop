@@ -1,0 +1,14 @@
+.local/
+.build/
+results/raw/
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+*.kubeconfig
+*.pem
+*.key
+.env
+*.pptx
+*.safetensors
+*.bin
