@@ -1,8 +1,8 @@
 # Справочник команд
 
-Все команды выполнять из корня checkout. Python 3.10+, kubectl для живых действий. Wrapper использует kubeconfig/context/API из `.local/site.json`, а не глобальный context.
+Выполняйте команды из каталога репозитория. Нужен Python 3.10+, а для работы с кластером — kubectl. Скрипт берёт kubeconfig, контекст и адрес API из `.local/site.json`; текущий контекст kubectl не используется.
 
-## Новый checkout
+## Скачать материалы
 
 ```bash
 git clone https://github.com/aleksandr-podmoskovniy/hardfest-gpu-workshop.git
@@ -12,13 +12,13 @@ python3 scripts/check_public.py
 python3 scripts/check_docs.py
 ```
 
-Только в **новом** checkout:
+Если `.local/site.json` ещё нет, создайте его:
 
 ```bash
 python3 scripts/hf.py init-site
 ```
 
-Команда создаёт личный шаблон без credentials, не выбирает молча активный кластер и не перезаписывает существующий файл. Один раз заполнить [поля site](SETUP.md). Если файл уже создан и заполнен, пропустите этот шаг.
+Заполните [параметры стенда](SETUP.md) в созданном файле. Токены и пароли туда не добавляйте. Существующий файл команда не перезаписывает.
 
 ## Посмотреть — без изменений
 
@@ -33,9 +33,9 @@ python3 scripts/hf.py diff b-tuned b-cache
 python3 scripts/hf.py diff b-tuned b-spec
 ```
 
-`render` и `diff` не подключаются к кластеру. Для offline-примера указать `--site config/site.example.json` до подкоманды.
+`render` и `diff` работают локально. Чтобы посмотреть пример без настройки стенда, укажите `--site config/site.example.json` перед именем подкоманды.
 
-## Жизненный цикл стадии
+## Запустить конфигурацию
 
 ```bash
 python3 scripts/hf.py apply a --ack
@@ -45,20 +45,22 @@ python3 scripts/hf.py model-info a
 python3 scripts/hf.py snapshot a --out .local/runs/a-before.json
 ```
 
-`apply`: ownership → server dry-run → replicas=0. `start`: Ready/cordon → scale 1 → ожидание до 300 s. Таймаут не означает успешный старт или автоматическое удаление. Снимок содержит deployment/pods/imageIDs/profile/claims, не читает Secret и сохраняется приватно. Следующему прогону дать новое имя файла.
+`apply` проверяет принадлежность ресурсов, выполняет серверную проверку манифеста и создаёт Deployment с нулём реплик. `start` проверяет ноду, увеличивает число реплик до одной и ждёт готовности до 300 секунд. При таймауте Pod остаётся в кластере — проверьте его состояние и логи.
 
-## Подготовить длинный dataset внутри runtime
+`snapshot` сохраняет Deployment, Pod, идентификаторы образов, профиль и ResourceClaim в `.local/`, не читая Secret. Для следующего прогона выберите другое имя файла: снимки не перезаписываются.
 
-После Ready A:
+## Подготовить длинные запросы
+
+После готовности A:
 
 ```bash
 python3 scripts/hf.py dataset a --input-fraction 0.5 --output-tokens 2048 \
   --documents 32 --out .local/long.jsonl
 ```
 
-Генератор передаётся в контейнер через stdin, читает его tokenizer; JSONL сохраняется на ноутбуке. Не нужно скачивать туда веса/CUDA/transformers или вручную угадывать mount path. Сверить server `usage.prompt_tokens` первым запросом.
+Генератор выполняется в контейнере и использует токенизатор модели; файл JSONL сохраняется на вашем компьютере. Скачивать веса и устанавливать transformers локально не требуется. После первого запроса сверьте длину входа с `usage.prompt_tokens` в ответе сервера.
 
-## Два занятых терминала
+## Подключиться к API
 
 T1:
 
@@ -72,11 +74,11 @@ T2:
 python3 scripts/hf.py port-forward b-tuned 18002
 ```
 
-Они остаются работать до Ctrl+C. Остальное выполнять в T0; после смены B переподключить T2 к новому stage.
+Оставьте обе команды работать. Остальные команды выполняйте в третьем терминале, T0. После смены профиля B остановите старый `port-forward` через Ctrl+C и запустите его для нового профиля.
 
 ## Полный сравнительный замер
 
-Свежие A/B engine, одинаковые условия; не выполнять тот же cold дважды без нового cache-state:
+Перед серией перезапустите A и B или очистите их кэш проверенным способом. Дайте обоим серверам одинаковый прогрев на других документах. Затем выполните:
 
 ```bash
 python3 scripts/bench.py --url http://127.0.0.1:18001 --dataset .local/long.jsonl \
@@ -86,7 +88,7 @@ python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long.json
 python3 scripts/report.py --directory results/raw/ab
 ```
 
-Может идти долго. `--cold` не сбрасывает server cache, только запрещает повтор строк. `--metrics` читает /metrics до/после, считает mean queue/prefill из counters и сохраняет raw snapshots. Нет серии/reset — нет данных, не ноль. Чужой трафик на endpoint искажает это среднее.
+На длинных входах серия может занять много времени. `--cold` запрещает повтор строк набора, но не очищает кэш сервера. `--metrics` сохраняет `/metrics` до и после серии и вычисляет среднее время очереди и prefill по разнице счётчиков. Если метрик нет или счётчики сбросились, среднее не вычисляется. Во время замера на этих API не должно быть посторонних запросов.
 
 ## Смена B и завершение
 
@@ -96,9 +98,9 @@ python3 scripts/hf.py apply b-cache --ack
 python3 scripts/hf.py start b-cache --ack
 ```
 
-Переподключить T2: `python3 scripts/hf.py port-forward b-cache 18002`. Затем аналогично stop b-cache → apply b-spec → start b-spec. При перезапуске теряется EmptyDir compile-cache; время загрузки и компиляции учитывайте отдельно от времени запросов.
+В T2 заново выполните `python3 scripts/hf.py port-forward b-cache 18002`. Для перехода к `b-spec` повторите тот же порядок: остановка, применение, запуск. При удалении Pod теряется кэш компиляции из `emptyDir`; загрузку и компиляцию измеряйте отдельно от обработки запросов.
 
-В конце остановить только созданные стадии. Для B достаточно одного stop — Deployment общий:
+В конце остановите созданные конфигурации. Для B достаточно одной команды `stop`: все его профили используют общий Deployment.
 
 ```bash
 python3 scripts/hf.py stop a --ack
@@ -106,4 +108,4 @@ python3 scripts/hf.py stop b-spec --ack
 python3 scripts/hf.py get resourceclaims
 ```
 
-Для TP2/MIG/MPS — остановить соответствующие stage. Не созданный Deployment даст not found; это не основание выполнять delete namespace. Сервис Console удаляется отдельно по точному имени. Модели/PVC сохраняются.
+Если запускали TP2, MIG или MPS, остановите их отдельно. Для несуществующего Deployment скрипт вернёт `not found`. Созданный через Console сервис удалите по его имени в Console. Namespace, модели и PVC оставьте для следующих упражнений.

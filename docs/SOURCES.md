@@ -1,24 +1,20 @@
-# Источники и происхождение
+# Источники
 
-Основной источник истории стенда — подготовленный operational `hardfest-demo`: lock моделей, проверка materialization, candidate profiles и текущие ограничения. Его адреса, kubeconfig, приватный image mirror и raw cluster exports не входят в публичный проект. [Статус проверок](STATUS.md).
+Версии моделей и образ vLLM закреплены в [models.lock.json](../models.lock.json). Состояние их проверки описано в [готовности примеров](STATUS.md).
 
-## Версионные первичные источники
+## Документация
 
-- [vLLM 0.30.0: optimization](https://docs.vllm.ai/en/v0.30.0/configuration/optimization/) — scheduler, chunked prefill, memory tradeoffs.
-- [vLLM 0.30.0: KV offloading](https://docs.vllm.ai/en/v0.30.0/features/kv_offloading_usage/) — connector, CPU budget и повторное использование.
+- [vLLM 0.30.0: optimization](https://docs.vllm.ai/en/v0.30.0/configuration/optimization/) — планировщик, chunked prefill и настройка памяти.
+- [vLLM 0.30.0: KV offloading](https://docs.vllm.ai/en/v0.30.0/features/kv_offloading_usage/) — выгрузка KV-кэша и объём памяти коннектора.
 - [vLLM 0.30.0: speculative decoding](https://docs.vllm.ai/en/v0.30.0/features/speculative_decoding/) — Gemma assistant через MTP.
-- [vLLM 0.30.0: metrics](https://docs.vllm.ai/en/v0.30.0/usage/metrics/) — server timing metrics; фактический exporter остаётся источником имён/labels.
+- [vLLM 0.30.0: metrics](https://docs.vllm.ai/en/v0.30.0/usage/metrics/) — метрики времени обработки запросов. Имена и метки сверяйте с ответом `/metrics` своего сервера.
 - [vLLM 0.30.0: bench serve](https://docs.vllm.ai/en/v0.30.0/cli/bench/serve/) — официальный нагрузочный клиент.
-- [NVIDIA MIG deployment considerations](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/deployment-considerations.html) — ограничения MIG/MPS; это не описание нашего DRA-контракта.
-- [NVIDIA SMI](https://docs.nvidia.com/deploy/nvidia-smi/) — topology/telemetry и ограничения трактовки показаний.
-- [Kubernetes DRA](https://kubernetes.io/docs/concepts/scheduling-eviction/dynamic-resource-allocation/) — claims, classes и жизненный цикл выделения.
+- [NVIDIA MIG deployment considerations](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/deployment-considerations.html) — ограничения MIG и MPS.
+- [NVIDIA SMI](https://docs.nvidia.com/deploy/nvidia-smi/) — топология и показатели работы GPU.
+- [Kubernetes DRA](https://kubernetes.io/docs/concepts/scheduling-eviction/dynamic-resource-allocation/) — заявки, классы устройств и выделение ресурсов.
 
-Конкретные revisions моделей — [models.lock.json](../models.lock.json). Их repository names, артефакты и размеры перенесены из файлового аудита стенда; запуск и производительность требуют самостоятельной проверки. Lock не является рекомендацией автоматически перейти на newest/latest.
+## Предыдущие материалы
 
-## Что взяли из прежних материалов
-
-Авторский **OpenStack Demo-cloud** (`cloud-demo/openstack`, локальная копия версии `85cd089`) — образец структуры: цель, архитектура, последовательная настройка, команды и проверка результата. Из него взяты подход к навигации и формат самостоятельного руководства, а не сценарий для докладчика. Инфраструктурные адреса, учётные данные и команды настройки старого стенда не переносились; доступ к этому проекту для выполнения HardFest не нужен.
-
-[IT Elements 2025](https://github.com/myskat90/vllm-habr/tree/main/IT%20Elements%202025): линейное повествование, команды, ожидаемый результат, иллюстрации. Старые версии runtime, values и credentials не перенесены.
-
-Локальная презентация `HardFest-v1_210926.pptx`: название и логика «память → вычисления → размещение → автоматизация». Числовые расчёты для GPT-OSS и EAGLE3 не объявлены характеристиками Gemma/Qwen. Презентация не вендорская спецификация и не инструкция изменять инфраструктуру.
+- Презентация `HardFest-v1_210926.pptx` — теоретические примеры и последовательность тем. [Соответствие слайдов разделам](SLIDES_MAP.md).
+- [IT Elements 2025](https://github.com/myskat90/vllm-habr/tree/main/IT%20Elements%202025) и авторский OpenStack Demo-cloud (`cloud-demo/openstack`, версия `85cd089`) — предыдущие мастер-классы, использованные как образцы подачи.
+- Подготовленный стенд `hardfest-demo` — версии и размеры файлов моделей, исходные профили запуска. Адреса площадки и учётные данные в публичный проект не включены.

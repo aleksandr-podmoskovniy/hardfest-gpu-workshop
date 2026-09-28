@@ -32,12 +32,12 @@ class Guide(unittest.TestCase):
         url = "https://github.com/aleksandr-podmoskovniy/hardfest-gpu-workshop"
         title = "Инференс без простоя GPU: чиним LLM-сервис руками и делим карту на живом кластере"
         self.assertIn("# " + title + "\n", readme)
-        self.assertIn("**Александр Подмосковный** · Флант / Deckhouse Platform", readme)
+        self.assertIn("Александр Подмосковный, Флант / Deckhouse Platform", readme)
         top = readme.split("# " + title, 1)[0]
         self.assertIn('src="assets/workshop-qr.svg"', top)
         self.assertIn(f'href="{url}"', top)
         for section in ("## Содержание", "## Подготовка окружения", "## Схема стенда",
-                        "## 1. Время ответа", "## 10. Остановка"):
+                        "## 1. Из чего складывается время ответа", "## 10. Остановка"):
             self.assertIn(section, readme)
         svg = ET.parse(ROOT / "assets/workshop-qr.svg").getroot()
         self.assertEqual(svg.find("{http://www.w3.org/2000/svg}desc").text, url)
@@ -72,14 +72,20 @@ class Guide(unittest.TestCase):
         self.assertNotIn("## ", alias)
         self.assertNotIn("```", alias)
 
-    def test_goal_and_architecture_precede_setup_with_return_links(self):
+    def test_architecture_precedes_setup_with_plain_navigation(self):
         readme = (ROOT / "README.md").read_text()
-        ordered = ["contents", "goal", "topology", "setup", "latency"]
+        ordered = ["contents", "topology", "setup", "latency"]
         positions = [readme.index(f'<a id="{name}"></a>') for name in ordered]
         self.assertEqual(positions, sorted(positions))
-        sections = re.split(r'<a id="[^"]+"></a>', readme)[2:]
-        for section in sections:
-            self.assertIn("[↑ К содержанию](#contents)", section)
+        self.assertIn("[К содержанию](#contents)", readme)
+
+    def test_readme_has_no_decorative_tagline_or_boilerplate_labels(self):
+        readme = (ROOT / "README.md").read_text()
+        self.assertNotIn("·", readme)
+        for phrase in ("практический мастер-класс ·", "Выберите учебный документ",
+                       "**Ожидаемый результат:**", "**Вывод:**", "**Задача:**",
+                       "Откройте мастер-класс на телефоне"):
+            self.assertNotIn(phrase, readme)
 
     def test_every_slide_mapped_once(self):
         text = (ROOT / "docs/SLIDES_MAP.md").read_text()
