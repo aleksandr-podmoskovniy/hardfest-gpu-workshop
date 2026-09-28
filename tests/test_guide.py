@@ -72,6 +72,15 @@ class Guide(unittest.TestCase):
         self.assertNotIn("## ", alias)
         self.assertNotIn("```", alias)
 
+    def test_goal_and_architecture_precede_setup_with_return_links(self):
+        readme = (ROOT / "README.md").read_text()
+        ordered = ["contents", "goal", "topology", "setup", "latency"]
+        positions = [readme.index(f'<a id="{name}"></a>') for name in ordered]
+        self.assertEqual(positions, sorted(positions))
+        sections = re.split(r'<a id="[^"]+"></a>', readme)[2:]
+        for section in sections:
+            self.assertIn("[↑ К содержанию](#contents)", section)
+
     def test_every_slide_mapped_once(self):
         text = (ROOT / "docs/SLIDES_MAP.md").read_text()
         covered = []
