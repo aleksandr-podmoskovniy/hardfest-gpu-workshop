@@ -186,15 +186,21 @@ git push
 1. Сохраните SHA прежней версии и параметры нод, PVC, DeviceClass, tolerations и NetworkPolicy.
 2. Перенесите их в site-values. Сравните helm template с действующими ресурсами.
    Имена Deployment, Service, labels и selectors сохранены; Bifrost остаётся на прежних адресах.
-3. Согласованно остановите A/B через старые YAML: replicas=0, commit/push/sync.
-   Дождитесь освобождения Pod и DRA-заявок.
-4. В том же Application замените directory-source на source.path чарта и helm.valueFiles.
-   Поле directory удалите полностью; сохраните имя Application, project и destination.
-5. Первый Helm-sync выполните при replicaCount=0, без prune и force.
-   Чарт использует новый алгоритм имени DRA-шаблона; старые шаблоны не удалятся автоматически.
-6. После проверки diff и ресурсов включайте A и B по одному через values.
-   Старые исходные YAML уберите из активного пути GitOps отдельным коммитом;
-   они остаются восстановимыми из истории Git.
+3. Переводите сервисы по одному: сначала A, затем B после проверки ответа A.
+   Подготовьте Helm-профиль с replicaCount=0 и отправьте его в Git.
+4. В том же Application замените прежний source.path на путь чарта и задайте helm.valueFiles.
+   Если поле directory или kustomize задано явно, удалите его; сохраните имя Application,
+   project и destination. Первый Helm-sync выполните без prune и force.
+5. Дождитесь нуля реплик и освобождения прежней DRA-заявки. Проверьте Service,
+   PVC и новые ресурсы, затем включите этот сервис через replicaCount=1 и новый commit/sync.
+   Дождитесь Ready, ответа API и ответа через Bifrost, прежде чем переходить ко второму сервису.
+6. Чарт использует новый алгоритм имени DRA-шаблона. При prune=false прежние
+   ConfigMap с хешем и ResourceClaimTemplate останутся, а Argo покажет OutOfSync.
+   Сначала проверьте ссылки из работающих Pod, Deployment и заявок. Удалите только
+   подтверждённо неиспользуемые старые объекты по точным именам — без общего prune.
+   Старые исходные YAML уберите из Git отдельным коммитом после миграции обоих сервисов.
+   Они остаются восстановимыми из истории; откат выполняется через Git/Argo,
+   не через старую ReplicaSet, которая может ссылаться на удалённый ConfigMap.
 
 Если эти workloads управляются Argo CD, не создавайте поверх них отдельный Helm release.
 
