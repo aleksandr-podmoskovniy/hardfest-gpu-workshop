@@ -58,6 +58,7 @@
 | resources.gemma / tp2 / small | Планируемые CPU requests и базовые memory request/limit в GiB; offload прибавляется отдельно |
 | kv_offload_gib | Необязательный бюджет RAM-кэша; переопределяет 64 GiB из профиля |
 | mps_percent / mps_memory_limit | Доля вычислительных ресурсов и лимит памяти одного MPS-клиента |
+| mps_gpu_memory_utilization | Доля полного MIG-раздела для памяти vLLM; должна помещаться в квоту MPS с запасом, не равна квоте SM автоматически |
 | reranker_profile | Проверенные параметры `conversion`/`pooling` для модели и версии vLLM |
 | reranker_config_verified | Только после успешного `/rerank` и проверки правильного ранжирования |
 

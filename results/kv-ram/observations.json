@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "kind": "single_sequence_functional_verification_not_capacity_benchmark",
+  "model": "gemma-4-31b",
+  "image": "vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40",
+  "engine_version": "0.30.0",
+  "hardware": {"gpu_count_used": 1, "gpu": "NVIDIA H100", "gpu_memory_mib": 97871, "vm_memory_gib": 128},
+  "profile": {
+    "tensor-parallel-size": 1,
+    "max-model-len": 131072,
+    "max-num-seqs": 32,
+    "max-num-batched-tokens": 4096,
+    "dtype": "bfloat16",
+    "kv-cache-dtype": "fp8",
+    "attention-backend": "TRITON_ATTN",
+    "enable-prefix-caching": true,
+    "enable-chunked-prefill": true,
+    "enforce-eager": false,
+    "max-cudagraph-capture-size": 32,
+    "gpu-memory-utilization": 0.9,
+    "kv-transfer-config": {
+      "kv_connector": "OffloadingConnector",
+      "kv_role": "kv_both",
+      "kv_connector_extra_config": {"cpu_bytes_to_use": 34359738368}
+    }
+  },
+  "workload": {
+    "concurrency": 1,
+    "prompt_tokens": 65536,
+    "completion_tokens": 128,
+    "temperature": 0,
+    "fixed_output": true,
+    "dataset_sha256": "c49415225d0b57999c38b1af2e1a846eacdf9cb0b7a10097996796da287cc27e",
+    "document_order_zero_based": [0, 1, 2, 3, 4, 5, 6, 0, 7, 8, 9, 1],
+    "successful": 12,
+    "errors": 0,
+    "note": "Two short health-check prompts preceded this sequence. All twelve long requests used the same optimized profile, with CPU KV enabled."
+  },
+  "raw_request_observations": [
+    {
+      "document": 1, "occurrence": 1,
+      "source_file": "bench-1790838826755790000.json", "source_request_index": 0,
+      "ttft_s": 57.29221616592258,
+      "first_content_s": 57.292217457899824,
+      "e2e_s": 62.224851415958256,
+      "usage": {"prompt_tokens": 65536, "completion_tokens": 128, "total_tokens": 65664},
+      "finish_reason": "length", "error": null
+    },
+    {
+      "document": 1, "occurrence": 2,
+      "source_file": "bench-1790839114855769000.json", "source_request_index": 0,
+      "ttft_s": 1.467181415995583,
+      "first_content_s": 1.4671830411534756,
+      "e2e_s": 6.412260208046064,
+      "usage": {"prompt_tokens": 65536, "completion_tokens": 128, "total_tokens": 65664},
+      "finish_reason": "length", "error": null
+    }
+  ],
+  "return_request_server_timing": {
+    "queue_mean_s": 0.24553574599849526,
+    "queue_completed": 1,
+    "prefill_mean_s": 0.21955308100041293,
+    "prefill_completed": 1
+  },
+  "return_request_counter_samples": [
+    {"name": "vllm:kv_offload_total_bytes_total", "labels": {"transfer_type": "CPU_to_GPU"}, "before": 0, "after": 3102474240},
+    {"name": "vllm:kv_offload_total_bytes_total", "labels": {"transfer_type": "GPU_to_CPU"}, "before": 31037849600, "after": 31037849600},
+    {"name": "vllm:kv_offload_total_time_total", "labels": {"transfer_type": "CPU_to_GPU"}, "before": 0, "after": 0.17994198608398437},
+    {"name": "vllm:prefix_cache_hits_total", "before": 65504, "after": 65504},
+    {"name": "vllm:external_prefix_cache_hits_total", "before": 0, "after": 65504},
+    {"name": "vllm:prompt_tokens_by_source_total", "labels": {"source": "local_compute"}, "before": 655448, "after": 655480},
+    {"name": "vllm:prompt_tokens_by_source_total", "labels": {"source": "local_cache_hit"}, "before": 65504, "after": 65504},
+    {"name": "vllm:prompt_tokens_by_source_total", "labels": {"source": "external_kv_transfer"}, "before": 0, "after": 65504}
+  ],
+  "source_report_sha256": {
+    "bench-1790838404473005000.json": "79457171c8418e995621dc1e06206738dd1a9f08237523ce303affea22dfc58c",
+    "bench-1790838826755790000.json": "e42a691619785a1da5d6559cda97ce47ab6806c3677a618993a4f04b04a19411",
+    "bench-1790838833507371000.json": "a954e20c16b683f202c594db376735d510a5d4308dc2b26e77137d9fbd3de306",
+    "bench-1790839107811287000.json": "712c66af7d0ad2272456cb31322fb3ff0d454110e9134403e0dfef1228b7765f",
+    "bench-1790839114855769000.json": "667d167cfca4d7be6ec8e73a785821990f798da9e593b55dad346629cad36fe3"
+  }
+}

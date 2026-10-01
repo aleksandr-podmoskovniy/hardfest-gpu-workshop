@@ -255,9 +255,9 @@ python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset examples/smoke.j
 
 ```bash
 python3 scripts/bench.py --url http://127.0.0.1:18001 --dataset .local/long.jsonl \
-  --concurrency 4 --requests 8 --cold --metrics --label a-long --out-dir results/raw/ab
+  --concurrency 4 --requests 8 --fixed-output --cold --metrics --label a-long --out-dir results/raw/ab
 python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long.jsonl \
-  --concurrency 4 --requests 8 --cold --metrics --label b-long --out-dir results/raw/ab
+  --concurrency 4 --requests 8 --fixed-output --cold --metrics --label b-long --out-dir results/raw/ab
 python3 scripts/report.py --directory results/raw/ab
 ```
 
@@ -274,6 +274,8 @@ python3 scripts/report.py --directory results/raw/ab
 ![Запись KV документа в RAM, вытеснение из GPU другими документами и обратная загрузка](assets/05-kv-ram.svg)
 
 Отправим документ, затем другие запросы, чтобы вытеснить его KV из памяти GPU, и снова отправим тот же документ. Сравним повторную обработку без кэша в RAM и с ним. Веса остаются на GPU; `--cpu-offload-gb` в этом эксперименте не используется.
+
+На H100 уже подтверждён возврат **2,89 GiB KV из RAM**: восстановлены 65 504 токена, локальных GPU-cache hits — 0. Первый запрос документа дал TTFT 57,29 с, повтор — 1,47 с. Это один холодный вход и один повтор в одном оптимизированном профиле, не p95 и не итоговое A/B. [Условия и исходные измерения](results/kv-ram/README.md).
 
 Профиль `b-cache` добавляет к `b-tuned` OffloadingConnector. Бюджет RAM задаётся явно и не выбирается автоматически по модели GPU. В варианте с 256 GiB RAM используется 64 GiB KV; для VM с 128 GiB — 32 GiB и остановленная A. Размер `/dev/shm` и лимит контейнера пересчитываются вместе с бюджетом. Проверьте [параметры своего стенда](docs/SETUP.md#2-параметры-своего-стенда) и [методику проверки выгрузки KV](labs/02-kv-ram.md).
 
@@ -306,11 +308,11 @@ python3 scripts/hf.py stop b-tuned --ack
 python3 scripts/hf.py --site .local/site-expanded.json apply b-tuned --ack
 python3 scripts/hf.py --site .local/site-expanded.json start b-tuned --ack
 python3 scripts/hf.py --site .local/site-expanded.json dataset b-tuned \
-  --input-fraction 0.5 --output-tokens 2048 --documents 7 --out .local/long-128k.jsonl
+  --input-fraction 0.5 --output-tokens 128 --documents 10 --out .local/long-128k.jsonl
 python3 scripts/hf.py --site .local/site-expanded.json snapshot b-tuned --out .local/runs/b-128k.json
 ```
 
-В новом наборе вход — 65 536 токенов, выход — до 2048. FP8 и чанкирование помогают разместить длинную историю **в GPU**. RAM-кэш сохраняет блоки для повторных обращений, но не превращает RAM в дополнительную HBM для вычисления активного запроса.
+В новом наборе вход — 65 536 токенов, выход — ровно 128 с флагом `--fixed-output`. Короткий ответ сокращает проверку самого механизма кэша; её нельзя смешивать с A/B, где выход равен 2048. FP8 и чанкирование помогают разместить длинную историю **в GPU**. RAM-кэш сохраняет блоки для повторных обращений, но не превращает RAM в дополнительную HBM для вычисления активного запроса.
 
 ### 4.2. Повтор документа без кэша в RAM
 
@@ -320,15 +322,15 @@ python3 scripts/hf.py --site .local/site-expanded.json snapshot b-tuned --out .l
 python3 scripts/hf.py --site .local/site-expanded.json port-forward b-tuned 18002
 ```
 
-В T0 отправьте первый документ, остальные 6, затем снова первый. Число документов — отправная точка: по метрикам нужно проверить, что первый вытеснен из GPU, но при включённом offload ещё помещается в RAM. Для двух серий используйте одинаковый набор и порядок.
+В T0 отправьте первый документ, остальные 9, затем снова первый. Семь разных документов на проверенной конфигурации не вытеснили первый из GPU; десять позволили получить чтение из RAM. Число документов всё равно нужно сверять с метриками своего запуска. Для двух серий используйте одинаковый набор и порядок.
 
 ```bash
 python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
-  --offset 0 --requests 1 --concurrency 1 --metrics --label x-first --out-dir results/raw/cache-off
+  --offset 0 --requests 1 --concurrency 1 --fixed-output --metrics --label x-first --out-dir results/raw/cache-off
 python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
-  --offset 1 --requests 6 --concurrency 1 --cold --metrics --label other-docs --out-dir results/raw/cache-off
+  --offset 1 --requests 9 --concurrency 1 --fixed-output --cold --metrics --label other-docs --out-dir results/raw/cache-off
 python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
-  --offset 0 --requests 1 --concurrency 1 --metrics --label x-return --out-dir results/raw/cache-off
+  --offset 0 --requests 1 --concurrency 1 --fixed-output --metrics --label x-return --out-dir results/raw/cache-off
 python3 scripts/report.py --directory results/raw/cache-off
 ```
 
@@ -351,11 +353,11 @@ python3 scripts/hf.py --site .local/site-expanded.json port-forward b-cache 1800
 
 ```bash
 python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
-  --offset 0 --requests 1 --concurrency 1 --metrics --label x-first --out-dir results/raw/cache-on
+  --offset 0 --requests 1 --concurrency 1 --fixed-output --metrics --label x-first --out-dir results/raw/cache-on
 python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
-  --offset 1 --requests 6 --concurrency 1 --cold --metrics --label other-docs --out-dir results/raw/cache-on
+  --offset 1 --requests 9 --concurrency 1 --fixed-output --cold --metrics --label other-docs --out-dir results/raw/cache-on
 python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
-  --offset 0 --requests 1 --concurrency 1 --metrics --label x-return --out-dir results/raw/cache-on
+  --offset 0 --requests 1 --concurrency 1 --fixed-output --metrics --label x-return --out-dir results/raw/cache-on
 python3 scripts/report.py --directory results/raw/cache-on
 ```
 

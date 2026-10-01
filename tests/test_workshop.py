@@ -185,6 +185,18 @@ class Manifests(unittest.TestCase):
         self.assertEqual(pod["containers"][0]["resources"]["limits"]["memory"], "80Gi")
         self.assertEqual(next(v for v in pod["volumes"] if v["name"] == "shm")["emptyDir"]["sizeLimit"], "40Gi")
 
+    def test_mps_vram_budget_is_separate_from_thread_quota(self):
+        self.site["mps_gpu_memory_utilization"] = 0.25
+        self.assertEqual(self.profile("embed-mps")["gpu-memory-utilization"], 0.25)
+        self.site["mps_percent"] = 50
+        self.assertEqual(self.profile("embed-mps")["gpu-memory-utilization"], 0.25)
+        self.assertEqual(self.profile("embed-mig")["gpu-memory-utilization"], 0.75)
+        self.assertEqual(self.profile("b-tuned")["gpu-memory-utilization"], 0.9)
+        for bad in (False, 0, -1, 1.1, "0.25", float("nan")):
+            self.site["mps_gpu_memory_utilization"] = bad
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                self.profile("embed-mps")
+
     def test_bad_site_resource_budgets_rejected(self):
         for budget in ({"memory_request_gib": 50, "memory_limit_gib": 48},
                        {"memory_request_gib": True}, {"cpu_request": "0"}):

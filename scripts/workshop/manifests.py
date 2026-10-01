@@ -105,6 +105,13 @@ def render(site, stage):
         if key == "reranker":
             # Model-specific conversion must come from a tested runtime recipe.
             profile.update(site.get("reranker_profile", {}))
+        if stage.endswith("mps") and "mps_gpu_memory_utilization" in site:
+            fraction = site["mps_gpu_memory_utilization"]
+            if type(fraction) not in (int, float) or not 0 < fraction <= 1:
+                raise ValueError("mps_gpu_memory_utilization must be a number in (0, 1]")
+            # CUDA reports total MIG memory, while free memory is MPS-limited.
+            # This is a VRAM budget, not the MPS active-thread percentage.
+            profile["gpu-memory-utilization"] = fraction
     ns = site["namespace"]
     labels = {"app.kubernetes.io/part-of": OWNER, "app.kubernetes.io/name": name}
     meta = lambda n: {"name": n, "namespace": ns, "labels": labels.copy()}
