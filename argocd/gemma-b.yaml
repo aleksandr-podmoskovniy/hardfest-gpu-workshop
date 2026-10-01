@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hardfest-gemma-b
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://gitlab.example.com/team/k8s-config.git
+    targetRevision: hardfest-demo
+    path: argo-projects/gpu-cluster/hardfest-demo/gemma-b
+  destination:
+    name: gpu-cluster
+    namespace: hardfest-demo
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true
+      - PruneLast=true

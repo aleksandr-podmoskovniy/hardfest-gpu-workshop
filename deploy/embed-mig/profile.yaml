@@ -1,0 +1,9 @@
+model: "/models/embedding"
+served-model-name: "embedding"
+host: "0.0.0.0"
+port: 8000
+runner: "pooling"
+dtype: "bfloat16"
+max-model-len: 8192
+max-num-seqs: 8
+gpu-memory-utilization: 0.75

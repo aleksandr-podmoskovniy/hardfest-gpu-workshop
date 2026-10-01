@@ -6,10 +6,14 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SKIP = {".git", ".local", ".build", "__pycache__", ".venv"}
-PATTERNS = [r"-----BEGIN (?:OPENSSH |RSA |EC )?PRIVATE KEY-----",
+PATTERNS = [r"-----BEGIN (?:OPENSSH |RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----",
             r"\b(?:ghp_|github_pat_|glpat-)[A-Za-z0-9_\-]{15,}",
+            r"\bsk-bf-[A-Za-z0-9_\-]{16,}",
+            r"\bhf_[A-Za-z0-9]{20,}",
+            r"\beyJ[A-Za-z0-9_\-]{12,}\.[A-Za-z0-9_\-]{12,}\.[A-Za-z0-9_\-]{12,}",
             r"\b(?:192\.168\.|10\.\d+\.\d+\.|172\.(?:1[6-9]|2\d|3[01])\.)\d+",
-            r"/Users/[^/\s]+/", r"registry\.flant\.com", r"client-key-data\s*:"]
+            r"/Users/[^/\s]+/", r"registry\.flant\.com", r"client-key-data\s*:",
+            r"(?m)^kind:\s*[\"']?Secret[\"']?\s*$"]
 
 
 def problems():

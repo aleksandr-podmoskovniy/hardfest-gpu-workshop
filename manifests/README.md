@@ -1,5 +1,10 @@
 # Манифесты и профили
 
+Основной источник для участников теперь [deploy/](../deploy/README.md): YAML,
+Kustomize и [GitOps](../docs/GITOPS.md). Каталог ниже сохраняет старые JSON-профили
+и операторский генератор для воспроизведения прежних экспериментов. Не используйте
+его apply/start/stop параллельно с Application, управляющим теми же Deployment.
+
 `profiles/` содержит читаемые конфигурации vLLM. [scripts/hf.py](../scripts/hf.py) собирает из профиля и private site Kubernetes `List` в JSON — Kubernetes принимает его как YAML/JSON через `-f`.
 
 ```bash

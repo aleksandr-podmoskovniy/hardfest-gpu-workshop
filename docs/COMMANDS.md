@@ -1,119 +1,56 @@
-# Справочник команд
+# Команды для GitOps
 
-Выполняйте команды из каталога репозитория. Нужен Python 3.10+, а для работы с кластером — kubectl. Скрипт берёт kubeconfig, контекст и адрес API из `.local/site.json`; текущий контекст kubectl не используется.
+Полный bootstrap — [GITOPS](GITOPS.md). Здесь рабочий цикл после настройки контекстов
+и копирования исходников в GitLab.
 
-## Скачать материалы
-
-```bash
-git clone https://github.com/aleksandr-podmoskovniy/hardfest-gpu-workshop.git
-cd hardfest-gpu-workshop
-python3 -m unittest discover -s tests -v
-python3 scripts/check_public.py
-python3 scripts/check_docs.py
-```
-
-Если `.local/site.json` ещё нет, создайте его:
+## Посмотреть профиль и итоговый YAML
 
 ```bash
-python3 scripts/hf.py init-site
+diff -u "$DEMO_DIR/gemma-a/profile.yaml" "$DEMO_DIR/gemma-b/profile.yaml"
+kubectl kustomize "$DEMO_DIR/gemma-b"
+kubectl --context "$GPU_CONTEXT" diff -k "$DEMO_DIR/gemma-b"
 ```
 
-Заполните [параметры стенда](SETUP.md) в созданном файле. Токены и пароли туда не добавляйте. Существующий файл команда не перезаписывает.
+У diff код 1 означает различия. Проверяйте конкретные ресурсы, а не весь большой
+GitOps-репозиторий.
 
-## Посмотреть — без изменений
+## Проверить и отправить изменение
 
 ```bash
-python3 scripts/hf.py preflight
-python3 scripts/hf.py get nodes
-python3 scripts/hf.py get deviceclasses
-python3 scripts/hf.py get resourceclaims
-python3 scripts/hf.py render a-chunked
-python3 scripts/hf.py diff a-chunked b-tuned
-python3 scripts/hf.py diff b-tuned b-cache
-python3 scripts/hf.py diff b-tuned b-spec
+kubectl --context "$GPU_CONTEXT" apply --dry-run=server -k "$DEMO_DIR/gemma-b"
+git diff -- "$DEMO_DIR/gemma-b"
+git add -- "$DEMO_DIR/gemma-b"
+git diff --cached --check
+git commit -S -s -m "Tune Gemma B"
+git push
 ```
 
-`render` и `diff` работают локально. Чтобы посмотреть пример без настройки стенда, укажите `--site config/site.example.json` перед именем подкоманды.
-
-Память KV для Gemma можно посчитать без кластера:
+## Применить отправленный коммит
 
 ```bash
-python3 scripts/kv_math.py --model gemma-4-31b --tokens 133120 --element-bytes 1
+REVISION=$(git rev-parse HEAD)
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application hardfest-gemma-b \
+  --type merge -p "$(jq -nc --arg rev "$REVISION" '{operation:{sync:{revision:$rev,prune:false}}}')"
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get application hardfest-gemma-b -o yaml
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo rollout status deployment/hf-gemma-b --timeout=15m
 ```
 
-Это только полезные данные KV. RAM процессов, загрузка весов и shared memory разобраны в [расчёте бюджета](MEMORY_BUDGET.md); последовательность первого запуска — в [плане развёртывания](DEPLOYMENT.md).
+Не запускайте вторую sync operation, пока первая не завершена. В UI Argo доступны
+тот же diff, Sync и журнал операции.
 
-## Запустить конфигурацию
+## Проверить API
 
 ```bash
-python3 scripts/hf.py apply a-chunked --ack
-python3 scripts/hf.py start a-chunked --ack
-python3 scripts/hf.py logs a-chunked
-python3 scripts/hf.py model-info a-chunked
-python3 scripts/hf.py snapshot a-chunked --out .local/runs/a-before.json
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo port-forward svc/hf-gemma-b 18002:8000
 ```
 
-`apply` проверяет принадлежность ресурсов, выполняет серверную проверку манифеста и создаёт Deployment с нулём реплик. `start` проверяет ноду, увеличивает число реплик до одной и ждёт готовности до 300 секунд. При таймауте Pod остаётся в кластере — проверьте его состояние и логи.
-
-`snapshot` сохраняет Deployment, Pod, идентификаторы образов, профиль и ResourceClaim в `.local/`, не читая Secret. Для следующего прогона выберите другое имя файла: снимки не перезаписываются.
-
-## Подготовить длинные запросы
-
-После готовности A:
+В другом терминале:
 
 ```bash
-python3 scripts/hf.py dataset a-chunked --input-fraction 0.5 --output-tokens 2048 \
-  --documents 32 --out .local/long.jsonl
+curl --fail http://127.0.0.1:18002/health
+curl --fail http://127.0.0.1:18002/v1/models | jq .
+curl --fail http://127.0.0.1:18002/metrics
 ```
 
-Генератор выполняется в контейнере и использует токенизатор модели; файл JSONL сохраняется на вашем компьютере. Скачивать веса и устанавливать transformers локально не требуется. После первого запроса сверьте длину входа с `usage.prompt_tokens` в ответе сервера.
-
-## Подключиться к API
-
-T1:
-
-```bash
-python3 scripts/hf.py port-forward a-chunked 18001
-```
-
-T2:
-
-```bash
-python3 scripts/hf.py port-forward b-tuned 18002
-```
-
-Оставьте обе команды работать. Остальные команды выполняйте в третьем терминале, T0. После смены профиля B остановите старый `port-forward` через Ctrl+C и запустите его для нового профиля.
-
-## Полный сравнительный замер
-
-Перед серией перезапустите A и B или очистите их кэш проверенным способом. Дайте обоим серверам одинаковый прогрев на других документах. Затем выполните:
-
-```bash
-python3 scripts/bench.py --url http://127.0.0.1:18001 --dataset .local/long.jsonl \
-  --concurrency 8 --requests 32 --cold --metrics --label a-cold --out-dir results/raw/ab
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long.jsonl \
-  --concurrency 8 --requests 32 --cold --metrics --label b-cold --out-dir results/raw/ab
-python3 scripts/report.py --directory results/raw/ab
-```
-
-На длинных входах серия может занять много времени. `--cold` запрещает повтор строк набора, но не очищает кэш сервера. `--metrics` сохраняет `/metrics` до и после серии и вычисляет среднее время очереди и prefill по разнице счётчиков. Если метрик нет или счётчики сбросились, среднее не вычисляется. Во время замера на этих API не должно быть посторонних запросов.
-
-## Смена B и завершение
-
-```bash
-python3 scripts/hf.py stop b-tuned --ack
-python3 scripts/hf.py apply b-cache --ack
-python3 scripts/hf.py start b-cache --ack
-```
-
-В T2 заново выполните `python3 scripts/hf.py port-forward b-cache 18002`. Для перехода к `b-spec` повторите тот же порядок: остановка, применение, запуск. При удалении Pod теряется кэш компиляции из `emptyDir`; загрузку и компиляцию измеряйте отдельно от обработки запросов.
-
-В конце остановите созданные конфигурации. Для B достаточно одной команды `stop`: все его профили используют общий Deployment.
-
-```bash
-python3 scripts/hf.py stop a --ack
-python3 scripts/hf.py stop b-spec --ack
-python3 scripts/hf.py get resourceclaims
-```
-
-Если запускали TP2, MIG или MPS, остановите их отдельно. Для несуществующего Deployment скрипт вернёт `not found`. Созданный через Console сервис удалите по его имени в Console. Namespace, модели и PVC оставьте для следующих упражнений.
+Нагрузка — [vllm bench serve](../labs/01-ab.md), RAM-кэш — [отдельный опыт](../labs/02-kv-ram.md).
+Готовые ответы Bifrost не должны подменять работу движка при измерениях.

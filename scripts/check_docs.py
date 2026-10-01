@@ -23,6 +23,10 @@ def check():
             if result.returncode:
                 errors.append(f"{path.relative_to(ROOT)}: {result.stderr.strip()}")
             for line in block.replace("\\\n", " ").splitlines():
+                # bash -n already validates the whole block, including quoted
+                # multiline jq/JSON. Only tokenize legacy Python entry points.
+                if not re.match(r"^\s*python3\s+scripts/", line):
+                    continue
                 tokens = shlex.split(line, comments=True)
                 if tokens[:2] == ["python3", "scripts/hf.py"]:
                     try:

@@ -37,11 +37,11 @@ w1·V1 + w2·V2 + w3·V3 → результат attention
 Посмотреть конфигурацию запущенной модели и логи:
 
 ```bash
-python3 scripts/hf.py model-info a
-python3 scripts/hf.py logs a
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec deployment/hf-gemma-a -- cat /models/gemma/config.json
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-a --tail=100
 ```
 
-`model-info` читает выбранные поля конфигурации внутри Pod и ничего не скачивает. У мультимодальной модели параметры текста могут находиться в `text_config`. Значение `head_dim` нужно брать из конфигурации: оно не всегда равно `hidden_size / heads`.
+Первая команда читает config.json внутри Pod и ничего не скачивает. У мультимодальной модели параметры текста могут находиться в `text_config`. Значение `head_dim` нужно брать из конфигурации: оно не всегда равно `hidden_size / heads`.
 
 ## Расчёт KV-кэша для GPT-OSS-120B
 
@@ -77,8 +77,7 @@ python3 scripts/hf.py logs a
 Четыре — 18,017578125 GiB, восемь — 36,03515625 GiB. При округлении получим 18,02 и 36,04 GiB.
 
 ```bash
-python3 scripts/kv_math.py --sessions 4
-python3 scripts/kv_math.py --sessions 8
+awk 'BEGIN { kv=2048*(18*131072+18*128)/1024^3; print 4*kv, "GiB"; print 8*kv, "GiB" }'
 ```
 
 </details>
@@ -106,13 +105,13 @@ python3 scripts/kv_math.py --sessions 8
 Переход с двух байтов на элемент K/V на один вдвое уменьшает объём самих K/V. Размер весов, рабочих буферов и памяти CUDA graphs при этом не меняется. Для выбранного варианта FP8 нужно проверить поддержку вычислительных ядер, способ получения коэффициентов масштабирования и качество ответов. [Квантованный KV-кэш в vLLM](https://docs.vllm.ai/en/v0.30.0/features/quantization/quantized_kvcache/).
 
 ```bash
-python3 scripts/kv_math.py --sessions 8 --element-bytes 1
+awk 'BEGIN { print 8*1024*(18*131072+18*128)/1024^3, "GiB FP8" }'
 ```
 
-Без `--model` калькулятор использует GPT-OSS из этого примера. Для Gemma есть отдельный [расчёт по её конфигурации](../MEMORY_BUDGET.md):
+В предыдущей формуле использован GPT-OSS. Для Gemma есть отдельный [расчёт по её конфигурации](../MEMORY_BUDGET.md):
 
 ```bash
-python3 scripts/kv_math.py --model gemma-4-31b --tokens 133120 --element-bytes 1
+awk 'BEGIN { print (81920*133120+16384*50*1024)/2/1024^3, "GiB FP8" }'
 ```
 
 Результат — 5,46875 GiB полезных данных KV одной истории. Это не сумма RAM процесса и не размер выделенного GPU-пула. Ёмкость кэша и служебные расходы сверяются при старте движка.

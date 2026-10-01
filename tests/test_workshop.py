@@ -3,6 +3,7 @@ import importlib.util
 import io
 import json
 import pathlib
+import re
 import subprocess
 import unittest
 from unittest.mock import Mock, patch
@@ -24,6 +25,20 @@ workload = module("make_workload")
 from workshop.manifests import memory_settings
 from workshop.cli import main as cli_main
 from workshop.lab import model_info
+
+
+class PublicContent(unittest.TestCase):
+    def test_credentials_and_secret_manifests_are_detected(self):
+        samples = [
+            "sk-" + "bf-" + "x" * 32,
+            "hf_" + "x" * 32,
+            "eyJ" + "x" * 20 + "." + "y" * 20 + "." + "z" * 20,
+            "-----BEGIN " + "ENCRYPTED PRIVATE KEY-----",
+            "apiVersion: v1\nkind: " + "Secret\nmetadata: {}\n",
+        ]
+        for index, sample in enumerate(samples):
+            with self.subTest(index=index):
+                self.assertTrue(any(re.search(pattern, sample) for pattern in public.PATTERNS))
 
 
 class WorkloadTokenizer(unittest.TestCase):
@@ -296,6 +311,23 @@ class Guards(unittest.TestCase):
     def test_foreign_owner_rejected(self):
         with self.assertRaises(ValueError):
             hf.Cluster(self.site).ownership({"metadata": {"labels": {}}})
+
+    def test_gitops_resources_readable_but_not_mutable(self):
+        for marker in ("annotation", "label"):
+            metadata = {"labels": {"app.kubernetes.io/part-of": hf.OWNER}}
+            if marker == "annotation":
+                metadata["annotations"] = {"argocd.argoproj.io/tracking-id": "hardfest-gemma-a:apps/Deployment:hardfest-demo/hf-gemma-a"}
+            else:
+                metadata["labels"]["argocd.argoproj.io/instance"] = "hardfest-gemma-a"
+            obj = {"metadata": metadata}
+            with self.subTest(marker=marker):
+                hf.Cluster(self.site).ownership(obj)
+                with self.assertRaisesRegex(ValueError, "managed by Argo CD"):
+                    hf.Cluster(self.site).ownership(obj, mutation=True)
+
+    def test_manual_workshop_resource_remains_mutable(self):
+        hf.Cluster(self.site).ownership(
+            {"metadata": {"labels": {"app.kubernetes.io/part-of": hf.OWNER}}}, mutation=True)
 
     def test_cordon_rejected(self):
         k = hf.Cluster(self.site)

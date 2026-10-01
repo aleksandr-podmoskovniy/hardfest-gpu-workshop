@@ -1,53 +1,41 @@
-# Публикация и сопровождение
+# Обновление GitHub и GitLab
 
-## Два проекта, две роли
+GitHub содержит самостоятельный воркшоп, схемы, публичные исходники манифестов и
+обезличенные результаты. GitLab k8s-config содержит привязку к конкретному стенду.
+Это не автоматическое зеркалирование всего GitOps-репозитория.
 
-Учебник — этот отдельный Git-репозиторий. Частная доставка площадки — существующий эксплуатационный `hardfest-demo`. Не добавлять весь k8s-config в public subtree и не включать автоматическое двустороннее копирование: там credentials, адреса, исторические состояния и отличающаяся ответственность.
+При проверенном изменении профиля:
 
-Профили переносить review-диффом. После успешной репетиции обновить lock, anonymized результаты и status. Публичный пример должен оставаться независимым от личного kubeconfig автора.
+1. Измените профиль в GitLab, review diff, commit/push/sync.
+2. Проверьте реально запущенный образ, флаги, GPU и ответ API.
+3. Перенесите только универсальные изменения в `deploy/` публичного репозитория.
+4. Обновите README, лабораторную и STATUS. Измерения публикуйте с условиями и исходными данными.
+5. Замените адреса, DeviceClass, PVC и ноды placeholders; не копируйте Secrets.
 
-## Git и подпись
+## Сборка и проверка
 
-Локальная identity настроена на автора; GPG использует уже существующий ключ, закрытый ключ не копируется. Проверка без изменения global config:
+В публичном репозитории:
 
 ```bash
-git config --local --get user.name
-git config --local --get user.email
-git config --local --get user.signingkey
-git config --local --get commit.gpgsign
+for PROFILE in deploy/*/kustomization.yaml; do
+  kubectl kustomize "$(dirname "$PROFILE")" > /dev/null
+done
+git diff --check
+git diff --stat
 ```
 
-Перед commit:
+Разработческие тесты CI используют Python; это не зависимость участника и не способ
+управления кластером:
 
 ```bash
 python3 -m unittest discover -s tests -v
 python3 scripts/check_public.py
-git status --short --untracked-files=all
+python3 scripts/check_docs.py
 ```
 
-Просмотреть ВСЕ добавляемые файлы и картинки. Проверка не является полноценным secret scanner; она не распознаёт секреты на скриншотах. Не пользоваться слепым `git add -f .local`.
+Они не доказывают запуск на GPU. Проверка публичных файлов ищет ключи, внутренние
+адреса и личные пути, но не заменяет просмотр diff и изображений.
 
-После review:
-
-```bash
-git add README.md WORKSHOP.md AGENTS.md LICENSE NOTICE CONTRIBUTING.md .gitignore .github \
-  models.lock.json config docs labs manifests scripts tests examples results/REPORT.template.md assets/README.md
-git diff --cached --check
-git diff --cached
-git commit -S -s -m "Add HardFest GPU inference workshop"
-git log -1 --show-signature
-```
-
-## GitHub — отдельный шаг
-
-Текущий аккаунт автора — `aleksandr-podmoskovniy`; старые материалы были в `myskat90/vllm-habr`. Новый remote не создаётся только из-за наличия gh login. Когда владелец подтвердит имя/видимость и review:
-
-```bash
-gh auth status
-gh repo create aleksandr-podmoskovniy/hardfest-gpu-workshop --public --source=. --remote=origin
-git push -u origin main
-```
-
-Эти команды **публикуют** проект. Не выполнять до разрешения и проверки материалов. MR для первого самостоятельного репозитория не обязателен; процесс дальнейших правок можно согласовать позже.
-
-Нельзя публиковать: .local, raw exports Kubernetes, registry credentials, kubeconfig, HF tokens, персональные промпты, необезличенные логи/картинки. Лицензия репозитория не даёт права распространять веса моделей или закрытые части платформы.
+Добавляйте в индекс конкретные файлы, проверяйте staged diff, используйте
+собственную подпись GPG/DCO. Никогда не публикуйте .local, raw kubeconfig, дампы Secret,
+cookies, полные снимки БД или токены из адресной строки браузера.

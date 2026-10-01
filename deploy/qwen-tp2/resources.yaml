@@ -1,0 +1,182 @@
+apiVersion: "resource.k8s.io/v1"
+kind: "ResourceClaimTemplate"
+metadata:
+  name: "hf-qwen-tp2-8ce1ffa52c"
+  namespace: "hardfest-demo"
+  labels:
+    app.kubernetes.io/part-of: "hardfest-gpu-workshop"
+    app.kubernetes.io/name: "hf-qwen-tp2"
+spec:
+  spec:
+    devices:
+      requests:
+        -
+          name: "gpu"
+          exactly:
+            deviceClassName: "REPLACE_GENERATED_H100_DEVICECLASS"
+            allocationMode: "ExactCount"
+            count: 2
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "hf-qwen-tp2"
+  namespace: "hardfest-demo"
+  labels:
+    app.kubernetes.io/part-of: "hardfest-gpu-workshop"
+    app.kubernetes.io/name: "hf-qwen-tp2"
+spec:
+  replicas: 0
+  strategy:
+    type: "Recreate"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "hf-qwen-tp2"
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: "hardfest-gpu-workshop"
+        app.kubernetes.io/name: "hf-qwen-tp2"
+      annotations:
+        workshop/profile: "tp2"
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 120
+      nodeSelector:
+        kubernetes.io/hostname: "REPLACE_H100_NODE"
+      tolerations: []
+      resourceClaims:
+        -
+          name: "gpu"
+          resourceClaimTemplateName: "hf-qwen-tp2-8ce1ffa52c"
+      containers:
+        -
+          name: "vllm"
+          image: "vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40"
+          imagePullPolicy: "IfNotPresent"
+          command:
+            - "vllm"
+            - "serve"
+            - "--config"
+            - "/etc/vllm/profile.yaml"
+          ports:
+            -
+              name: "http"
+              containerPort: 8000
+          env:
+            -
+              name: "HF_HUB_OFFLINE"
+              value: "1"
+            -
+              name: "TRANSFORMERS_OFFLINE"
+              value: "1"
+            -
+              name: "HF_HOME"
+              value: "/runtime/huggingface"
+            -
+              name: "VLLM_CACHE_ROOT"
+              value: "/runtime/vllm"
+            -
+              name: "XDG_CACHE_HOME"
+              value: "/runtime/cache"
+            -
+              name: "TOKENIZERS_PARALLELISM"
+              value: "false"
+          resources:
+            requests:
+              cpu: "24"
+              memory: "96Gi"
+              ephemeral-storage: "4Gi"
+            limits:
+              memory: "200Gi"
+              ephemeral-storage: "24Gi"
+            claims:
+              -
+                name: "gpu"
+          volumeMounts:
+            -
+              name: "profile"
+              mountPath: "/etc/vllm"
+              readOnly: true
+            -
+              name: "runtime"
+              mountPath: "/runtime"
+            -
+              name: "shm"
+              mountPath: "/dev/shm"
+            -
+              name: "qwen"
+              mountPath: "/models/qwen"
+              subPath: "REPLACE_QWEN_MODEL_SUBPATH"
+              readOnly: true
+          startupProbe:
+            httpGet:
+              path: "/health"
+              port: 8000
+            periodSeconds: 10
+            failureThreshold: 180
+          readinessProbe:
+            httpGet:
+              path: "/health"
+              port: 8000
+            periodSeconds: 5
+      volumes:
+        -
+          name: "profile"
+          configMap:
+            name: "hf-qwen-tp2"
+        -
+          name: "runtime"
+          emptyDir:
+            sizeLimit: "20Gi"
+        -
+          name: "shm"
+          emptyDir:
+            medium: "Memory"
+            sizeLimit: "8Gi"
+        -
+          name: "qwen"
+          persistentVolumeClaim:
+            claimName: "REPLACE_QWEN_PVC"
+            readOnly: true
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "hf-qwen-tp2"
+  namespace: "hardfest-demo"
+  labels:
+    app.kubernetes.io/part-of: "hardfest-gpu-workshop"
+    app.kubernetes.io/name: "hf-qwen-tp2"
+spec:
+  selector:
+    app.kubernetes.io/name: "hf-qwen-tp2"
+  ports:
+    -
+      port: 8000
+      targetPort: 8000
+  type: "ClusterIP"
+---
+apiVersion: "networking.k8s.io/v1"
+kind: "NetworkPolicy"
+metadata:
+  name: "hf-qwen-tp2"
+  namespace: "hardfest-demo"
+  labels:
+    app.kubernetes.io/part-of: "hardfest-gpu-workshop"
+    app.kubernetes.io/name: "hf-qwen-tp2"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: "hf-qwen-tp2"
+  policyTypes:
+    - "Ingress"
+  ingress:
+    -
+      from:
+        -
+          podSelector: {}
+      ports:
+        -
+          port: 8000
+          protocol: "TCP"

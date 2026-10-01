@@ -35,9 +35,13 @@ class Cluster:
         self.run(["get", "--raw=/version"])
         print(f"Context: {self.site['context']}; namespace: {self.site['namespace']}", file=sys.stderr)
 
-    def ownership(self, obj):
+    def ownership(self, obj, *, mutation=False):
         if obj and obj.get("metadata", {}).get("labels", {}).get("app.kubernetes.io/part-of") != OWNER:
             raise ValueError("Existing resource is not owned by this workshop; refusing takeover")
+        metadata = (obj or {}).get("metadata", {})
+        if mutation and (metadata.get("annotations", {}).get("argocd.argoproj.io/tracking-id")
+                         or metadata.get("labels", {}).get("argocd.argoproj.io/instance")):
+            raise ValueError("Resource is managed by Argo CD; change Git and sync the Application instead")
 
     def ready_node(self, stage):
         small = STAGES[stage][1] is None

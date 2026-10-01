@@ -69,55 +69,30 @@ Open WebUI и HA Bifrost используются на всех этапах, н
 
 ## Подготовка окружения
 
-### Что потребуется
+Нужны Git, kubectl, jq и yq v4 (Mike Farah). Python на компьютере участника для развёртывания не требуется. Манифесты собирает встроенный в kubectl Kustomize; Argo CD применяет их в целевой кластер.
 
-- Kubernetes/DKP с DRA, установленными GPU-драйвером и контроллером GPUClass/GPUPool.
-- Две сопоставимые H100 на одной ноде для одновременного A/B; отдельная A30 с поддержкой MIG для разделения GPU.
-- Веса моделей на PVC и образ vLLM из [models.lock.json](models.lock.json).
-- Оперативная память под процессы vLLM и KV-кэш. Для 256 GiB RAM предусмотрен одновременный A + B cache; на VM с 128 GiB опыт с RAM-кэшем выполняется отдельно, после остановки A. [Бюджеты для обоих вариантов](docs/MEMORY_BUDGET.md).
-- Python 3.10+, Git, kubectl и kubeconfig с доступом к учебному namespace `hardfest-demo`.
-- Для раздела автоматизации — ai-models, ai-inference и Console с совместимыми CRD.
-
-Можно изучать теорию и генерировать манифесты без GPU. Для последовательного A/B достаточно одной совместимой карты, но между вариантами нужен перезапуск. Раздел MIG/MPS требует соответствующих оборудования и драйвера.
-
-### Получить материалы
-
-В терминале на своём компьютере:
+Предпосылки стенда: две H100 с DRA, установленный GPU-драйвер и GPUClass/GPUPool-контроллер, подготовленные PVC с моделями и namespace `hardfest-demo`. Для MIG/MPS нужна отдельная A30. Для автоматического инференса — совместимые версии ai-models, ai-inference и Console. [Бюджет RAM](docs/MEMORY_BUDGET.md): A/B помещаются на VM 128 GiB с указанными лимитами, этап с RAM-кэшем выполняется отдельно после остановки A.
 
 ```bash
 git clone https://github.com/aleksandr-podmoskovniy/hardfest-gpu-workshop.git
 cd hardfest-gpu-workshop
-python3 scripts/hf.py init-site
+kubectl kustomize deploy/gemma-a
+kubectl kustomize deploy/gemma-b
 ```
 
-Команда создаст `.local/site.json` с настройками вашей площадки. Если файл уже существует, пропустите `init-site`: скрипт не перезаписывает его.
+Исходники находятся в [deploy/](deploy/README.md). В каждом каталоге видны параметры vLLM, Deployment, Service, DRA-заявка и NetworkPolicy. `replicas: 0` предотвращает случайный запуск GPU-нагрузки.
 
-Укажите в нём kubeconfig, context, адрес API, GPU-ноды, DeviceClass, PVC и пути моделей. [Описание полей](docs/SETUP.md). Файлы из `.local` не публикуются. Namespace, PVC, модели и GPU-классы должны быть подготовлены до запуска.
+Далее перенесите каталоги A/B и [Application](argocd/gemma-a.yaml) в свой GitLab `k8s-config` по [инструкции GitOps](docs/GITOPS.md). В ней есть все команды: привязка ноды/PVC/DeviceClass, commit/push, регистрация Application и sync. После этого команды с `$DEMO_DIR` выполняются **из GitOps-репозитория**.
 
-### Проверить манифесты
-
-```bash
-python3 scripts/hf.py --site config/site.example.json render a-chunked
+```text
+k8s-config: YAML → git diff → commit/push
+                  → Argo CD в управляющем кластере
+                  → Pod и Service в GPU-кластере
 ```
 
-`render` выводит манифесты с `replicas: 0`, не подключаясь к кластеру. С примером настроек можно проверить генерацию YAML ещё до подготовки своей площадки.
+В примерах `ARGO_CONTEXT` — контекст управляющего кластера, `GPU_CONTEXT` — кластера с GPU. Это разные роли, даже когда оба кластера доступны с одного компьютера. На время экспериментов autosync выключен; каждый запуск выбирается явным sync нужного коммита. Параметры площадки лежат в GitLab, секреты — в защищённом хранилище и Kubernetes Secrets, не в публичной копии.
 
-<details>
-<summary>Проверка скриптов и документации</summary>
-
-Если вы изменили материалы, проверьте тесты, ссылки и синтаксис команд:
-
-```bash
-python3 -m unittest discover -s tests -v
-python3 scripts/check_public.py
-python3 scripts/check_docs.py
-```
-
-Эти проверки работают локально и не запускают команды из руководства.
-
-</details>
-
-Все команды ниже выполняются из корня репозитория. Для экспериментов нужны выделенные GPU: `apply/start/stop --ack` меняют ресурсы кластера, указанного в `.local/site.json`. Для первого развёртывания используйте [порядок запуска и отката](docs/DEPLOYMENT.md), затем пройдите [проверку стенда](docs/REHEARSAL.md). Подтверждённые проверки и незавершённые прогоны перечислены в [статусе подготовки](docs/STATUS.md).
+Подтверждённые запуски и ограничения перечислены в [статусе](docs/STATUS.md). Готовый YAML и успешный dry-run ещё не означают, что модель отвечает.
 
 <a id="latency"></a>
 
@@ -137,9 +112,10 @@ python3 scripts/check_docs.py
 Проверьте, к какому кластеру подключены команды и какие устройства доступны:
 
 ```bash
-python3 scripts/hf.py preflight
-python3 scripts/hf.py get nodes
-python3 scripts/hf.py get deviceclasses
+kubectl config get-contexts
+kubectl --context "$GPU_CONTEXT" get nodes
+kubectl --context "$GPU_CONTEXT" get deviceclasses
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo get resourceclaims,pvc
 ```
 
 Проверьте адрес API и context, состояние Ready у ноды и владельца DeviceClass. Доступ к CUDA внутри контейнера также нужен: одной записи о H100 в списке устройств недостаточно.
@@ -178,8 +154,7 @@ python3 scripts/hf.py get deviceclasses
 Четыре — **18,02 GiB**, восемь — **36,04 GiB**, без весов и рабочих буферов.
 
 ```bash
-python3 scripts/kv_math.py --sessions 4
-python3 scripts/kv_math.py --sessions 8
+awk 'BEGIN { kv=2048*(18*131072+18*128)/1024^3; print "4 сессии:",4*kv,"GiB"; print "8 сессий:",8*kv,"GiB" }'
 ```
 
 </details>
@@ -195,7 +170,7 @@ python3 scripts/kv_math.py --sessions 8
 Для нашей Gemma расчёт другой: 10 полных слоёв и 50 локальных с окном 1024. История из 131 072 токенов входа и 2 048 выхода занимает минимум 10,9375 GiB KV в BF16 или 5,46875 GiB в FP8. [Формула, параметры и границы расчёта](docs/MEMORY_BUDGET.md#kv-для-нашей-gemma).
 
 ```bash
-python3 scripts/kv_math.py --model gemma-4-31b --tokens 133120 --element-bytes 1
+awk 'BEGIN { print (81920*133120+16384*50*1024)/2/1024^3, "GiB FP8 KV" }'
 ```
 
 Это полезные данные KV без служебных расходов. Размер фактического пула смотрим в логах vLLM. Даже с кэшем в RAM рабочие блоки KV должны помещаться на GPU во время вычисления.
@@ -206,66 +181,51 @@ python3 scripts/kv_math.py --model gemma-4-31b --tokens 133120 --element-bytes 1
 
 ![Сравнение настроек A и B при одинаковом окне 65536, входе 32768 и выходе 2048 токенов](assets/04-ab.svg)
 
-A и B работают с одинаковым окном **65 536 токенов**. Для A используем профиль `a-chunked`: BF16 KV, без prefix cache и CUDA graphs. Чанкирование по 4096 токенов оставлено для вместимости длинного входа. B сохраняет тот же размер порции, включает prefix cache и CUDA graphs и использует FP8 KV. Ни один вариант не выгружает веса в RAM.
+Обе реплики используют одинаковые веса, окно **65 536**, вход **32 768**, выход **2048 токенов**. A: BF16 KV, выключены prefix cache и CUDA graphs. B: FP8 KV, prefix cache и CUDA graphs включены. Prefill порциями по 4096 оставлен у обеих реплик: полностью отключённый вариант не вместил большое окно. Выгрузки весов в RAM нет.
 
-Полностью отключённый профиль `a` сохранён как отдельный опыт на вместимость; его не называем результатом замера `a-chunked`. Это сравнение настроек одной версии, а не старой и новой версии vLLM: в современных версиях часть оптимизаций уже включена по умолчанию. Перед замером прогрейте движок на запросах, которых нет в контрольной серии. [Настройки, ограничения совместимости и порядок сравнения](labs/01-ab.md).
+Это сравнение **настроек одной версии vLLM**, не подмена новой версии старой. Часть оптимизаций в современном vLLM уже включена по умолчанию. Мы явно выключаем их у A, чтобы разобрать совместный эффект.
 
-```bash
-python3 scripts/hf.py render a-chunked
-python3 scripts/hf.py render b-tuned
-# После проверки двух свободных H100:
-python3 scripts/hf.py apply a-chunked --ack
-python3 scripts/hf.py apply b-tuned --ack
-python3 scripts/hf.py start a-chunked --ack
-python3 scripts/hf.py start b-tuned --ack
-python3 scripts/hf.py model-info a-chunked
-python3 scripts/hf.py snapshot a-chunked --out .local/runs/ab-a.json
-python3 scripts/hf.py snapshot b-tuned --out .local/runs/ab-b.json
-```
-
-Подготовьте набор запросов. Скрипт использует токенизатор модели внутри запущенного Pod и сохраняет результат на вашем компьютере. При окне 65 536 вход занимает 32 768 токенов, на ответ отведено 2048 токенов. При повторной генерации укажите новое имя файла: существующий файл не перезаписывается.
+Откройте [профиль A](deploy/gemma-a/profile.yaml) и [профиль B](deploy/gemma-b/profile.yaml). После переноса в GitOps-репозиторий:
 
 ```bash
-python3 scripts/hf.py dataset a-chunked --input-fraction 0.5 --output-tokens 2048 \
-  --documents 32 --out .local/long.jsonl
+diff -u "$DEMO_DIR/gemma-a/profile.yaml" "$DEMO_DIR/gemma-b/profile.yaml"
+kubectl kustomize "$DEMO_DIR/gemma-a"
+kubectl kustomize "$DEMO_DIR/gemma-b"
 ```
 
-Основной терминал с командами будем называть T0. Откройте ещё два терминала для подключения к API; команды `port-forward` в них должны оставаться запущенными.
-
-В T1:
+Код возврата `diff` равный 1 означает найденные различия. Запуск — изменение replicas в Git, commit/push и sync двух Application, как в [шаге 4 GitOps](docs/GITOPS.md#4-включить-a-и-b-через-git). Затем:
 
 ```bash
-python3 scripts/hf.py port-forward a-chunked 18001
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-a --tail=80
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-b --tail=80
 ```
 
-В T2:
+В Open WebUI выберите **Gemma A — базовая (64K)**, затем **Gemma B — оптимизированная (64K)**. Оставьте одинаковыми документ, вопрос, настройки поиска и генерации. Два маршрута Bifrost должны быть привязаны к разным Service: балансировать A и B под одним именем нельзя. Внешний кэш готовых ответов шлюза для сравнения отключается, иначе измеряется не работа модели.
+
+Для прямой проверки API откройте два отдельных терминала; port-forward остаётся работающим:
 
 ```bash
-python3 scripts/hf.py port-forward b-tuned 18002
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo port-forward svc/hf-gemma-a 18001:8000
 ```
-
-Вернитесь в T0 и отправьте по два коротких запроса, чтобы проверить оба API:
 
 ```bash
-python3 scripts/bench.py --url http://127.0.0.1:18001 --dataset examples/smoke.jsonl --concurrency 1 --requests 2
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset examples/smoke.jsonl --concurrency 1 --requests 2
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo port-forward svc/hf-gemma-b 18002:8000
 ```
 
-Если оба сервиса отвечают, выполните один и тот же набор длинных запросов:
+В основном терминале:
 
 ```bash
-python3 scripts/bench.py --url http://127.0.0.1:18001 --dataset .local/long.jsonl \
-  --concurrency 4 --requests 8 --fixed-output --cold --metrics --label a-long --out-dir results/raw/ab
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long.jsonl \
-  --concurrency 4 --requests 8 --fixed-output --cold --metrics --label b-long --out-dir results/raw/ab
-python3 scripts/report.py --directory results/raw/ab
+for PORT in 18001 18002; do
+  curl --fail --no-buffer --max-time 180 "http://127.0.0.1:$PORT/v1/chat/completions" \
+    -H 'Content-Type: application/json' \
+    -d '{"model":"gemma-4-31b","messages":[{"role":"user","content":"Объясни, зачем LLM нужен KV-кэш."}],"max_tokens":256,"temperature":0,"stream":true,"chat_template_kwargs":{"enable_thinking":false}}'
+done
 ```
 
-Восемь запросов подходят для пробного запуска. Для оценки p95 нужна более длинная серия и не менее трёх повторов; порядок описан в [методике измерений](docs/MEASUREMENTS.md). Перед каждым прогоном зафиксируйте состояние кэша. Флаг `--cold` запрещает повторять строки набора, но не очищает кэш сервера.
+В короткой проверке рассуждение выключено у обеих реплик, чтобы увидеть текст ответа в небольшом лимите генерации. Для числового сравнения используйте штатный `vllm bench serve` внутри образа: локально не нужны ни Python, ни токенизатор. [Команды длинной нагрузки и сохранения результатов](labs/01-ab.md). Короткий вопрос в UI показывает работоспособность, но не заменяет тест длинных контекстов.
 
-Снимки настроек сохраняются в `.local/runs/`, результаты запросов — в `results/raw/ab/`. В отчёте каждый прогон занимает отдельную строку.
-
-Сравните время до первого токена, ожидание в очереди, обработку входа, скорость генерации и число ошибок. Среднее время prefill и p95 TTFT описывают разные величины — их нельзя подставлять друг вместо друга.
+Очередь, prefill, TTFT и время всей генерации измеряйте отдельно. Среднее prefill нельзя подписать как p95 TTFT. Восемь запросов годятся для пробного запуска, но не для устойчивой оценки хвостов задержки. [Методика измерений](docs/MEASUREMENTS.md).
 
 <a id="ram"></a>
 
@@ -273,101 +233,70 @@ python3 scripts/report.py --directory results/raw/ab
 
 ![Запись KV документа в RAM, вытеснение из GPU другими документами и обратная загрузка](assets/05-kv-ram.svg)
 
-Отправим документ, затем другие запросы, чтобы вытеснить его KV из памяти GPU, и снова отправим тот же документ. Сравним повторную обработку без кэша в RAM и с ним. Веса остаются на GPU; `--cpu-offload-gb` в этом эксперименте не используется.
+Сначала отправим документ X, затем другие документы, чтобы вытеснить его KV из GPU, и снова X. Проверим, что повтор не пересчитывает весь вход, а возвращает сохранённые блоки из RAM. Веса остаются на GPU; `--cpu-offload-gb` не используется.
 
-На H100 уже подтверждён возврат **2,89 GiB KV из RAM**: восстановлены 65 504 токена, локальных GPU-cache hits — 0. Первый запрос документа дал TTFT 57,29 с, повтор — 1,47 с. Это один холодный вход и один повтор в одном оптимизированном профиле, не p95 и не итоговое A/B. [Условия и исходные измерения](results/kv-ram/README.md).
+На стенде уже подтверждён возврат **2,89 GiB KV из RAM**: восстановлены 65 504 токена, локальных GPU-cache hits — 0. Первый запрос дал TTFT 57,29 с, повтор — 1,47 с. Это один холодный вход и один повтор в одном оптимизированном профиле, **не p95 и не итог A/B**. [Условия и исходные измерения](results/kv-ram/README.md).
 
-Профиль `b-cache` добавляет к `b-tuned` OffloadingConnector. Бюджет RAM задаётся явно и не выбирается автоматически по модели GPU. В варианте с 256 GiB RAM используется 64 GiB KV; для VM с 128 GiB — 32 GiB и остановленная A. Размер `/dev/shm` и лимит контейнера пересчитываются вместе с бюджетом. Проверьте [параметры своего стенда](docs/SETUP.md#2-параметры-своего-стенда) и [методику проверки выгрузки KV](labs/02-kv-ram.md).
+### Увеличиваем контекст
 
-### 4.1. Увеличиваем окно B до 128K
+Основное A/B использует одинаковые 64K. Теперь у B отдельно увеличиваем окно до 128K: это демонстрация вместимости и кэша, а не продолжение прежней таблицы ускорения.
 
-В предыдущем опыте сравниваем скорость A/B на одинаковых 64K. Здесь проверяем другую возможность: больше контекста у B. Этот результат не подставляется в прежнюю таблицу ускорения.
-
-Создайте отдельные настройки: окно 131 072 и 32 GiB RAM-кэша. Исходный `.local/site.json` остаётся с 64K. Команда откажется перезаписать существующий файл; при повторении этапа используйте уже созданный.
+На VM 128 GiB сначала остановите A **через Git**:
 
 ```bash
-python3 - <<'PY'
-import json
-import os
-from pathlib import Path
-site = json.loads(Path('.local/site.json').read_text())
-site['context_tokens'] = 131072
-site['kv_offload_gib'] = 32
-fd = os.open('.local/site-expanded.json', os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-with os.fdopen(fd, 'w') as out:
-    json.dump(site, out, indent=2)
-    out.write('\n')
-PY
+yq -i '.replicas = [{"name": "hf-gemma-a", "count": 0}]' "$DEMO_DIR/gemma-a/kustomization.yaml"
+git add -- "$DEMO_DIR/gemma-a/kustomization.yaml"
+git commit -S -s -m "Stop Gemma A before the RAM cache experiment"
+git push
 ```
 
-На VM с 128 GiB перед обеими сериями остановите A. Увеличенное окно сначала проверяется **без RAM-кэша**:
+Выполните sync Application A и дождитесь удаления его Pod. PVC остаётся.
+Далее перенесите параметры из [B 128K без RAM](deploy/gemma-b-128k/profile.yaml)
+в существующий профиль B. После commit/push/sync проверьте окно 131 072 в логах.
+
+### Добавляем RAM-кэш
+
+[Профиль с RAM](deploy/gemma-b-ram/profile.yaml) добавляет:
+
+```yaml
+max-model-len: 131072
+kv-transfer-config:
+  kv_connector: OffloadingConnector
+  kv_role: kv_both
+  kv_connector_extra_config:
+    cpu_bytes_to_use: 34359738368
+```
+
+В [Deployment](deploy/gemma-b-ram/resources.yaml) одновременно изменены RAM request
+до 56 GiB, limit до 80 GiB и `/dev/shm` до 40 GiB. **32 GiB CPU KV уже включены
+в эти значения**, второй раз прибавлять их не нужно. Проверьте свободную RAM ноды,
+затем перенесите профиль и эти лимиты в каталог B своего GitOps-репозитория.
 
 ```bash
-python3 scripts/hf.py stop a-chunked --ack
-python3 scripts/hf.py stop b-tuned --ack
-python3 scripts/hf.py --site .local/site-expanded.json apply b-tuned --ack
-python3 scripts/hf.py --site .local/site-expanded.json start b-tuned --ack
-python3 scripts/hf.py --site .local/site-expanded.json dataset b-tuned \
-  --input-fraction 0.5 --output-tokens 128 --documents 10 --out .local/long-128k.jsonl
-python3 scripts/hf.py --site .local/site-expanded.json snapshot b-tuned --out .local/runs/b-128k.json
+kubectl kustomize "$DEMO_DIR/gemma-b"
+git diff -- "$DEMO_DIR/gemma-b"
+git add -- "$DEMO_DIR/gemma-b"
+git commit -S -s -m "Enable 32 GiB CPU KV cache for Gemma B at 128K"
+git push
 ```
 
-В новом наборе вход — 65 536 токенов, выход — ровно 128 с флагом `--fixed-output`. Короткий ответ сокращает проверку самого механизма кэша; её нельзя смешивать с A/B, где выход равен 2048. FP8 и чанкирование помогают разместить длинную историю **в GPU**. RAM-кэш сохраняет блоки для повторных обращений, но не превращает RAM в дополнительную HBM для вычисления активного запроса.
-
-### 4.2. Повтор документа без кэша в RAM
-
-В T2 завершите предыдущий port-forward через Ctrl+C и запустите:
+Синхронизируйте **то же Application B**, не создавайте второе приложение на один
+Deployment. После перезапуска переподключите port-forward и проверьте:
 
 ```bash
-python3 scripts/hf.py --site .local/site-expanded.json port-forward b-tuned 18002
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo rollout status deployment/hf-gemma-b --timeout=15m
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-b --tail=100
+curl --fail http://127.0.0.1:18002/metrics
 ```
 
-В T0 отправьте первый документ, остальные 9, затем снова первый. Семь разных документов на проверенной конфигурации не вытеснили первый из GPU; десять позволили получить чтение из RAM. Число документов всё равно нужно сверять с метриками своего запуска. Для двух серий используйте одинаковый набор и порядок.
+Выполните одинаковую последовательность X → другие документы → X без offload и с ним.
+[Запросы, проверка переноса и счётчиков](labs/02-kv-ram.md).
+Если X остался в GPU, быстрое повторение доказывает только prefix cache, не RAM-offload.
+На нашем запуске для вытеснения понадобились ещё девять разных документов.
 
-```bash
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
-  --offset 0 --requests 1 --concurrency 1 --fixed-output --metrics --label x-first --out-dir results/raw/cache-off
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
-  --offset 1 --requests 9 --concurrency 1 --fixed-output --cold --metrics --label other-docs --out-dir results/raw/cache-off
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
-  --offset 0 --requests 1 --concurrency 1 --fixed-output --metrics --label x-return --out-dir results/raw/cache-off
-python3 scripts/report.py --directory results/raw/cache-off
-```
-
-### 4.3. С кэшем в RAM
-
-```bash
-python3 scripts/hf.py --site .local/site-expanded.json stop b-tuned --ack
-python3 scripts/hf.py --site .local/site-expanded.json apply b-cache --ack
-python3 scripts/hf.py --site .local/site-expanded.json start b-cache --ack
-python3 scripts/hf.py --site .local/site-expanded.json logs b-cache
-```
-
-Дождитесь готовности API и найдите в логах включённый OffloadingConnector с заданным объёмом памяти. В T2 завершите старый `port-forward` и подключитесь заново:
-
-```bash
-python3 scripts/hf.py --site .local/site-expanded.json port-forward b-cache 18002
-```
-
-В T0 повторите те же документы, сохраняя отдельный результат:
-
-```bash
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
-  --offset 0 --requests 1 --concurrency 1 --fixed-output --metrics --label x-first --out-dir results/raw/cache-on
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
-  --offset 1 --requests 9 --concurrency 1 --fixed-output --cold --metrics --label other-docs --out-dir results/raw/cache-on
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
-  --offset 0 --requests 1 --concurrency 1 --fixed-output --metrics --label x-return --out-dir results/raw/cache-on
-python3 scripts/report.py --directory results/raw/cache-on
-```
-
-### 4.4. Проверка результата
-
-Сравните строки `x-return` двух серий. Начальное состояние движка и порядок прогрева должны совпадать; для прогрева используйте другой префикс.
-
-По счётчикам или трассировке проверьте, что KV первого документа был вытеснен из GPU, записан в RAM и загружен обратно. Если он остался на GPU, быстрое повторение объясняется обычным префиксным кэшем. Само число запросов этого не показывает; без данных о переносе блоков результат эксперимента с RAM остаётся неподтверждённым.
-
-Для KV объёмом 4,50 GiB передача при скорости 25 GiB/с заняла бы около 0,180 с. Это расчёт времени копирования, без очереди и вычислений. Фактическое время сравниваем по метрикам. [Как устроены кэш и планировщик](docs/chapters/02-scheduler.md).
+RAM сохраняет KV для повторных обращений, но не заменяет HBM при вычислении активного
+запроса. Для условных 4,50 GiB при скорости копирования 25 GiB/с передача заняла бы
+0,180 с — без очереди и вычислений. Сравнивайте фактические метрики, а не эту оценку.
 
 <a id="compute"></a>
 
@@ -378,7 +307,7 @@ python3 scripts/report.py --directory results/raw/cache-on
 В сравнении A и `b-tuned` кэш в RAM ещё не использовался. Сравните настройки двух запусков:
 
 ```bash
-python3 scripts/hf.py diff a-chunked b-tuned
+diff -u "$DEMO_DIR/gemma-a/profile.yaml" "$DEMO_DIR/gemma-b/profile.yaml"
 ```
 
 На этапе prefill модель обрабатывает вход, на этапе decode — генерирует продолжение. Chunked prefill разбивает длинный вход на порции, которые планировщик чередует с генерацией уже начатых ответов.
@@ -414,21 +343,18 @@ FP8 уменьшает память под K/V по сравнению с BF16. 
 
 Используем Gemma assistant. Сравниваем `b-tuned` и `b-spec` без кэша в RAM, чтобы не смешивать два изменения. [Настройки черновой генерации](labs/03-speculation.md).
 
-```bash
-python3 scripts/hf.py stop b-cache --ack
-python3 scripts/hf.py apply b-spec --ack
-python3 scripts/hf.py start b-spec --ack
-```
-
-В терминале T2 переподключите API:
+Кандидат хранится в [deploy/gemma-b-spec](deploy/gemma-b-spec/profile.yaml).
+Переносите его в существующее Application B только после отдельной проверки assistant.
+Дополнительный PVC/mount и параметры `speculative-config` должны попасть в один коммит.
+Пока подтверждения генерации нет, оставьте работающий B без speculative decoding.
 
 ```bash
-python3 scripts/hf.py port-forward b-spec 18002
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-b --tail=100
 ```
 
 В логах должны быть загрузка assistant и включённый метод speculative decoding. В [лабораторной](labs/03-speculation.md) приведены команды парных прогонов без черновика и с ним.
 
-`bench.py` измеряет время до первого токена, полное время ответа и скорость генерации. Долю принятых черновых токенов он не считает — эти данные нужно получить отдельно из метрик vLLM, если выбранный движок их публикует.
+Штатный `vllm bench serve` измеряет время до первого токена, полное время ответа и скорость генерации. Долю принятых черновых токенов он не считает — эти данные нужно получить отдельно из метрик vLLM, если выбранный движок их публикует.
 
 Если основная модель приняла три токена, а четвёртый отвергла, продолжение после него тоже отбрасывается. Средняя стоимость выданного токена за цикл:
 
@@ -452,22 +378,27 @@ python3 scripts/hf.py port-forward b-spec 18002
 
 На A30 заранее включён режим MIG, но сами разделы создаются по заявкам. GPUClass/GPUPool формирует DeviceClass, планировщик выделяет устройство по ResourceClaim, а DRA-драйвер готовит MIG-раздел для контейнера. [Настройка MIG и MPS](labs/05-mig-mps.md).
 
-Для этого раздела используем отдельный файл `.local/site-mig.json`. Он явно задаёт контекст кластера с A30, namespace `hardfest-demo`, классы и PVC моделей. Это работает и при размещении A30 в другом кластере; H100-команды продолжают использовать `.local/site.json`.
+Для A30 подготовьте отдельные Application с её destination и каталоги
+[embed-mig](deploy/embed-mig/resources.yaml), [embed-mps](deploy/embed-mps/resources.yaml).
+Если карта в другом кластере, используйте отдельный `MIG_CONTEXT`; не переключайте
+неявно текущий контекст H100.
 
 ```bash
-python3 scripts/hf.py --site .local/site-mig.json get deviceclasses
-python3 scripts/hf.py --site .local/site-mig.json apply embed-mig --ack
-python3 scripts/hf.py --site .local/site-mig.json start embed-mig --ack
-python3 scripts/hf.py --site .local/site-mig.json get resourceclaims
+export MIG_CONTEXT=cluster-with-a30
+kubectl --context "$MIG_CONTEXT" get deviceclasses
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get resourceclaims
 ```
 
-Для проверки embedding API откройте отдельный терминал T3:
+Перенесите манифесты в GitOps-репозиторий, задайте подготовленные классы и PVC,
+включите replica через Git и синхронизируйте приложения. Квота MPS в примере —
+25% active threads и 4 GiB памяти; vLLM использует отдельный VRAM-бюджет 0,25,
+поскольку CUDA сообщает полный объём памяти MIG.
 
 ```bash
-python3 scripts/hf.py --site .local/site-mig.json port-forward embed-mig 18003
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo port-forward svc/hf-embed-mig 18003:8000
 ```
 
-В T0:
+В другом терминале:
 
 ```bash
 curl --fail --max-time 30 http://127.0.0.1:18003/v1/embeddings \
@@ -475,19 +406,9 @@ curl --fail --max-time 30 http://127.0.0.1:18003/v1/embeddings \
   -d '{"model":"embedding","input":["Динамическое разделение GPU","Очередь инференса"]}'
 ```
 
-API должен вернуть по вектору для каждого из двух текстов.
-
-После настройки и проверки `reranker_profile` из [лабораторной](labs/05-mig-mps.md) запустите два MPS-клиента:
-
-```bash
-python3 scripts/hf.py --site .local/site-mig.json apply embed-mps --ack
-python3 scripts/hf.py --site .local/site-mig.json start embed-mps --ack
-python3 scripts/hf.py --site .local/site-mig.json apply rerank-mps --ack
-python3 scripts/hf.py --site .local/site-mig.json start rerank-mps --ack
-python3 scripts/hf.py --site .local/site-mig.json get resourceclaims
-```
-
-Запуск реранкера заблокирован, пока его профиль не проверен. В выделенных устройствах ResourceClaim проверьте, что оба MPS-клиента попали в один MIG-раздел.
+API должен вернуть два вектора. В ResourceClaim проверьте выделенный MIG и его
+долю MPS. Реранкер требует отдельного проверенного runtime-профиля: его запуск
+и совместное использование MIG ещё не подтверждены, не выдавайте их за готовый этап.
 
 Измерьте работу каждого API отдельно и обоих вместе: время ответа, ошибки и пик памяти. Квота MPS ограничивает доступные вычислительные ресурсы, поэтому 25% MPS не равны 25% производительности. Аппаратную изоляцию в этом примере обеспечивает MIG.
 
@@ -505,9 +426,8 @@ python3 scripts/hf.py --site .local/site-mig.json get resourceclaims
 
 Освободите A, сохранив ручной B:
 
-```bash
-python3 scripts/hf.py stop a --ack
-```
+В Kustomization A установите `replicas[].count: 0`, выполните commit/push/sync
+и дождитесь завершения его Pod. Не используйте ручной scale поверх GitOps.
 
 В мастере Console создайте сервис `hf-platform-gemma`: источник ai-models, та же ревизия модели, согласованные контекст, GPU-профиль и стратегия.
 
@@ -532,11 +452,10 @@ python3 scripts/hf.py stop a --ack
 
 Бонус выполняется только после проверки рецепта и устойчивости обеих GPU. Само наличие NVLink не доказывает готовность инференса; [предварительные проверки](labs/06-tp2.md) обязательны до освобождения Gemma.
 
-Через Console удалите только сервис `hf-platform-gemma`, созданный на предыдущем шаге, и дождитесь освобождения его заявки на GPU. Скрипт `hf.py` этим сервисом не управляет. Остановите оставшуюся ручную Gemma:
+Через Console удалите только сервис `hf-platform-gemma`, созданный на предыдущем шаге, и дождитесь освобождения его заявки на GPU. Ручное Application B этим сервисом не управляет. Для B установите ноль реплик в Git и выполните sync, затем проверьте освобождение заявок:
 
 ```bash
-python3 scripts/hf.py stop b-spec --ack
-python3 scripts/hf.py get resourceclaims
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims
 ```
 
 Создайте в AI Inference отдельный сервис `hf-platform-qwen` с моделью Qwen из ai-models и проверенным рецептом для двух H100. План должен выделить обе карты одной ноды и установить TP=2. Одного выбора `Throughput` недостаточно: проверьте в плане контекст, память, параметры MTP и KV-offload. Комбинации без подтверждённого запуска не считаются готовым рецептом.
@@ -549,16 +468,18 @@ python3 scripts/hf.py get resourceclaims
 
 ## 10. Остановка и освобождение ресурсов
 
-Остановите только этапы, которые запускали. Для B достаточно одной команды: все его профили используют Deployment `hf-gemma-b`.
+Остановите только те Application, которые запускали: в их Kustomization задайте
+ноль реплик, commit/push и sync. Для B достаточно одного изменения: профили используют
+один Deployment `hf-gemma-b`.
 
 ```bash
-python3 scripts/hf.py stop a --ack
-python3 scripts/hf.py stop b-spec --ack
-python3 scripts/hf.py stop tp2 --ack
-python3 scripts/hf.py --site .local/site-mig.json stop rerank-mps --ack
-python3 scripts/hf.py --site .local/site-mig.json stop embed-mps --ack
-python3 scripts/hf.py --site .local/site-mig.json stop embed-mig --ack
-python3 scripts/hf.py get resourceclaims
+yq -i '.replicas = [{"name": "hf-gemma-a", "count": 0}]' "$DEMO_DIR/gemma-a/kustomization.yaml"
+yq -i '.replicas = [{"name": "hf-gemma-b", "count": 0}]' "$DEMO_DIR/gemma-b/kustomization.yaml"
+git add -- "$DEMO_DIR/gemma-a/kustomization.yaml" "$DEMO_DIR/gemma-b/kustomization.yaml"
+git commit -S -s -m "Stop HardFest Gemma workloads"
+git push
+# После sync нужной ревизии:
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims
 ```
 
 Для этапов, которые вы не запускали, возможен ответ `not found`. Созданные через Console `hf-platform-gemma` и `hf-platform-qwen` удаляются отдельно, только как соответствующие InferenceService. Если участникам оставлен доступ к чату, сначала согласуйте завершение работы: остановка его LLM, эмбеддера или реранкера нарушит работу сервиса. Не удаляйте Open WebUI, Bifrost, базы знаний и пользовательские данные при очистке GPU-нагрузки.

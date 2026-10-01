@@ -81,6 +81,7 @@ def main():
     name = STAGES[stage][0]
     if args.action == "apply":
         current = k.get("deployment", name)
+        k.ownership(current, mutation=True)
         if current and current["spec"].get("replicas", 0):
             raise ValueError("Stop the deployment explicitly before replacing its profile")
         pods = json.loads(k.ns(["get", "pods", "-l", "app.kubernetes.io/name=" + name, "-o", "json"]))
@@ -88,7 +89,7 @@ def main():
             raise ValueError("Old pods still exist (possibly Terminating); wait before changing the profile")
         bundle = render(site, stage)
         for obj in bundle["items"]:
-            k.ownership(k.get(obj["kind"], obj["metadata"]["name"]))
+            k.ownership(k.get(obj["kind"], obj["metadata"]["name"]), mutation=True)
         raw = json.dumps(bundle)
         print(k.ns(["apply", "--dry-run=server", "-f", "-"], data=raw))
         print(k.ns(["apply", "-f", "-"], data=raw))
@@ -97,7 +98,7 @@ def main():
     obj = k.get("deployment", name)
     if obj is None:
         raise ValueError("Deployment not found; apply the reviewed stage first")
-    k.ownership(obj)
+    k.ownership(obj, mutation=args.action in {"start", "stop"})
     if args.action == "start":
         if obj["spec"]["template"]["metadata"]["annotations"].get("workshop/profile") != stage:
             raise ValueError("Deployment contains a different profile; stop/apply explicitly")

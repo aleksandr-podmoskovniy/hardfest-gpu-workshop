@@ -65,11 +65,44 @@ class Guide(unittest.TestCase):
     def test_expanded_context_is_separate_from_ab(self):
         readme = (ROOT / "README.md").read_text()
         ram = readme.split('id="ram"', 1)[1].split('id="compute"', 1)[0]
-        self.assertIn("site['context_tokens'] = 131072", ram)
-        self.assertIn("site['kv_offload_gib'] = 32", ram)
-        self.assertIn("os.O_EXCL", ram)
-        for command in ("apply b-tuned", "start b-tuned", "apply b-cache", "start b-cache"):
-            self.assertIn("--site .local/site-expanded.json " + command, ram)
+        self.assertIn("max-model-len: 131072", ram)
+        self.assertIn("cpu_bytes_to_use: 34359738368", ram)
+        self.assertIn('"count": 0', ram)
+        self.assertIn("deploy/gemma-b-128k/profile.yaml", ram)
+        self.assertIn("deploy/gemma-b-ram/profile.yaml", ram)
+        self.assertIn("то же Application B", ram)
+
+    def test_primary_workshop_uses_gitops_not_private_python_wrappers(self):
+        readme = (ROOT / "README.md").read_text()
+        for old in ("python3", "scripts/hf.py", ".local"):
+            self.assertNotIn(old, readme)
+        for command in ("kubectl kustomize", "git commit -S -s", "git push"):
+            self.assertIn(command, readme)
+        gitops = (ROOT / "docs/GITOPS.md").read_text()
+        for term in ("ARGO_CONTEXT", "GPU_CONTEXT", "operation:{sync", "revision:$rev", "prune:false"):
+            self.assertIn(term, gitops)
+
+    def test_native_manifests_are_safe_and_complete(self):
+        profiles = list((ROOT / "deploy").glob("*/kustomization.yaml"))
+        self.assertEqual(len(profiles), 8)
+        for path in profiles:
+            with self.subTest(profile=path.parent.name):
+                kustomization = path.read_text()
+                resources = (path.parent / "resources.yaml").read_text()
+                self.assertIn("configMapGenerator:", kustomization)
+                self.assertNotIn("disableNameSuffixHash", kustomization)
+                self.assertIn("replicas: 0", resources)
+                self.assertIn('type: "Recreate"', resources)
+                self.assertIn('kind: "ResourceClaimTemplate"', resources)
+                self.assertNotIn('kind: "DeviceClass"', resources)
+                self.assertNotIn('kind: "Secret"', resources)
+                self.assertNotIn("cpu-offload-gb", (path.parent / "profile.yaml").read_text())
+                self.assertRegex(resources, r"@sha256:[0-9a-f]{64}")
+        for name in ("gemma-a", "gemma-b"):
+            self.assertIn("max-model-len: 65536", (ROOT / "deploy" / name / "profile.yaml").read_text())
+        for path in (ROOT / "argocd").glob("*.yaml"):
+            self.assertNotIn("automated:", path.read_text())
+            self.assertNotIn("finalizers:", path.read_text())
 
     def test_participant_docs_do_not_contain_speaker_directions(self):
         paths = [ROOT / "README.md", ROOT / "WORKSHOP.md"]
