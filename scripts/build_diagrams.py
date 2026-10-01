@@ -395,21 +395,142 @@ def platform():
 
 
 def tp2():
-    d = Diagram('10-tp2', 'Две карты — один экземпляр большой модели',
-                'Финальный эксперимент после освобождения обеих H100. Запуск и скорость проверяются отдельно.', 500)
-    d.card(48, 164, 410, 174, 'H100 №1', ['Часть весов и KV', 'Процесс TP rank 0'])
-    d.card(742, 164, 410, 174, 'H100 №2', ['Часть весов и KV', 'Процесс TP rank 1'])
-    d.path('M 460 245 H 740', BLUE, True)
-    d.path('M 740 280 H 460', BLUE, True)
-    d.text(600, 215, 'NVLink / NCCL', 26, BLUE, True, 'middle')
-    d.text(600, 316, 'Обмен на шагах модели', 20, MUTED, anchor='middle')
-    d.text(48, 393, 'TP=2 не означает две независимые реплики.', 30, INK, True)
-    d.text(48, 433, 'Проверяем архитектуру, квантование, память и связь карт до нагрузки на 50 сессий.', 23)
-    d.footer('NVLink ускоряет обмен между GPU. CPU KV-offload использует другую иерархию памяти.')
+    d = Diagram('10-tp2', 'Qwen TP2: две карты, один экземпляр модели',
+                'Один запрос обрабатывается двумя GPU. Размещение и скорость проверяются отдельно.', 620)
+    d.rect(48, 145, 1104, 306, '#ffffff', BLUE)
+    d.text(72, 183, 'ОДНА НОДА / ОДИН POD / ОДИН API', 22, BLUE, True)
+    d.card(72, 214, 390, 167, 'H100 №1', ['Часть весов', 'Локальные состояния', 'TP rank 0'])
+    d.card(738, 214, 390, 167, 'H100 №2', ['Часть весов', 'Локальные состояния', 'TP rank 1'])
+    d.text(600, 258, 'Обмен NCCL', 26, BLUE, True, 'middle')
+    d.path('M 464 300 H 736', BLUE, True)
+    d.path('M 736 344 H 464', BLUE, True)
+    d.text(600, 422, 'Физическую связь GPU проверяем по топологии стенда.', 23, MUTED, anchor='middle')
+    d.text(48, 507, 'Оба процесса участвуют в вычислении одного ответа.', 30, INK, True)
+    d.text(48, 547, 'TP=2 не создаёт две реплики и не превращает HBM в единый прозрачный пул.', 24)
+    d.footer('Qwen и Gemma — разные модели: результаты Qwen не продолжают сравнение настроек Gemma A/B.')
+    d.save()
+
+
+def qwen_transition():
+    d = Diagram('17-qwen-transition', 'От двух Gemma к одному сервису Qwen TP2',
+                'Сначала освобождаем обе H100, затем проверяем заявку, размещение и ответ модели.', 1040)
+    d.rect(48, 146, 1104, 218, GRAY, LINE)
+    d.text(72, 184, '1. ОСВОБОДИТЬ ОБЕ H100 ОТ ПРЕЖНИХ СЕРВИСОВ', 23, MUTED, True)
+    for x, title, body in [(72, 'Gemma A', ['replicaCount: 0', 'GitOps: commit → sync']),
+                            (432, 'Gemma B', ['replicaCount: 0', 'GitOps: commit → sync']),
+                            (792, 'Gemma AI Inference', ['Если ещё запущена', 'Удалить InferenceService'])]:
+        d.rect(x, 211, 336, 126, '#ffffff', LINE)
+        d.text(x+18, 249, title, 26, INK, True)
+        d.text(x+18, 284, body, 22)
+    d.path('M 600 366 V 389', MUTED, True)
+    d.rect(180, 392, 840, 55, MINT, TEAL)
+    d.text(600, 427, 'Обе H100 доступны; прежние Pod и claims освобождены', 24, TEAL, True, 'middle')
+    d.text(48, 490, '2. ЗАЯВКА ДОЛЖНА ВЫДЕЛИТЬ ДВЕ ПОЛНЫЕ GPU', 23, BLUE, True)
+    d.card(48, 519, 316, 146, 'DeviceClass', ['Существующий класс', 'для полных GPU'])
+    d.card(442, 519, 310, 146, 'ResourceClaim', ['count: 2', 'Одна заявка для Pod'])
+    d.path('M 366 588 H 440', BLUE, True)
+    d.path('M 754 588 H 832', BLUE, True)
+    d.rect(834, 519, 318, 146, MINT, TEAL)
+    d.text(856, 558, 'Одна нода', 27, TEAL, True)
+    for x, label in [(856, 'H100 №1'), (1005, 'H100 №2')]:
+        d.rect(x, 582, 125, 57, '#ffffff', TEAL)
+        d.text(x+62.5, 618, label, 21, TEAL, True, 'middle')
+    d.text(48, 718, '3. ПРОВЕРИТЬ API И ПОДКЛЮЧИТЬ ЕГО К ПРЕЖНЕМУ ШЛЮЗУ', 23, BLUE, True)
+    d.card(48, 750, 316, 128, 'Тот же Open WebUI', ['Чат и базы знаний'])
+    d.card(442, 750, 310, 128, 'Тот же Bifrost', ['Маршрут к Qwen'])
+    d.card(834, 750, 318, 128, 'Qwen TP2', ['Один Pod, один сервис', 'Проверенный ответ API'], MINT, TEAL)
+    d.path('M 366 810 H 440', BLUE, True)
+    d.path('M 754 810 H 832', BLUE, True)
+    d.path('M 993 667 V 748', TEAL, True)
+    d.rect(48, 911, 1104, 75, LILAC, PURPLE)
+    d.text(72, 942, 'WebUI и Bifrost сохраняются; меняется модель за маршрутом.', 27, PURPLE, True)
+    d.text(72, 972, 'План с одной GPU не выполняет требование TP2, даже если параметр запуска равен 2.', 22)
+    d.footer('Классы берём у контроллера GPU. Для перехода не удаляем PVC, веса моделей и GPUClass / GPUPool.')
+    d.save()
+
+
+def qwen_mtp():
+    d = Diagram('18-qwen-mtp', 'MTP в Qwen: проверка предложенного продолжения',
+                'Условный цикл с четырьмя предложениями. Число принятых токенов здесь не является замером.', 930)
+    d.rect(48, 143, 1104, 76, LILAC, PURPLE)
+    d.text(72, 176, 'Один сервис Qwen TP2', 27, PURPLE, True)
+    d.text(72, 206, 'Встроенный MTP-блок предлагает токены; основная модель проверяет их пакетом.', 23)
+    d.text(48, 283, ['MTP', 'предлагает'], 25, PURPLE, True)
+    for i, token in enumerate(['t₁', 't₂', 't₃', 't₄']):
+        x = 344+i*202
+        d.rect(x, 263, 174, 68, LILAC, PURPLE)
+        d.text(x+87, 309, token, 32, PURPLE, True, 'middle')
+        d.path(f'M {x+87} 333 V 387', MUTED, True)
+        if i < 3:
+            d.path(f'M {x+176} 297 H {x+200}', PURPLE, True, width=2)
+    d.text(48, 417, ['Основная модель', 'проверяет'], 25, BLUE, True)
+    for i, (label, fill, color) in enumerate([('Принят', MINT, TEAL), ('Принят', MINT, TEAL),
+                                             ('Отказ', SAND, AMBER), ('Отбросить', GRAY, MUTED)]):
+        x = 344+i*202
+        d.rect(x, 389, 174, 68, fill, color)
+        d.text(x+87, 433, label, 25, color, True, 'middle')
+    d.path('M 344 475 V 486 H 720 V 475', TEAL)
+    d.text(532, 517, 'Принятый префикс', 23, TEAL, True, 'middle')
+    d.text(936, 500, ['Первый отказ', 'отменяет остаток'], 22, AMBER, anchor='middle')
+    d.rect(48, 550, 1104, 108, PALE, BLUE)
+    d.text(72, 591, 'В ответ', 27, BLUE, True)
+    d.text(72, 628, 'и в следующий цикл', 22, MUTED)
+    for x, token, fill, color in [(344, 't₁', MINT, TEAL), (546, 't₂', MINT, TEAL),
+                                  (748, 't*', PALE, BLUE)]:
+        d.rect(x, 570, 174, 68, fill, color)
+        d.text(x+87, 616, token, 32, color, True, 'middle')
+    d.text(954, 597, ['Исправление', 'после отказа'], 21, BLUE)
+    d.path('M 532 524 V 548', TEAL, True)
+    d.path('M 835 459 V 548', BLUE, True)
+    d.rect(48, 699, 416, 124, MINT, TEAL)
+    d.text(72, 734, 'Доля принятия', 26, TEAL, True)
+    d.text(256, 771, 'принятые токены', 23, INK, anchor='middle')
+    d.path('M 104 782 H 408', TEAL, width=2)
+    d.text(256, 810, 'предложенные токены', 23, INK, anchor='middle')
+    d.rect(504, 699, 648, 124, LILAC, PURPLE)
+    d.text(528, 734, 'Цена выданного токена', 26, PURPLE, True)
+    d.text(828, 771, 'время предложения + проверки + обмена', 24, INK, anchor='middle')
+    d.path('M 562 782 H 1094', PURPLE, width=2)
+    d.text(828, 810, 'выданные токены', 23, INK, anchor='middle')
+    d.text(48, 872, 'Acceptance ≠ ускорение: сравниваем TPOT и токены/с при той же нагрузке.', 26, INK, True)
+    d.footer('Старт: num_speculative_tokens=1. Qwen ± MTP: те же вход, выход, TP2 и кэш.')
+    d.save()
+
+
+def qwen_capacity():
+    d = Diagram('19-qwen-capacity', 'Qwen: сколько запросов выдерживает сервис',
+                'Увеличиваем число одновременных запросов и проверяем пределы качества обслуживания.', 970)
+    d.rect(48, 146, 1104, 77, PALE, BLUE)
+    d.text(72, 179, 'Один профиль нагрузки на всю серию', 27, BLUE, True)
+    d.text(72, 209, 'Фиксируем вход, выход, модель, TP2, настройки MTP и состояние кэша.', 24)
+    d.text(48, 269, 'ОДНОВРЕМЕННЫЕ ЗАПРОСЫ C', 23, MUTED, True)
+    for i, count in enumerate([1, 2, 4, 8, 16, 32, 50]):
+        x = 48+i*162
+        d.rect(x, 292, 132, 79, PALE, BLUE)
+        d.text(x+66, 345, str(count), 41, BLUE, True, 'middle')
+        if i < 6:
+            d.path(f'M {x+134} 332 H {x+160}', BLUE, True, width=2)
+    d.path('M 48 385 V 397 H 1152 V 385', MUTED, width=2)
+    d.text(600, 433, 'На каждой ступени сохраняем результаты и проверяем четыре сигнала', 24, MUTED, anchor='middle')
+    for x, title, body, fill, color in [
+            (48, 'Очередь', ['Запросы в ожидании', 'Растёт или стабильна?'], SAND, AMBER),
+            (329, 'TTFT', ['До первого токена', 'p50 / p95 / p99'], PALE, BLUE),
+            (610, 'TPOT', ['Время на токен', 'p50 / p95 / p99'], LILAC, PURPLE),
+            (891, 'Ошибки', ['HTTP / timeout / OOM', 'Учитываем все отказы'], SAND, AMBER)]:
+        d.rect(x, 461, 261, 144, fill, color)
+        d.text(x+20, 503, title, 28, color, True)
+        d.text(x+20, 546, body, 21)
+    d.path('M 600 610 V 635 H 314 V 657', TEAL, True)
+    d.path('M 600 635 H 886 V 657', AMBER, True)
+    d.card(48, 659, 532, 146, 'Пороги соблюдены', ['Переходим к следующей ступени.', 'Пределы задаём до начала серии.'], MINT, TEAL)
+    d.card(620, 659, 532, 146, 'Нарушен хотя бы один порог', ['Останавливаем рост нагрузки.', 'Граница — последняя устойчивая ступень.'], SAND, AMBER)
+    d.text(48, 854, '50 пользователей ≠ 50 полных окон контекста', 31, INK, True)
+    d.text(48, 891, 'Длина контекста ограничивает одну историю; ёмкость сервиса подтверждает нагрузка.', 24)
+    d.footer('Ступени — план проверки, не результаты. Успех на 50 одновременных запросах пока не заявлен.')
     d.save()
 
 
 if __name__ == '__main__':
-    for build in (topology, latency, memory, ab, offload, scheduler, speculation, mig, platform, tp2, gemma_formula, gitops, attention, prefixes, gptoss_formula, rag):
+    for build in (topology, latency, memory, ab, offload, scheduler, speculation, mig, platform, tp2, gemma_formula, gitops, attention, prefixes, gptoss_formula, rag, qwen_transition, qwen_mtp, qwen_capacity):
         build()
-    print('Built 16 workshop SVGs in assets/. No external images, fonts or services.')
+    print('Built 19 workshop SVGs in assets/. No external images, fonts or services.')

@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="970" viewBox="0 0 1200 970" role="img" aria-labelledby="title desc">
+<title id="title">Qwen: сколько запросов выдерживает сервис</title><desc id="desc">Увеличиваем число одновременных запросов и проверяем пределы качества обслуживания.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
+<rect x="1" y="1" width="1198" height="968" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
+<text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="64" dy="0">Qwen: сколько запросов выдерживает сервис</tspan>
+</text>
+<text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
+<tspan x="64" dy="0">Увеличиваем число одновременных запросов и проверяем пределы качества обслуживания.</tspan>
+</text>
+<rect x="48" y="146" width="1104" height="77" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="72" y="179" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="72" dy="0">Один профиль нагрузки на всю серию</tspan>
+</text>
+<text x="72" y="209" font-size="24" fill="#252528" text-anchor="start">
+<tspan x="72" dy="0">Фиксируем вход, выход, модель, TP2, настройки MTP и состояние кэша.</tspan>
+</text>
+<text x="48" y="269" font-size="23" fill="#5e6572" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">ОДНОВРЕМЕННЫЕ ЗАПРОСЫ C</tspan>
+</text>
+<rect x="48" y="292" width="132" height="79" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="114" y="345" font-size="41" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="114" dy="0">1</tspan>
+</text>
+<path d="M 182 332 H 208" fill="none" stroke="#0750f5" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="210" y="292" width="132" height="79" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="276" y="345" font-size="41" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="276" dy="0">2</tspan>
+</text>
+<path d="M 344 332 H 370" fill="none" stroke="#0750f5" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="372" y="292" width="132" height="79" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="438" y="345" font-size="41" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="438" dy="0">4</tspan>
+</text>
+<path d="M 506 332 H 532" fill="none" stroke="#0750f5" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="534" y="292" width="132" height="79" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="600" y="345" font-size="41" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="600" dy="0">8</tspan>
+</text>
+<path d="M 668 332 H 694" fill="none" stroke="#0750f5" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="696" y="292" width="132" height="79" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="762" y="345" font-size="41" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="762" dy="0">16</tspan>
+</text>
+<path d="M 830 332 H 856" fill="none" stroke="#0750f5" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="858" y="292" width="132" height="79" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="924" y="345" font-size="41" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="924" dy="0">32</tspan>
+</text>
+<path d="M 992 332 H 1018" fill="none" stroke="#0750f5" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="1020" y="292" width="132" height="79" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="1086" y="345" font-size="41" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="1086" dy="0">50</tspan>
+</text>
+<path d="M 48 385 V 397 H 1152 V 385" fill="none" stroke="#5e6572" stroke-width="2" stroke-linejoin="round"/>
+<text x="600" y="433" font-size="24" fill="#5e6572" text-anchor="middle">
+<tspan x="600" dy="0">На каждой ступени сохраняем результаты и проверяем четыре сигнала</tspan>
+</text>
+<rect x="48" y="461" width="261" height="144" rx="14" fill="#fff2da" stroke="#a15b0b" stroke-width="2"/>
+<text x="68" y="503" font-size="28" fill="#a15b0b" text-anchor="start" font-weight="700">
+<tspan x="68" dy="0">Очередь</tspan>
+</text>
+<text x="68" y="546" font-size="21" fill="#252528" text-anchor="start">
+<tspan x="68" dy="0">Запросы в ожидании</tspan>
+<tspan x="68" dy="28.35">Растёт или стабильна?</tspan>
+</text>
+<rect x="329" y="461" width="261" height="144" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="349" y="503" font-size="28" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="349" dy="0">TTFT</tspan>
+</text>
+<text x="349" y="546" font-size="21" fill="#252528" text-anchor="start">
+<tspan x="349" dy="0">До первого токена</tspan>
+<tspan x="349" dy="28.35">p50 / p95 / p99</tspan>
+</text>
+<rect x="610" y="461" width="261" height="144" rx="14" fill="#efe9fc" stroke="#6844bc" stroke-width="2"/>
+<text x="630" y="503" font-size="28" fill="#6844bc" text-anchor="start" font-weight="700">
+<tspan x="630" dy="0">TPOT</tspan>
+</text>
+<text x="630" y="546" font-size="21" fill="#252528" text-anchor="start">
+<tspan x="630" dy="0">Время на токен</tspan>
+<tspan x="630" dy="28.35">p50 / p95 / p99</tspan>
+</text>
+<rect x="891" y="461" width="261" height="144" rx="14" fill="#fff2da" stroke="#a15b0b" stroke-width="2"/>
+<text x="911" y="503" font-size="28" fill="#a15b0b" text-anchor="start" font-weight="700">
+<tspan x="911" dy="0">Ошибки</tspan>
+</text>
+<text x="911" y="546" font-size="21" fill="#252528" text-anchor="start">
+<tspan x="911" dy="0">HTTP / timeout / OOM</tspan>
+<tspan x="911" dy="28.35">Учитываем все отказы</tspan>
+</text>
+<path d="M 600 610 V 635 H 314 V 657" fill="none" stroke="#177c83" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 600 635 H 886 V 657" fill="none" stroke="#a15b0b" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="48" y="659" width="532" height="146" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
+<text x="70" y="698" font-size="27" fill="#177c83" text-anchor="start" font-weight="700">
+<tspan x="70" dy="0">Пороги соблюдены</tspan>
+</text>
+<text x="70" y="735" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="70" dy="0">Переходим к следующей ступени.</tspan>
+<tspan x="70" dy="29.700000000000003">Пределы задаём до начала серии.</tspan>
+</text>
+<rect x="620" y="659" width="532" height="146" rx="14" fill="#fff2da" stroke="#a15b0b" stroke-width="2"/>
+<text x="642" y="698" font-size="27" fill="#a15b0b" text-anchor="start" font-weight="700">
+<tspan x="642" dy="0">Нарушен хотя бы один порог</tspan>
+</text>
+<text x="642" y="735" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="642" dy="0">Останавливаем рост нагрузки.</tspan>
+<tspan x="642" dy="29.700000000000003">Граница — последняя устойчивая ступень.</tspan>
+</text>
+<text x="48" y="854" font-size="31" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">50 пользователей ≠ 50 полных окон контекста</tspan>
+</text>
+<text x="48" y="891" font-size="24" fill="#252528" text-anchor="start">
+<tspan x="48" dy="0">Длина контекста ограничивает одну историю; ёмкость сервиса подтверждает нагрузка.</tspan>
+</text>
+<text x="48" y="942" font-size="20" fill="#5e6572" text-anchor="start">
+<tspan x="48" dy="0">Ступени — план проверки, не результаты. Успех на 50 одновременных запросах пока не заявлен.</tspan>
+</text>
+</svg>

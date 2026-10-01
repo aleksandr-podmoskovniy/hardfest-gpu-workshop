@@ -1,4 +1,6 @@
-# Standalone profile; do not stack B variants.
+# Reference for the AI Inference recipe and an isolated manual validation.
+# One process group on two full H100; do not run alongside either Gemma.
+# Candidate host budget: 16 vCPU / 128 GiB. Validate allocatable and startup peaks.
 fullnameOverride: hf-qwen-tp2
 replicaCount: 0
 profile: tp2
@@ -16,25 +18,28 @@ modelVolumes:
     subPath: REPLACE_QWEN_MODEL_SUBPATH
 resources:
   requests:
-    cpu: "24"
-    memory: 96Gi
+    cpu: "12"
+    memory: 80Gi
     ephemeral-storage: 4Gi
   limits:
-    memory: 200Gi
+    memory: 104Gi
     ephemeral-storage: 24Gi
-shmSize: 8Gi
+shmSize: 24Gi
 vllm:
   model: /models/qwen
   served-model-name: qwen3.8-flash-next
   host: 0.0.0.0
   port: 8000
   dtype: bfloat16
+  safetensors-load-strategy: lazy
   tensor-parallel-size: 2
   max-model-len: 262144
   max-num-seqs: 16
   gpu-memory-utilization: 0.9
   language-model-only: true
   reasoning-parser: qwen3
+  tool-call-parser: qwen3_xml
+  enable-auto-tool-choice: true
   generation-config: vllm
   enable-prefix-caching: true
   enable-chunked-prefill: true
@@ -47,3 +52,11 @@ vllm:
     cpu_offload: false
   distributed-executor-backend: mp
   mamba-cache-mode: align
+  speculative-config:
+    method: mtp
+    num_speculative_tokens: 1
+  kv-transfer-config:
+    kv_connector: OffloadingConnector
+    kv_role: kv_both
+    kv_connector_extra_config:
+      cpu_bytes_to_use: 17179869184

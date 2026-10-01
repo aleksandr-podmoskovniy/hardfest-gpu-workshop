@@ -51,6 +51,26 @@ class HelmProfiles(unittest.TestCase):
         self.assertEqual(resources["requests"]["memory"], "56Gi")
         self.assertEqual(resources["limits"]["memory"], "80Gi")
 
+    def test_qwen_tp2_mtp_and_ram_match_the_host_budget(self):
+        actual = checker.render(ROOT / "values/qwen-tp2.yaml")
+        config = yaml.safe_load(actual["ConfigMap"]["data"]["profile.yaml"])
+        self.assertEqual(config["tensor-parallel-size"], 2)
+        self.assertEqual(config["max-model-len"], 262144)
+        self.assertEqual(config["speculative-config"], {"method": "mtp", "num_speculative_tokens": 1})
+        self.assertEqual(config["tool-call-parser"], "qwen3_xml")
+        self.assertTrue(config["enable-auto-tool-choice"])
+        self.assertEqual(config["safetensors-load-strategy"], "lazy")
+        offload = config["kv-transfer-config"]
+        self.assertEqual(offload["kv_connector"], "OffloadingConnector")
+        self.assertEqual(offload["kv_connector_extra_config"]["cpu_bytes_to_use"], 16 * 1024**3)
+        pod = actual["Deployment"]["spec"]["template"]["spec"]
+        resources = pod["containers"][0]["resources"]
+        self.assertEqual(resources["requests"]["cpu"], "12")
+        self.assertEqual(resources["requests"]["memory"], "80Gi")
+        self.assertEqual(resources["limits"]["memory"], "104Gi")
+        self.assertEqual(next(v for v in pod["volumes"] if v["name"] == "shm")["emptyDir"],
+                         {"medium": "Memory", "sizeLimit": "24Gi"})
+
     def render_override(self, overrides, success=True):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "overrides.yaml"

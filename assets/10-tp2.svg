@@ -1,46 +1,52 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" role="img" aria-labelledby="title desc">
-<title id="title">Две карты — один экземпляр большой модели</title><desc id="desc">Финальный эксперимент после освобождения обеих H100. Запуск и скорость проверяются отдельно.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+<title id="title">Qwen TP2: две карты, один экземпляр модели</title><desc id="desc">Один запрос обрабатывается двумя GPU. Размещение и скорость проверяются отдельно.</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
-<rect x="1" y="1" width="1198" height="498" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="1" y="1" width="1198" height="618" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
 <rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
 <text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="64" dy="0">Две карты — один экземпляр большой модели</tspan>
+<tspan x="64" dy="0">Qwen TP2: две карты, один экземпляр модели</tspan>
 </text>
 <text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
-<tspan x="64" dy="0">Финальный эксперимент после освобождения обеих H100. Запуск и скорость проверяются отдельно.</tspan>
+<tspan x="64" dy="0">Один запрос обрабатывается двумя GPU. Размещение и скорость проверяются отдельно.</tspan>
 </text>
-<rect x="48" y="164" width="410" height="174" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
-<text x="70" y="203" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="70" dy="0">H100 №1</tspan>
+<rect x="48" y="145" width="1104" height="306" rx="14" fill="#ffffff" stroke="#0750f5" stroke-width="2"/>
+<text x="72" y="183" font-size="22" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="72" dy="0">ОДНА НОДА / ОДИН POD / ОДИН API</tspan>
 </text>
-<text x="70" y="240" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="70" dy="0">Часть весов и KV</tspan>
-<tspan x="70" dy="29.700000000000003">Процесс TP rank 0</tspan>
+<rect x="72" y="214" width="390" height="167" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="94" y="253" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="94" dy="0">H100 №1</tspan>
 </text>
-<rect x="742" y="164" width="410" height="174" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
-<text x="764" y="203" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="764" dy="0">H100 №2</tspan>
+<text x="94" y="290" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="94" dy="0">Часть весов</tspan>
+<tspan x="94" dy="29.700000000000003">Локальные состояния</tspan>
+<tspan x="94" dy="29.700000000000003">TP rank 0</tspan>
 </text>
-<text x="764" y="240" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="764" dy="0">Часть весов и KV</tspan>
-<tspan x="764" dy="29.700000000000003">Процесс TP rank 1</tspan>
+<rect x="738" y="214" width="390" height="167" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="760" y="253" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="760" dy="0">H100 №2</tspan>
 </text>
-<path d="M 460 245 H 740" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<path d="M 740 280 H 460" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<text x="600" y="215" font-size="26" fill="#0750f5" text-anchor="middle" font-weight="700">
-<tspan x="600" dy="0">NVLink / NCCL</tspan>
+<text x="760" y="290" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="760" dy="0">Часть весов</tspan>
+<tspan x="760" dy="29.700000000000003">Локальные состояния</tspan>
+<tspan x="760" dy="29.700000000000003">TP rank 1</tspan>
 </text>
-<text x="600" y="316" font-size="20" fill="#5e6572" text-anchor="middle">
-<tspan x="600" dy="0">Обмен на шагах модели</tspan>
+<text x="600" y="258" font-size="26" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="600" dy="0">Обмен NCCL</tspan>
 </text>
-<text x="48" y="393" font-size="30" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="48" dy="0">TP=2 не означает две независимые реплики.</tspan>
+<path d="M 464 300 H 736" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 736 344 H 464" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="600" y="422" font-size="23" fill="#5e6572" text-anchor="middle">
+<tspan x="600" dy="0">Физическую связь GPU проверяем по топологии стенда.</tspan>
 </text>
-<text x="48" y="433" font-size="23" fill="#252528" text-anchor="start">
-<tspan x="48" dy="0">Проверяем архитектуру, квантование, память и связь карт до нагрузки на 50 сессий.</tspan>
+<text x="48" y="507" font-size="30" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">Оба процесса участвуют в вычислении одного ответа.</tspan>
 </text>
-<text x="48" y="472" font-size="20" fill="#5e6572" text-anchor="start">
-<tspan x="48" dy="0">NVLink ускоряет обмен между GPU. CPU KV-offload использует другую иерархию памяти.</tspan>
+<text x="48" y="547" font-size="24" fill="#252528" text-anchor="start">
+<tspan x="48" dy="0">TP=2 не создаёт две реплики и не превращает HBM в единый прозрачный пул.</tspan>
+</text>
+<text x="48" y="592" font-size="20" fill="#5e6572" text-anchor="start">
+<tspan x="48" dy="0">Qwen и Gemma — разные модели: результаты Qwen не продолжают сравнение настроек Gemma A/B.</tspan>
 </text>
 </svg>

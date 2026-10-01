@@ -1,0 +1,101 @@
+# Temporary CPU-only client, not the inference workload. Replace all REPLACE_* values.
+# Explicitly suspended until an operator chooses the node, target and concurrency.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: qwen-benchmark-c1
+  namespace: hardfest-demo
+  labels:
+    app.kubernetes.io/name: qwen-benchmark
+spec:
+  suspend: true
+  backoffLimit: 0
+  activeDeadlineSeconds: 3600
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: qwen-benchmark
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: REPLACE_CPU_NODE
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: benchmark
+          image: vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40
+          imagePullPolicy: IfNotPresent
+          workingDir: /work
+          command: ["/bin/bash", "-euc"]
+          args:
+            - |
+              hf download "$TOKENIZER_ID" --revision "$TOKENIZER_REVISION" \
+                --include 'tokenizer*' 'config.json' 'special_tokens_map.json' 'chat_template*' \
+                --local-dir /work/tokenizer
+              vllm bench serve \
+                --backend vllm --base-url "$TARGET_BASE_URL" --endpoint /v1/completions \
+                --model "$TARGET_MODEL" --tokenizer /work/tokenizer \
+                --dataset-name random --seed 42 \
+                --random-input-len "$INPUT_TOKENS" --random-output-len "$OUTPUT_TOKENS" \
+                --random-range-ratio 0 --num-prompts "$NUM_PROMPTS" \
+                --max-concurrency "$CONCURRENCY" --ignore-eos --temperature 0 \
+                --percentile-metrics ttft,tpot,itl --metric-percentiles 95,99 \
+                --save-result --result-dir /work/results --result-filename result.json
+              printf 'RESULT_JSON_BEGIN\n'
+              cat /work/results/result.json
+              printf '\nRESULT_JSON_END\n'
+          env:
+            - name: TARGET_BASE_URL
+              value: http://REPLACE_QWEN_SERVICE.hardfest-demo.svc.cluster.local:8000
+            - name: TARGET_MODEL
+              value: REPLACE_SERVED_MODEL_ID
+            - name: TOKENIZER_ID
+              value: nvidia/Qwen3.8-Flash-Next-NVFP4
+            - name: TOKENIZER_REVISION
+              value: fc694b54fb0174e0913e6adf86691ef85a4ead47
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: REPLACE_RUNTIME_API_SECRET
+                  key: REPLACE_RUNTIME_API_SECRET_KEY
+            - name: HF_HOME
+              value: /work/huggingface
+            - name: XDG_CACHE_HOME
+              value: /work/cache
+            - name: TOKENIZERS_PARALLELISM
+              value: "false"
+            - name: INPUT_TOKENS
+              value: "8192"
+            - name: OUTPUT_TOKENS
+              value: "512"
+            - name: NUM_PROMPTS
+              value: "8"
+            - name: CONCURRENCY
+              value: "1"
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+              ephemeral-storage: 2Gi
+            limits:
+              cpu: "4"
+              memory: 8Gi
+              ephemeral-storage: 8Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: work
+              mountPath: /work
+      volumes:
+        - name: work
+          emptyDir:
+            sizeLimit: 6Gi

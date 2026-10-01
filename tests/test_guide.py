@@ -45,7 +45,9 @@ class Guide(unittest.TestCase):
     def test_illustrations_are_local_accessible_and_self_contained(self):
         readme = (ROOT / "README.md").read_text()
         images = re.findall(r"!\[([^]]+)\]\((assets/\d[^)]+\.svg)\)", readme)
-        self.assertEqual(len(images), 12)
+        self.assertGreaterEqual(len(images), 15)
+        self.assertTrue({"assets/17-qwen-transition.svg", "assets/18-qwen-mtp.svg",
+                         "assets/19-qwen-capacity.svg"}.issubset({p for _, p in images}))
         for alt, filename in images:
             with self.subTest(filename=filename):
                 self.assertGreater(len(alt), 20)
@@ -144,6 +146,22 @@ class Guide(unittest.TestCase):
         self.assertNotIn("## ", alias)
         self.assertNotIn("```", alias)
 
+    def test_qwen_is_a_required_final_stage_with_operational_checks(self):
+        readme = (ROOT / "README.md").read_text()
+        chapter = readme.split('id="tp2"', 1)[1].split('id="speculation"', 1)[0]
+        self.assertRegex(chapter, r"## 7\. Qwen")
+        self.assertNotIn("бонус", chapter.lower())
+        self.assertLess(readme.index('id="tp2"'), readme.index('id="cleanup"'))
+        for term in ("AI Inference", "DeviceClass", "tensor-parallel-size: 2",
+                     "QWEN_WORKLOAD=statefulset/", "port-forward", "/v1/chat/completions",
+                     "Virtual Key", "OIDC", "MTP", "labs/06-tp2.md"):
+            self.assertIn(term, chapter)
+        for filename in ("17-qwen-transition.svg", "18-qwen-mtp.svg", "19-qwen-capacity.svg"):
+            self.assertIn(filename, chapter)
+        deployment = (ROOT / "docs/DEPLOYMENT.md").read_text()
+        self.assertIn("Qwen TP2 с MTP", deployment)
+        self.assertIn("обе H100", deployment)
+
     def test_chat_path_is_present_from_manual_to_platform_stages(self):
         readme = (ROOT / "README.md").read_text()
         self.assertLess(readme.index('id="chat"'), readme.index('id="setup"'))
@@ -204,7 +222,7 @@ class Guide(unittest.TestCase):
 
     def test_all_theory_diagrams_are_local_svg_without_external_content(self):
         diagrams = list((ROOT / "assets").glob("[0-9][0-9]-*.svg"))
-        self.assertEqual(len(diagrams), 16)
+        self.assertEqual(len(diagrams), 19)
         for path in diagrams:
             svg = ET.parse(path).getroot()
             self.assertEqual(svg.attrib["viewBox"].split()[2], "1200")
