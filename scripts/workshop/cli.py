@@ -47,7 +47,7 @@ def main():
     stage = getattr(args, "stage", None)
     if args.action == "diff":
         def lines(stage):
-            return render(site, stage)["items"][0]["data"]["profile.json"].splitlines(keepends=True)
+            return render(site, stage)["items"][0]["data"]["profile.yaml"].splitlines(keepends=True)
         print("".join(difflib.unified_diff(lines(args.before), lines(args.after), fromfile=args.before, tofile=args.after)))
         return
     if args.action == "render":
@@ -108,14 +108,48 @@ def main():
                 or actual["spec"]["containers"][0]["image"] != desired["spec"]["containers"][0]["image"]
                 or actual["spec"]["resourceClaims"] != desired["spec"]["resourceClaims"]):
             raise ValueError("Site/profile differs from applied deployment; review and stop/apply first")
+        def memory_layout(template):
+            spec = template["spec"]
+            resources = spec["containers"][0].get("resources", {})
+            shm = next((v.get("emptyDir", {}) for v in spec.get("volumes", [])
+                        if v["name"] == "shm"), {})
+            mount = next((v for v in spec["containers"][0].get("volumeMounts", [])
+                          if v.get("mountPath") == "/dev/shm"), {})
+            return (resources.get("requests", {}).get("memory"),
+                    resources.get("limits", {}).get("memory"),
+                    shm.get("medium"), shm.get("sizeLimit"), mount.get("name"))
+        if memory_layout(actual) != memory_layout(desired):
+            raise ValueError("Memory or /dev/shm settings changed; review and stop/apply first")
+        def site_binding(template):
+            spec = template["spec"]
+            container = spec["containers"][0]
+            return (spec.get("nodeSelector"),
+                    container["resources"].get("requests", {}).get("cpu"),
+                    [(v["name"], v["persistentVolumeClaim"])
+                     for v in spec.get("volumes", []) if "persistentVolumeClaim" in v],
+                    [(m["name"], m["mountPath"], m.get("subPath"), m.get("readOnly", False))
+                     for m in container.get("volumeMounts", []) if m["mountPath"].startswith("/models/")])
+        if site_binding(actual) != site_binding(desired):
+            raise ValueError("Node, CPU or model binding changed; review and stop/apply first")
         k.ready_node(stage)
         deployments = json.loads(k.ns(["get", "deployments", "-o", "json"]))["items"]
         incompatible = {"hf-gemma-a", "hf-gemma-b"} if stage == "tp2" else (
-            {"hf-qwen-tp2"} if stage in {"a", "b-tuned", "b-cache", "b-spec"} else set())
+            {"hf-qwen-tp2"} if stage in {"a", "a-chunked", "b-tuned", "b-cache", "b-spec"} else set())
         if any(d["metadata"]["name"] in incompatible and d["spec"].get("replicas", 0) for d in deployments):
             raise ValueError("Another workshop stage still occupies the H100s; stop it first")
         print(k.ns(["scale", "deployment/" + name, "--replicas=1"]))
         k.ns(["rollout", "status", "deployment/" + name, "--timeout=300s"], stream=True)
+        # rollout status also succeeds after another terminal scales to zero.
+        # A completed wait is not proof that the requested profile is running.
+        running = k.get("deployment", name)
+        status = (running or {}).get("status", {})
+        if (not running or running["spec"].get("replicas") != 1
+                or status.get("readyReplicas", 0) != 1
+                or status.get("updatedReplicas", 0) != 1
+                or status.get("observedGeneration", 0) < running["metadata"].get("generation", 1)
+                or running["spec"]["template"]["metadata"]["annotations"].get("workshop/profile-sha256")
+                    != desired["metadata"]["annotations"]["workshop/profile-sha256"]):
+            raise ValueError("Rollout wait ended, but the requested replica is not ready; it may have been stopped or changed")
     elif args.action == "stop":
         print(k.ns(["scale", "deployment/" + name, "--replicas=0"]))
         k.ns(["wait", "--for=delete", "pod", "-l", "app.kubernetes.io/name=" + name, "--timeout=180s"], stream=True)

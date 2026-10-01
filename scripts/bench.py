@@ -36,15 +36,20 @@ def events(response):
         yield "\n".join(data)
 
 
-def request(url, model, row, index, timeout):
+def request(url, model, row, index, timeout, fixed_output=False):
     payload = {"model": model, "messages": row["messages"],
                "max_tokens": row["max_tokens"], "temperature": 0,
                "stream": True, "stream_options": {"include_usage": True}}
+    if fixed_output:
+        payload.update(ignore_eos=True, min_tokens=row["max_tokens"])
     req = urllib.request.Request(url.rstrip("/") + "/v1/chat/completions",
         data=json.dumps(payload).encode(), headers={"Content-Type": "application/json",
         "X-Request-Id": f"hardfest-{time.time_ns()}-{index}"})
     start = time.perf_counter()
     first = None
+    first_content = None
+    preview = ""
+    content_hash = hashlib.sha256()
     chunks = 0
     usage = None
     finish = None
@@ -67,12 +72,18 @@ def request(url, model, row, index, timeout):
                     if any(delta.get(k) for k in ("content", "reasoning_content", "reasoning", "tool_calls")):
                         first = first if first is not None else time.perf_counter() - start
                         chunks += 1
+                    if isinstance(delta.get("content"), str) and delta["content"]:
+                        first_content = first_content if first_content is not None else time.perf_counter() - start
+                        content_hash.update(delta["content"].encode())
+                        preview = (preview + delta["content"])[:2000]
                     finish = choice.get("finish_reason") or finish
         if not done or first is None:
             raise ValueError("Incomplete SSE or no output; not counted as successful")
     except (OSError, ValueError, TimeoutError) as exc:
         error = str(exc)[:300]
-    return {"index": index, "ttft_s": first, "e2e_s": time.perf_counter() - start,
+    return {"index": index, "ttft_s": first, "first_content_s": first_content,
+            "content_preview": preview, "content_sha256": content_hash.hexdigest(),
+            "e2e_s": time.perf_counter() - start,
             "usage": usage, "finish_reason": finish, "stream_chunks": chunks, "error": error}
 
 
@@ -83,6 +94,7 @@ def summarize(rows, elapsed):
     return {"requests": len(rows), "successful": len(ok), "errors": len(rows) - len(ok),
             "wall_s": elapsed, "client_ttft_mean_s": sum(r["ttft_s"] for r in ok) / len(ok) if ok else None,
             "client_ttft_p95_s": percentile([r["ttft_s"] for r in ok], .95),
+            "first_content_p95_s": percentile([r["first_content_s"] for r in ok if r.get("first_content_s") is not None], .95),
             "e2e_p95_s": percentile([r["e2e_s"] for r in ok], .95),
             "output_tokens_per_s": sum(token_counts) / elapsed if complete_usage else None,
             "usage_complete": complete_usage,
@@ -138,6 +150,7 @@ def main():
     p.add_argument("--label", default="unnamed")
     p.add_argument("--cold", action="store_true", help="reject reused dataset rows; does NOT clear server cache")
     p.add_argument("--metrics", action="store_true", help="capture endpoint metrics before/after, without inventing p95")
+    p.add_argument("--fixed-output", action="store_true", help="vLLM-only synthetic test: ignore EOS and generate max_tokens; not a quality test")
     p.add_argument("--offset", type=int, default=0, help="start at this dataset row, for X -> Y... -> X experiments")
     p.add_argument("--out-dir", type=pathlib.Path, default=pathlib.Path("results/raw"))
     args = p.parse_args()
@@ -158,14 +171,14 @@ def main():
     before, before_error = metrics_snapshot(args.url) if args.metrics else (None, None)
     start = time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.concurrency) as pool:
-        futures = [pool.submit(request, args.url, args.model, rows[i % len(rows)], i, args.timeout)
+        futures = [pool.submit(request, args.url, args.model, rows[i % len(rows)], i, args.timeout, args.fixed_output)
                    for i in range(args.requests)]
         result = [f.result() for f in futures]
     elapsed = time.perf_counter() - start
     after, after_error = metrics_snapshot(args.url) if args.metrics else (None, None)
     report = {"schema": 1, "label": args.label, "dataset_sha256": hashlib.sha256(data).hexdigest(),
               "dataset_rows": len(rows), "dataset_offset": args.offset, "model": args.model, "concurrency": args.concurrency,
-              "sampling": {"temperature": 0}, "summary": summarize(result, elapsed),
+              "sampling": {"temperature": 0, "fixed_output": args.fixed_output}, "summary": summarize(result, elapsed),
               "server_timings": server_timings(before, after),
               "metrics": {"before": before, "after": after, "errors": [before_error, after_error]},
               "requests": result}

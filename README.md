@@ -1,6 +1,6 @@
-<p>
+<p align="center">
   <a href="https://github.com/aleksandr-podmoskovniy/hardfest-gpu-workshop">
-    <img src="assets/workshop-qr.svg" width="220" height="220" alt="QR-код: открыть этот мастер-класс на GitHub">
+    <img src="assets/workshop-qr.svg" width="250" height="250" alt="QR-код: открыть этот мастер-класс на GitHub">
   </a>
 </p>
 
@@ -8,13 +8,14 @@
 
 Александр Подмосковный, Флант / Deckhouse Platform
 
-На двух H100 запустим одну модель с разными настройками и сравним, как она обрабатывает длинные запросы. Разберём расход памяти, очередь, KV-кэш в RAM, CUDA graphs и генерацию с черновой моделью. На отдельной A100 разместим эмбеддер и реранкер с динамическим MIG и MPS. Затем повторим запуск LLM через Deckhouse Platform.
+На двух H100 запустим одну модель с разными настройками и сравним, как она обрабатывает длинные запросы. Разберём расход памяти, очередь, KV-кэш в RAM, CUDA graphs и генерацию с черновой моделью. На отдельной A30 разместим эмбеддер и реранкер с динамическим MIG и MPS. Затем повторим запуск LLM через Deckhouse Platform.
 
 <a id="contents"></a>
 
 ## Содержание
 
 - [Схема стенда](#topology)
+- [Чат, базы знаний и доступ](#chat)
 - [Подготовка окружения](#setup)
 - [Из чего складывается время ответа](#latency)
 - [Память: веса, буферы и KV-кэш](#memory)
@@ -32,16 +33,37 @@
 
 ## Схема стенда
 
+![Путь запросов: Open WebUI через HA Bifrost к Gemma на двух H100 и сервисам поиска на A30](assets/01-topology.svg)
+
 | Ресурс | Запуск |
 | --- | --- |
 | H100 №1 | Gemma, TP=1. Исходная конфигурация A, затем сервис Deckhouse |
 | H100 №2 | Та же Gemma, TP=1. Конфигурация B для проверки оптимизаций |
-| A100 | Эмбеддер и реранкер в MIG-разделах, MPS внутри MIG |
+| A30 24 GB | Эмбеддер в разделе `1g.6gb`, эмбеддер и реранкер через MPS в `2g.12gb`; одна из четырёх долей карты остаётся свободной |
 | Обе H100 после завершения A/B | Qwen, TP=2 |
 
 В A и B одинаковые веса, длина контекста и запросы. Версии моделей и образ vLLM закреплены в [models.lock.json](models.lock.json).
 
 Для A/B используем Gemma 4 31B, для черновой генерации — Gemma assistant. Финальный эксперимент на двух картах подготовлен для Qwen3.8-Flash-Next-NVFP4. Расчёт KV-памяти в теоретической части приведён отдельно на примере GPT-OSS-120B; для Gemma его нужно пересчитать по её архитектуре.
+
+<a id="chat"></a>
+
+## Чат, базы знаний и доступ
+
+Open WebUI и HA Bifrost используются на всех этапах, начиная с ручного запуска vLLM:
+
+```text
+Участник → Open WebUI → HA Bifrost → Gemma A / Gemma B
+                                  → Gemma через AI Inference
+                                  → Qwen TP2 через AI Inference
+                                  → эмбеддер и реранкер на A30
+```
+
+Участник регистрируется по почте и паролю, ожидает одобрения администратора и получает доступ к учебным базам знаний. OIDC остаётся дополнительным способом входа. Подключение MCP требует отдельной персональной авторизации: доступ к чату и документам не выдаёт права на кластер.
+
+Выберите в Open WebUI подготовленную базу знаний и задайте вопрос по её документам. Проверьте ответ и ссылки на источники. Для сравнения моделей оставляйте прежними вопрос, документы, настройки поиска и генерации. Исходные документы и индекс не пересоздаются при смене сервера LLM.
+
+Администратор заранее подключает ручные и платформенные сервисы к одному шлюзу, настраивает права на базы и персональный учёт запросов. Порядок подготовки и проверки — в [интеграции чата](docs/CHAT_AND_ACCESS.md). Прямые API-запросы ниже нужны для диагностики и измерения движка; они не заменяют пользовательский путь через Open WebUI и Bifrost.
 
 <a id="setup"></a>
 
@@ -50,9 +72,9 @@
 ### Что потребуется
 
 - Kubernetes/DKP с DRA, установленными GPU-драйвером и контроллером GPUClass/GPUPool.
-- Две сопоставимые H100 на одной ноде для одновременного A/B; отдельная A100 с поддержкой MIG для разделения GPU.
+- Две сопоставимые H100 на одной ноде для одновременного A/B; отдельная A30 с поддержкой MIG для разделения GPU.
 - Веса моделей на PVC и образ vLLM из [models.lock.json](models.lock.json).
-- Оперативная память под процессы vLLM и KV-кэш. При одновременном A и B с кэшем в RAM запросы памяти Pod составляют 192 GiB. [Запросы, лимиты и запас памяти](docs/SETUP.md).
+- Оперативная память под процессы vLLM и KV-кэш. Для 256 GiB RAM предусмотрен одновременный A + B cache; на VM с 128 GiB опыт с RAM-кэшем выполняется отдельно, после остановки A. [Бюджеты для обоих вариантов](docs/MEMORY_BUDGET.md).
 - Python 3.10+, Git, kubectl и kubeconfig с доступом к учебному namespace `hardfest-demo`.
 - Для раздела автоматизации — ai-models, ai-inference и Console с совместимыми CRD.
 
@@ -75,7 +97,7 @@ python3 scripts/hf.py init-site
 ### Проверить манифесты
 
 ```bash
-python3 scripts/hf.py --site config/site.example.json render a
+python3 scripts/hf.py --site config/site.example.json render a-chunked
 ```
 
 `render` выводит манифесты с `replicas: 0`, не подключаясь к кластеру. С примером настроек можно проверить генерацию YAML ещё до подготовки своей площадки.
@@ -95,11 +117,13 @@ python3 scripts/check_docs.py
 
 </details>
 
-Все команды ниже выполняются из корня репозитория. Для экспериментов нужны выделенные GPU: `apply/start/stop --ack` меняют ресурсы кластера, указанного в `.local/site.json`. Перед началом пройдите [проверку стенда](docs/REHEARSAL.md). Подтверждённые проверки и незавершённые прогоны перечислены в [статусе подготовки](docs/STATUS.md).
+Все команды ниже выполняются из корня репозитория. Для экспериментов нужны выделенные GPU: `apply/start/stop --ack` меняют ресурсы кластера, указанного в `.local/site.json`. Для первого развёртывания используйте [порядок запуска и отката](docs/DEPLOYMENT.md), затем пройдите [проверку стенда](docs/REHEARSAL.md). Подтверждённые проверки и незавершённые прогоны перечислены в [статусе подготовки](docs/STATUS.md).
 
 <a id="latency"></a>
 
 ## 1. Из чего складывается время ответа
+
+![Очередь, prefill, первый токен и первый текст ответа на условной временной шкале](assets/02-latency.svg)
 
 | Фаза | Что происходит |
 | --- | --- |
@@ -162,35 +186,47 @@ python3 scripts/kv_math.py --sessions 8
 
 ### Почему четвёртый контекст может не поместиться
 
+![Учебный бюджет видеопамяти: веса, буферы и KV; три истории помещаются, четвёртая превышает бюджет](assets/03-memory.svg)
+
 Допустим, у карты 96 GiB памяти, движку доступно 90%, веса занимают 64 GiB, а рабочие буферы — 6 GiB. Для KV остаётся `96 GiB × 0,90 − 64 GiB − 6 GiB = 16,4 GiB`. Этого хватит на три независимые истории по 4,5044 GiB, но не на четыре. Это условный пример, не характеристики H100 нашего стенда.
 
 Контекст включает весь вход и генерацию: 120K входа + 8K рассуждения и ответа = 128K. Окно `max-model-len` задаёт потолок истории, а не выделяет столько памяти заранее каждому пользователю.
 
-Для Gemma нужны её параметры из `config.json` и размер KV-пула из логов vLLM. Даже с кэшем в RAM рабочие блоки KV должны помещаться на GPU во время вычисления.
+Для нашей Gemma расчёт другой: 10 полных слоёв и 50 локальных с окном 1024. История из 131 072 токенов входа и 2 048 выхода занимает минимум 10,9375 GiB KV в BF16 или 5,46875 GiB в FP8. [Формула, параметры и границы расчёта](docs/MEMORY_BUDGET.md#kv-для-нашей-gemma).
+
+```bash
+python3 scripts/kv_math.py --model gemma-4-31b --tokens 133120 --element-bytes 1
+```
+
+Это полезные данные KV без служебных расходов. Размер фактического пула смотрим в логах vLLM. Даже с кэшем в RAM рабочие блоки KV должны помещаться на GPU во время вычисления.
 
 <a id="ab"></a>
 
 ## 3. Запуск двух конфигураций и сравнение A/B
 
-A запускается со штатными настройками выбранной версии vLLM, B — с параметрами из профиля `b-tuned`. Перед замером прогрейте движок на запросах, которых нет в контрольной серии. [Настройки и порядок сравнения](labs/01-ab.md).
+![Сравнение настроек A и B при одинаковом окне 65536, входе 32768 и выходе 2048 токенов](assets/04-ab.svg)
+
+A и B работают с одинаковым окном **65 536 токенов**. Для A используем профиль `a-chunked`: BF16 KV, без prefix cache и CUDA graphs. Чанкирование по 4096 токенов оставлено для вместимости длинного входа. B сохраняет тот же размер порции, включает prefix cache и CUDA graphs и использует FP8 KV. Ни один вариант не выгружает веса в RAM.
+
+Полностью отключённый профиль `a` сохранён как отдельный опыт на вместимость; его не называем результатом замера `a-chunked`. Это сравнение настроек одной версии, а не старой и новой версии vLLM: в современных версиях часть оптимизаций уже включена по умолчанию. Перед замером прогрейте движок на запросах, которых нет в контрольной серии. [Настройки, ограничения совместимости и порядок сравнения](labs/01-ab.md).
 
 ```bash
-python3 scripts/hf.py render a
+python3 scripts/hf.py render a-chunked
 python3 scripts/hf.py render b-tuned
 # После проверки двух свободных H100:
-python3 scripts/hf.py apply a --ack
+python3 scripts/hf.py apply a-chunked --ack
 python3 scripts/hf.py apply b-tuned --ack
-python3 scripts/hf.py start a --ack
+python3 scripts/hf.py start a-chunked --ack
 python3 scripts/hf.py start b-tuned --ack
-python3 scripts/hf.py model-info a
-python3 scripts/hf.py snapshot a --out .local/runs/ab-a.json
+python3 scripts/hf.py model-info a-chunked
+python3 scripts/hf.py snapshot a-chunked --out .local/runs/ab-a.json
 python3 scripts/hf.py snapshot b-tuned --out .local/runs/ab-b.json
 ```
 
-Подготовьте набор запросов. Скрипт использует токенизатор модели внутри запущенного Pod и сохраняет результат на вашем компьютере. Вход занимает половину контекста, на ответ отведено 2048 токенов. При повторной генерации укажите новое имя файла: существующий файл не перезаписывается.
+Подготовьте набор запросов. Скрипт использует токенизатор модели внутри запущенного Pod и сохраняет результат на вашем компьютере. При окне 65 536 вход занимает 32 768 токенов, на ответ отведено 2048 токенов. При повторной генерации укажите новое имя файла: существующий файл не перезаписывается.
 
 ```bash
-python3 scripts/hf.py dataset a --input-fraction 0.5 --output-tokens 2048 \
+python3 scripts/hf.py dataset a-chunked --input-fraction 0.5 --output-tokens 2048 \
   --documents 32 --out .local/long.jsonl
 ```
 
@@ -199,7 +235,7 @@ python3 scripts/hf.py dataset a --input-fraction 0.5 --output-tokens 2048 \
 В T1:
 
 ```bash
-python3 scripts/hf.py port-forward a 18001
+python3 scripts/hf.py port-forward a-chunked 18001
 ```
 
 В T2:
@@ -235,66 +271,95 @@ python3 scripts/report.py --directory results/raw/ab
 
 ## 4. Возврат KV-кэша из RAM
 
+![Запись KV документа в RAM, вытеснение из GPU другими документами и обратная загрузка](assets/05-kv-ram.svg)
+
 Отправим документ, затем другие запросы, чтобы вытеснить его KV из памяти GPU, и снова отправим тот же документ. Сравним повторную обработку без кэша в RAM и с ним. Веса остаются на GPU; `--cpu-offload-gb` в этом эксперименте не используется.
 
-Профиль `b-cache` добавляет к `b-tuned` OffloadingConnector с общим бюджетом 64 GiB на все рабочие процессы. Блоки KV сохраняются в RAM и возвращаются на GPU перед вычислением. Проверьте свободную память узла и лимит Pod. [Настройка выгрузки KV](labs/02-kv-ram.md).
+Профиль `b-cache` добавляет к `b-tuned` OffloadingConnector. Бюджет RAM задаётся явно и не выбирается автоматически по модели GPU. В варианте с 256 GiB RAM используется 64 GiB KV; для VM с 128 GiB — 32 GiB и остановленная A. Размер `/dev/shm` и лимит контейнера пересчитываются вместе с бюджетом. Проверьте [параметры своего стенда](docs/SETUP.md#2-параметры-своего-стенда) и [методику проверки выгрузки KV](labs/02-kv-ram.md).
 
-### 4.1. Без кэша в RAM
+### 4.1. Увеличиваем окно B до 128K
 
-Нужен готовый `.local/long.jsonl` с 32 документами. Чтобы не принять прогретый кэш предыдущего A/B за холодный вход, перезапустите B:
+В предыдущем опыте сравниваем скорость A/B на одинаковых 64K. Здесь проверяем другую возможность: больше контекста у B. Этот результат не подставляется в прежнюю таблицу ускорения.
+
+Создайте отдельные настройки: окно 131 072 и 32 GiB RAM-кэша. Исходный `.local/site.json` остаётся с 64K. Команда откажется перезаписать существующий файл; при повторении этапа используйте уже созданный.
 
 ```bash
-python3 scripts/hf.py stop b-tuned --ack
-python3 scripts/hf.py apply b-tuned --ack
-python3 scripts/hf.py start b-tuned --ack
+python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+site = json.loads(Path('.local/site.json').read_text())
+site['context_tokens'] = 131072
+site['kv_offload_gib'] = 32
+fd = os.open('.local/site-expanded.json', os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+with os.fdopen(fd, 'w') as out:
+    json.dump(site, out, indent=2)
+    out.write('\n')
+PY
 ```
+
+На VM с 128 GiB перед обеими сериями остановите A. Увеличенное окно сначала проверяется **без RAM-кэша**:
+
+```bash
+python3 scripts/hf.py stop a-chunked --ack
+python3 scripts/hf.py stop b-tuned --ack
+python3 scripts/hf.py --site .local/site-expanded.json apply b-tuned --ack
+python3 scripts/hf.py --site .local/site-expanded.json start b-tuned --ack
+python3 scripts/hf.py --site .local/site-expanded.json dataset b-tuned \
+  --input-fraction 0.5 --output-tokens 2048 --documents 7 --out .local/long-128k.jsonl
+python3 scripts/hf.py --site .local/site-expanded.json snapshot b-tuned --out .local/runs/b-128k.json
+```
+
+В новом наборе вход — 65 536 токенов, выход — до 2048. FP8 и чанкирование помогают разместить длинную историю **в GPU**. RAM-кэш сохраняет блоки для повторных обращений, но не превращает RAM в дополнительную HBM для вычисления активного запроса.
+
+### 4.2. Повтор документа без кэша в RAM
 
 В T2 завершите предыдущий port-forward через Ctrl+C и запустите:
 
 ```bash
-python3 scripts/hf.py port-forward b-tuned 18002
+python3 scripts/hf.py --site .local/site-expanded.json port-forward b-tuned 18002
 ```
 
-В T0 отправьте первый документ, остальные 31, затем снова первый:
+В T0 отправьте первый документ, остальные 6, затем снова первый. Число документов — отправная точка: по метрикам нужно проверить, что первый вытеснен из GPU, но при включённом offload ещё помещается в RAM. Для двух серий используйте одинаковый набор и порядок.
 
 ```bash
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long.jsonl \
+python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
   --offset 0 --requests 1 --concurrency 1 --metrics --label x-first --out-dir results/raw/cache-off
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long.jsonl \
-  --offset 1 --requests 31 --concurrency 4 --cold --metrics --label other-docs --out-dir results/raw/cache-off
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long.jsonl \
+python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
+  --offset 1 --requests 6 --concurrency 1 --cold --metrics --label other-docs --out-dir results/raw/cache-off
+python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
   --offset 0 --requests 1 --concurrency 1 --metrics --label x-return --out-dir results/raw/cache-off
 python3 scripts/report.py --directory results/raw/cache-off
 ```
 
-### 4.2. С кэшем в RAM
+### 4.3. С кэшем в RAM
 
 ```bash
-python3 scripts/hf.py stop b-tuned --ack
-python3 scripts/hf.py apply b-cache --ack
-python3 scripts/hf.py start b-cache --ack
-python3 scripts/hf.py logs b-cache
+python3 scripts/hf.py --site .local/site-expanded.json stop b-tuned --ack
+python3 scripts/hf.py --site .local/site-expanded.json apply b-cache --ack
+python3 scripts/hf.py --site .local/site-expanded.json start b-cache --ack
+python3 scripts/hf.py --site .local/site-expanded.json logs b-cache
 ```
 
 Дождитесь готовности API и найдите в логах включённый OffloadingConnector с заданным объёмом памяти. В T2 завершите старый `port-forward` и подключитесь заново:
 
 ```bash
-python3 scripts/hf.py port-forward b-cache 18002
+python3 scripts/hf.py --site .local/site-expanded.json port-forward b-cache 18002
 ```
 
 В T0 повторите те же документы, сохраняя отдельный результат:
 
 ```bash
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long.jsonl \
+python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
   --offset 0 --requests 1 --concurrency 1 --metrics --label x-first --out-dir results/raw/cache-on
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long.jsonl \
-  --offset 1 --requests 31 --concurrency 4 --cold --metrics --label other-docs --out-dir results/raw/cache-on
-python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long.jsonl \
+python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
+  --offset 1 --requests 6 --concurrency 1 --cold --metrics --label other-docs --out-dir results/raw/cache-on
+python3 scripts/bench.py --url http://127.0.0.1:18002 --dataset .local/long-128k.jsonl \
   --offset 0 --requests 1 --concurrency 1 --metrics --label x-return --out-dir results/raw/cache-on
 python3 scripts/report.py --directory results/raw/cache-on
 ```
 
-### 4.3. Проверка результата
+### 4.4. Проверка результата
 
 Сравните строки `x-return` двух серий. Начальное состояние движка и порядок прогрева должны совпадать; для прогрева используйте другой префикс.
 
@@ -306,10 +371,12 @@ python3 scripts/report.py --directory results/raw/cache-on
 
 ## 5. Chunked prefill, батчинг и CUDA graphs
 
+![Чанкирование чередует порции длинного входа с генерацией уже начатых ответов](assets/06-scheduler.svg)
+
 В сравнении A и `b-tuned` кэш в RAM ещё не использовался. Сравните настройки двух запусков:
 
 ```bash
-python3 scripts/hf.py diff a b-tuned
+python3 scripts/hf.py diff a-chunked b-tuned
 ```
 
 На этапе prefill модель обрабатывает вход, на этапе decode — генерирует продолжение. Chunked prefill разбивает длинный вход на порции, которые планировщик чередует с генерацией уже начатых ответов.
@@ -319,7 +386,7 @@ python3 scripts/hf.py diff a b-tuned
 | 8192 токена | 3 × 1 токен | 8189 токенов |
 | 2048 токенов | 3 × 1 токен | 2045 токенов |
 
-При меньшей порции входа обработка документа занимает больше шагов, зато уже начатые ответы могут реже ждать. В профиле B задан бюджет 4096 токенов на шаг. Подходящее значение зависит от соотношения длин входа и ответа.
+При меньшей порции входа обработка документа занимает больше шагов, зато уже начатые ответы могут реже ждать. В основном A/B обеим репликам задан бюджет 4096 токенов на шаг. Подходящее значение зависит от соотношения длин входа и ответа; влияние выключения чанкирования рассматривается отдельно в профиле `a`.
 
 ### Три ограничения vLLM
 
@@ -336,6 +403,10 @@ FP8 уменьшает память под K/V по сравнению с BF16. 
 <a id="speculation"></a>
 
 ## 6. Генерация с черновой моделью
+
+![Основная модель принимает начало черновика и исправляет продолжение после первого отклонённого токена](assets/07-speculation.svg)
+
+Этот этап требует отдельной проверки assistant на выбранном runtime. Не заменяйте уже работающий B до проверки предпосылок из [лабораторной](labs/03-speculation.md); готовность отражена в [статусе](docs/STATUS.md).
 
 Черновая модель предлагает несколько токенов, основная проверяет их за один проход. Если проверка обходится дешевле последовательной генерации, ответ ускоряется. При этом черновик тоже занимает память и тратит время на вычисление.
 
@@ -367,6 +438,8 @@ python3 scripts/hf.py port-forward b-spec 18002
 
 ## 7. Динамический MIG и MPS
 
+![Классы GPU и DRA-заявки формируют геометрию A30: отдельный MIG для эмбеддера, MPS внутри другого MIG и свободная доля](assets/08-mig-mps.svg)
+
 Эмбеддер превращает текст в вектор, реранкер оценивает найденные фрагменты. Для них не обязательно резервировать целую карту.
 
 | Механизм | Как делится GPU |
@@ -375,19 +448,21 @@ python3 scripts/hf.py port-forward b-spec 18002
 | MPS | Несколько процессов совместно используют ресурсы GPU или одного MIG-раздела |
 | Time-slicing | Процессы чередуют выполнение; общая ёмкость памяти не увеличивается |
 
-На A100 заранее включён режим MIG, но сами разделы создаются по заявкам. GPUClass/GPUPool формирует DeviceClass, планировщик выделяет устройство по ResourceClaim, а DRA-драйвер готовит MIG-раздел для контейнера. [Настройка MIG и MPS](labs/05-mig-mps.md).
+На A30 заранее включён режим MIG, но сами разделы создаются по заявкам. GPUClass/GPUPool формирует DeviceClass, планировщик выделяет устройство по ResourceClaim, а DRA-драйвер готовит MIG-раздел для контейнера. [Настройка MIG и MPS](labs/05-mig-mps.md).
+
+Для этого раздела используем отдельный файл `.local/site-mig.json`. Он явно задаёт контекст кластера с A30, namespace `hardfest-demo`, классы и PVC моделей. Это работает и при размещении A30 в другом кластере; H100-команды продолжают использовать `.local/site.json`.
 
 ```bash
-python3 scripts/hf.py get deviceclasses
-python3 scripts/hf.py apply embed-mig --ack
-python3 scripts/hf.py start embed-mig --ack
-python3 scripts/hf.py get resourceclaims
+python3 scripts/hf.py --site .local/site-mig.json get deviceclasses
+python3 scripts/hf.py --site .local/site-mig.json apply embed-mig --ack
+python3 scripts/hf.py --site .local/site-mig.json start embed-mig --ack
+python3 scripts/hf.py --site .local/site-mig.json get resourceclaims
 ```
 
 Для проверки embedding API откройте отдельный терминал T3:
 
 ```bash
-python3 scripts/hf.py port-forward embed-mig 18003
+python3 scripts/hf.py --site .local/site-mig.json port-forward embed-mig 18003
 ```
 
 В T0:
@@ -403,11 +478,11 @@ API должен вернуть по вектору для каждого из �
 После настройки и проверки `reranker_profile` из [лабораторной](labs/05-mig-mps.md) запустите два MPS-клиента:
 
 ```bash
-python3 scripts/hf.py apply embed-mps --ack
-python3 scripts/hf.py start embed-mps --ack
-python3 scripts/hf.py apply rerank-mps --ack
-python3 scripts/hf.py start rerank-mps --ack
-python3 scripts/hf.py get resourceclaims
+python3 scripts/hf.py --site .local/site-mig.json apply embed-mps --ack
+python3 scripts/hf.py --site .local/site-mig.json start embed-mps --ack
+python3 scripts/hf.py --site .local/site-mig.json apply rerank-mps --ack
+python3 scripts/hf.py --site .local/site-mig.json start rerank-mps --ack
+python3 scripts/hf.py --site .local/site-mig.json get resourceclaims
 ```
 
 Запуск реранкера заблокирован, пока его профиль не проверен. В выделенных устройствах ResourceClaim проверьте, что оба MPS-клиента попали в один MIG-раздел.
@@ -419,6 +494,10 @@ python3 scripts/hf.py get resourceclaims
 <a id="platform"></a>
 
 ## 8. Повтор запуска через Deckhouse Platform
+
+![Модель и рецепт преобразуются в InferenceService, план, DRA-заявку, Pod и проверяемый API](assets/09-platform.svg)
+
+Сначала проверьте совместимость модуля и наличие испытанного рецепта. Обновление runtime и автоматические профили ещё проходят подготовку — [точная готовность](docs/STATUS.md). До этой проверки **не останавливайте работающую ручную Gemma ради платформенного запуска**.
 
 Теперь запустите Gemma через сервис ai-inference с теми параметрами, которые выбрали вручную. [Работа с мастером Console](labs/04-deckhouse.md).
 
@@ -441,34 +520,28 @@ python3 scripts/hf.py stop a --ack
 
 Повторите набор запросов и сравните три запуска: исходный A, настроенный вручную B и сервис Deckhouse. Сохраните одинаковые параметры генерации, параллелизм и состояние кэша. Результаты внесите в [отчёт](results/REPORT.template.md).
 
-Если у вас уже собран RAG, можно дополнительно переключить его на новый API генерации. Документы, индекс, эмбеддер и реранкер при этом оставьте прежними.
+Подключите API нового сервиса к тому же HA Bifrost и проверьте его в прежнем Open WebUI. Документы, индекс и доступ участников остаются прежними. Сначала проверьте новый маршрут отдельно; не подменяйте им A или B во время измерений.
 
 <a id="tp2"></a>
 
 ## 9. Большая модель на двух H100
 
-Через Console удалите сервис `hf-platform-gemma`, созданный на предыдущем шаге, и дождитесь освобождения его заявки на GPU. Скрипт `hf.py` этим сервисом не управляет.
+![TP2: один экземпляр большой модели на двух H100 с обменом по NVLink и NCCL](assets/10-tp2.svg)
+
+Бонус выполняется только после проверки рецепта и устойчивости обеих GPU. Само наличие NVLink не доказывает готовность инференса; [предварительные проверки](labs/06-tp2.md) обязательны до освобождения Gemma.
+
+Через Console удалите только сервис `hf-platform-gemma`, созданный на предыдущем шаге, и дождитесь освобождения его заявки на GPU. Скрипт `hf.py` этим сервисом не управляет. Остановите оставшуюся ручную Gemma:
 
 ```bash
 python3 scripts/hf.py stop b-spec --ack
-python3 scripts/hf.py apply tp2 --ack
-python3 scripts/hf.py start tp2 --ack
+python3 scripts/hf.py get resourceclaims
 ```
 
-В отдельном терминале подключитесь к API:
+Создайте в AI Inference отдельный сервис `hf-platform-qwen` с моделью Qwen из ai-models и проверенным рецептом для двух H100. План должен выделить обе карты одной ноды и установить TP=2. Одного выбора `Throughput` недостаточно: проверьте в плане контекст, память, параметры MTP и KV-offload. Комбинации без подтверждённого запуска не считаются готовым рецептом.
 
-```bash
-python3 scripts/hf.py port-forward tp2 18004
-```
+После загрузки подключите сервис через HA Bifrost к прежнему Open WebUI и проверьте ответ с той же базой знаний. Эмбеддер и реранкер на A30 продолжают работать. Затем измеряйте нагрузку: 1, 2, 4, 8, 16, 32, 50 одновременных запросов. Остановитесь при ошибках или превышении выбранного предела задержки.
 
-В основном терминале выполните короткую проверку. У этого сервиса другое имя модели:
-
-```bash
-python3 scripts/bench.py --url http://127.0.0.1:18004 --model qwen3.8-flash-next \
-  --dataset examples/smoke.jsonl --requests 2 --concurrency 1
-```
-
-После загрузки Qwen проверьте ответ через API и создайте набор запросов её токенизатором. Затем увеличивайте число одновременных запросов: 1, 2, 4, 8, 16, 32, 50. Остановитесь при ошибках или превышении выбранного предела задержки. [Проверка связи между GPU и команды нагрузки](labs/06-tp2.md).
+Платформенный рецепт Qwen ещё проходит подготовку; подтверждение готовности публикуется в [статусе](docs/STATUS.md). [Ручной TP2](labs/06-tp2.md) оставлен для предварительной проверки движка и оборудования, а не как замена автоматическому запуску в этом разделе.
 
 <a id="cleanup"></a>
 
@@ -480,13 +553,13 @@ python3 scripts/bench.py --url http://127.0.0.1:18004 --model qwen3.8-flash-next
 python3 scripts/hf.py stop a --ack
 python3 scripts/hf.py stop b-spec --ack
 python3 scripts/hf.py stop tp2 --ack
-python3 scripts/hf.py stop rerank-mps --ack
-python3 scripts/hf.py stop embed-mps --ack
-python3 scripts/hf.py stop embed-mig --ack
+python3 scripts/hf.py --site .local/site-mig.json stop rerank-mps --ack
+python3 scripts/hf.py --site .local/site-mig.json stop embed-mps --ack
+python3 scripts/hf.py --site .local/site-mig.json stop embed-mig --ack
 python3 scripts/hf.py get resourceclaims
 ```
 
-Для этапов, которые вы не запускали, возможен ответ `not found`. Созданный через Console `hf-platform-gemma` удаляется отдельно, только как этот InferenceService.
+Для этапов, которые вы не запускали, возможен ответ `not found`. Созданные через Console `hf-platform-gemma` и `hf-platform-qwen` удаляются отдельно, только как соответствующие InferenceService. Если участникам оставлен доступ к чату, сначала согласуйте завершение работы: остановка его LLM, эмбеддера или реранкера нарушит работу сервиса. Не удаляйте Open WebUI, Bifrost, базы знаний и пользовательские данные при очистке GPU-нагрузки.
 
 Проверьте, что Pod завершились, заявки освобождены, а GPU снова доступны. PVC и модели должны остаться. MIG-раздел может сохраняться после освобождения заявки — это зависит от политики драйвера. Не удаляйте namespace, PVC и finalizers ради очистки.
 

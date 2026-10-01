@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="710" viewBox="0 0 1200 710" role="img" aria-labelledby="title desc">
+<title id="title">Один чат, разные способы запуска модели</title><desc id="desc">Схема подключения сервисов. Проверенные этапы перечислены в STATUS.md.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
+<rect x="1" y="1" width="1198" height="708" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
+<text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="64" dy="0">Один чат, разные способы запуска модели</tspan>
+</text>
+<text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
+<tspan x="64" dy="0">Схема подключения сервисов. Проверенные этапы перечислены в STATUS.md.</tspan>
+</text>
+<rect x="48" y="160" width="250" height="130" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="70" y="199" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="70" dy="0">Open WebUI</tspan>
+</text>
+<text x="70" y="236" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="70" dy="0">Чаты и базы знаний</tspan>
+<tspan x="70" dy="29.700000000000003">Пароль или OIDC</tspan>
+</text>
+<rect x="378" y="160" width="254" height="130" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="400" y="199" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="400" dy="0">HA Bifrost</tspan>
+</text>
+<text x="400" y="236" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="400" dy="0">Маршруты к моделям</tspan>
+<tspan x="400" dy="29.700000000000003">Учёт и контроль API</tspan>
+</text>
+<path d="M 298 222 H 376" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="337" y="204" font-size="20" fill="#5e6572" text-anchor="middle">
+<tspan x="337" dy="0">API</tspan>
+</text>
+<rect x="728" y="146" width="424" height="114" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="750" y="185" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="750" dy="0">H100 №1 — Gemma A</tspan>
+</text>
+<text x="750" y="222" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="750" dy="0">Ручной vLLM → сервис платформы</tspan>
+</text>
+<rect x="728" y="294" width="424" height="114" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="750" y="333" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="750" dy="0">H100 №2 — Gemma B</tspan>
+</text>
+<text x="750" y="370" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="750" dy="0">Та же модель, другие настройки</tspan>
+</text>
+<path d="M 632 205 H 726" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 674 205 V 351 H 726" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="728" y="442" width="424" height="126" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
+<text x="750" y="481" font-size="27" fill="#177c83" text-anchor="start" font-weight="700">
+<tspan x="750" dy="0">A30 — сервисы поиска</tspan>
+</text>
+<text x="750" y="518" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="750" dy="0">Эмбеддер и реранкер</tspan>
+<tspan x="750" dy="29.700000000000003">Динамический MIG + MPS</tspan>
+</text>
+<path d="M 674 351 V 502 H 726" fill="none" stroke="#177c83" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="48" y="380" width="250" height="144" rx="14" fill="#f1f4f8" stroke="#5e6572" stroke-width="2"/>
+<text x="70" y="419" font-size="27" fill="#5e6572" text-anchor="start" font-weight="700">
+<tspan x="70" dy="0">База знаний</tspan>
+</text>
+<text x="70" y="456" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="70" dy="0">Документы и индекс</tspan>
+<tspan x="70" dy="29.700000000000003">сохраняются при</tspan>
+<tspan x="70" dy="29.700000000000003">смене сервера LLM</tspan>
+</text>
+<path d="M 174 290 V 378" fill="none" stroke="#5e6572" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="378" y="442" width="254" height="126" rx="14" fill="#efe9fc" stroke="#6844bc" stroke-width="2"/>
+<text x="400" y="479" font-size="26" fill="#6844bc" text-anchor="start" font-weight="700">
+<tspan x="400" dy="0">OIDC / MCP</tspan>
+</text>
+<text x="400" y="516" font-size="21" fill="#252528" text-anchor="start">
+<tspan x="400" dy="0">Персональные права</tspan>
+<tspan x="400" dy="28.35">на инструменты</tspan>
+</text>
+<path d="M 505 290 V 440" fill="none" stroke="#6844bc" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)" stroke-dasharray="7 6"/>
+<rect x="48" y="606" width="1104" height="50" rx="14" fill="#f1f4f8" stroke="#cbd5e1" stroke-width="2"/>
+<text x="70" y="638" font-size="24" fill="#252528" text-anchor="start">
+<tspan x="70" dy="0">Бонус после A/B: обе H100 освобождаются под один Qwen TP2.</tspan>
+</text>
+<text x="48" y="682" font-size="20" fill="#5e6572" text-anchor="start">
+<tspan x="48" dy="0">Внешний пользователь не подключается к vLLM напрямую. Стрелки показывают обращения к сервисам.</tspan>
+</text>
+</svg>

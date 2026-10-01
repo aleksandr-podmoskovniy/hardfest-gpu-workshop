@@ -7,6 +7,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 OWNER = "hardfest-gpu-workshop"
 STAGES = {
     "a": ("hf-gemma-a", "gemma-a", "gemma"),
+    "a-chunked": ("hf-gemma-a", "gemma-a-chunked", "gemma"),
     "b-tuned": ("hf-gemma-b", "gemma-b-tuned", "gemma"),
     "b-cache": ("hf-gemma-b", "gemma-b-cache", "gemma"),
     "b-spec": ("hf-gemma-b", "gemma-b-spec", "gemma"),
@@ -15,9 +16,35 @@ STAGES = {
     "embed-mps": ("hf-embed-mps", None, "embedding"),
     "rerank-mps": ("hf-rerank-mps", None, "reranker"),
 }
-READABLE = {"nodes", "deviceclasses", "gpuclasses", "gpupools", "gpus",
+READABLE = {"nodes", "deviceclasses", "gpuclasses", "gpupools", "gpus", "physicalgpus",
             "resourceslices", "pods", "deployments", "resourceclaims", "pvc", "events"}
-GLOBAL = {"nodes", "deviceclasses", "gpuclasses", "gpupools", "gpus", "resourceslices"}
+GLOBAL = {"nodes", "deviceclasses", "gpuclasses", "gpupools", "gpus", "physicalgpus", "resourceslices"}
+
+
+def memory_settings(stage, profile, site=None):
+    """Planning budgets, not measured RSS. CPU KV is counted exactly once."""
+    small = STAGES[stage][1] is None
+    request_gib, limit_gib = (4, 12) if small else (64, 80)
+    if stage == "tp2":
+        request_gib, limit_gib = 96, 200
+    role = "small" if small else "tp2" if stage == "tp2" else "gemma"
+    budget = (site or {}).get("resources", {}).get(role, {})
+    request_gib = budget.get("memory_request_gib", request_gib)
+    limit_gib = budget.get("memory_limit_gib", limit_gib)
+    if (type(request_gib) is not int or type(limit_gib) is not int
+            or not 1 <= request_gib <= limit_gib):
+        raise ValueError("RAM budgets must be positive integer GiB; request <= limit")
+    offload_gib = 0
+    transfer = profile.get("kv-transfer-config", {})
+    if transfer.get("kv_connector") == "OffloadingConnector":
+        byte_count = transfer.get("kv_connector_extra_config", {}).get("cpu_bytes_to_use")
+        if type(byte_count) is not int or byte_count <= 0:
+            raise ValueError("OffloadingConnector needs a positive integer cpu_bytes_to_use")
+        offload_gib = (byte_count + 1024**3 - 1) // 1024**3
+    # vLLM 0.30 CPU offload uses /dev/shm; retain 8 GiB for other IPC.
+    return {"request": f"{request_gib + offload_gib}Gi",
+            "limit": f"{limit_gib + offload_gib}Gi",
+            "shm": f"{8 + offload_gib}Gi"}
 
 
 def read_json(path):
@@ -62,6 +89,14 @@ def render(site, stage):
     if profile_name:
         profile = read_json(ROOT / "manifests/profiles" / (profile_name + ".json"))
         profile["max-model-len"] = int(site["context_tokens"])
+        if profile.get("no-enable-chunked-prefill") is True:
+            # Without chunks, one full prompt must fit the scheduler token budget.
+            profile["max-num-batched-tokens"] = int(site["context_tokens"])
+        if stage == "b-cache" and "kv_offload_gib" in site:
+            budget = site["kv_offload_gib"]
+            if type(budget) is not int or budget < 1:
+                raise ValueError("kv_offload_gib must be a positive integer")
+            profile["kv-transfer-config"]["kv_connector_extra_config"]["cpu_bytes_to_use"] = budget * 1024**3
     else:
         profile = {"model": f"/models/{key}", "served-model-name": key,
                    "host": "0.0.0.0", "port": 8000, "runner": "pooling",
@@ -90,9 +125,10 @@ def render(site, stage):
     claim_hash = hashlib.sha256(json.dumps(devices, sort_keys=True).encode()).hexdigest()[:10]
     claim = name + "-" + claim_hash
     keys = [key] + (["assistant"] if stage == "b-spec" else [])
+    memory = memory_settings(stage, profile, site)
     volumes = [{"name": "profile", "configMap": {"name": name}},
                {"name": "runtime", "emptyDir": {"sizeLimit": "20Gi"}},
-               {"name": "shm", "emptyDir": {"medium": "Memory", "sizeLimit": "8Gi"}}]
+               {"name": "shm", "emptyDir": {"medium": "Memory", "sizeLimit": memory["shm"]}}]
     mounts = [{"name": "profile", "mountPath": "/etc/vllm", "readOnly": True},
               {"name": "runtime", "mountPath": "/runtime"},
               {"name": "shm", "mountPath": "/dev/shm"}]
@@ -101,11 +137,11 @@ def render(site, stage):
         volumes.append({"name": model, "persistentVolumeClaim": {"claimName": source["pvc"], "readOnly": True}})
         mounts.append({"name": model, "mountPath": f"/models/{model}",
                        "subPath": source["sub_path"], "readOnly": True})
-    cpu, memory, limit = ("2", "4Gi", "12Gi") if small else ("16", "64Gi", "128Gi")
-    if stage == "b-cache":
-        memory, limit = "128Gi", "224Gi"
-    if stage == "tp2":
-        cpu, memory, limit = "24", "96Gi", "200Gi"
+    cpu = "2" if small else "24" if stage == "tp2" else "16"
+    role = "small" if small else "tp2" if stage == "tp2" else "gemma"
+    cpu = str(site.get("resources", {}).get(role, {}).get("cpu_request", cpu))
+    if not re.fullmatch(r"(?:[1-9][0-9]*m|[1-9][0-9]*(?:\.[0-9]+)?)", cpu):
+        raise ValueError("cpu_request must be a positive Kubernetes CPU quantity")
     env = {"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1",
            "HF_HOME": "/runtime/huggingface", "VLLM_CACHE_ROOT": "/runtime/vllm",
            "XDG_CACHE_HOME": "/runtime/cache", "TOKENIZERS_PARALLELISM": "false"}
@@ -114,11 +150,11 @@ def render(site, stage):
            "tolerations": site.get("tolerations", []),
            "resourceClaims": [{"name": "gpu", "resourceClaimTemplateName": claim}],
            "containers": [{"name": "vllm", "image": site["image"], "imagePullPolicy": "IfNotPresent",
-               "command": ["vllm", "serve", "--config", "/etc/vllm/profile.json"],
+               "command": ["vllm", "serve", "--config", "/etc/vllm/profile.yaml"],
                "ports": [{"name": "http", "containerPort": 8000}],
                "env": [{"name": k, "value": v} for k, v in env.items()],
-               "resources": {"requests": {"cpu": cpu, "memory": memory, "ephemeral-storage": "4Gi"},
-                   "limits": {"memory": limit, "ephemeral-storage": "24Gi"}, "claims": [{"name": "gpu"}]},
+               "resources": {"requests": {"cpu": cpu, "memory": memory["request"], "ephemeral-storage": "4Gi"},
+                   "limits": {"memory": memory["limit"], "ephemeral-storage": "24Gi"}, "claims": [{"name": "gpu"}]},
                "volumeMounts": mounts,
                "startupProbe": {"httpGet": {"path": "/health", "port": 8000}, "periodSeconds": 10, "failureThreshold": 180},
                "readinessProbe": {"httpGet": {"path": "/health", "port": 8000}, "periodSeconds": 5}}],
@@ -133,7 +169,7 @@ def render(site, stage):
                 "workshop/profile": stage, "workshop/profile-sha256": fingerprint}}, "spec": pod}}}
     return {"apiVersion": "v1", "kind": "List", "items": [
         {"apiVersion": "v1", "kind": "ConfigMap", "metadata": meta(name),
-         "data": {"profile.json": json.dumps(profile, indent=2)}},
+         "data": {"profile.yaml": json.dumps(profile, indent=2)}},
         {"apiVersion": "resource.k8s.io/v1", "kind": "ResourceClaimTemplate", "metadata": meta(claim),
          "spec": {"spec": {"devices": devices}}}, deployment,
         {"apiVersion": "v1", "kind": "Service", "metadata": meta(name),

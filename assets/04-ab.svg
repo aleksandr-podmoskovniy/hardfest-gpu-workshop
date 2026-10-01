@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660" role="img" aria-labelledby="title desc">
+<title id="title">Меняем настройки, а не условия задачи</title><desc id="desc">Одна версия vLLM, одинаковые BF16-веса, разные H100.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
+<rect x="1" y="1" width="1198" height="658" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
+<text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="64" dy="0">Меняем настройки, а не условия задачи</tspan>
+</text>
+<text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
+<tspan x="64" dy="0">Одна версия vLLM, одинаковые BF16-веса, разные H100.</tspan>
+</text>
+<rect x="48" y="142" width="1104" height="68" rx="14" fill="#f1f4f8" stroke="#cbd5e1" stroke-width="2"/>
+<text x="600" y="185" font-size="30" fill="#252528" text-anchor="middle" font-weight="700">
+<tspan x="600" dy="0">Окно 65 536      Вход 32 768      Выход 2 048</tspan>
+</text>
+<rect x="48" y="244" width="532" height="282" rx="14" fill="#f1f4f8" stroke="#5e6572" stroke-width="2"/>
+<text x="70" y="283" font-size="27" fill="#5e6572" text-anchor="start" font-weight="700">
+<tspan x="70" dy="0">A — a-chunked</tspan>
+</text>
+<rect x="620" y="244" width="532" height="282" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="642" y="283" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="642" dy="0">B — b-tuned</tspan>
+</text>
+<text x="72" y="339" font-size="25" fill="#252528" text-anchor="start">
+<tspan x="72" dy="0">KV: BF16</tspan>
+</text>
+<text x="72" y="386" font-size="25" fill="#252528" text-anchor="start">
+<tspan x="72" dy="0">Prefix cache: выключен</tspan>
+</text>
+<text x="72" y="433" font-size="25" fill="#252528" text-anchor="start">
+<tspan x="72" dy="0">CUDA graphs / compile: выключены</tspan>
+</text>
+<text x="72" y="480" font-size="25" fill="#252528" text-anchor="start">
+<tspan x="72" dy="0">Attention: FlashAttention 4</tspan>
+</text>
+<text x="644" y="339" font-size="25" fill="#252528" text-anchor="start">
+<tspan x="644" dy="0">KV: FP8</tspan>
+</text>
+<text x="644" y="386" font-size="25" fill="#252528" text-anchor="start">
+<tspan x="644" dy="0">Prefix cache: включён</tspan>
+</text>
+<text x="644" y="433" font-size="25" fill="#252528" text-anchor="start">
+<tspan x="644" dy="0">CUDA graphs / compile: включены</tspan>
+</text>
+<text x="644" y="480" font-size="25" fill="#252528" text-anchor="start">
+<tspan x="644" dy="0">Attention: Triton</tspan>
+</text>
+<rect x="48" y="550" width="1104" height="58" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
+<text x="600" y="588" font-size="24" fill="#177c83" text-anchor="middle" font-weight="700">
+<tspan x="600" dy="0">У обоих: prefill по 4096, до 32 последовательностей, веса только в GPU</tspan>
+</text>
+<text x="48" y="632" font-size="20" fill="#5e6572" text-anchor="start">
+<tspan x="48" dy="0">Чанкирование оставлено у A для вместимости. KV в RAM здесь выключен; его проверяем отдельно.</tspan>
+</text>
+</svg>

@@ -1,4 +1,5 @@
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -11,8 +12,12 @@ class Cluster:
                      "--context", site["context"], "--request-timeout=15s"]
 
     def run(self, args, data=None, stream=False, timeout=60):
+        env = os.environ.copy()
+        if self.site.get("bypass_proxy", False):
+            for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"):
+                env.pop(name, None)
         result = subprocess.run(self.base + args, input=data, text=True,
-                                capture_output=not stream, timeout=None if stream else timeout, check=True)
+                                capture_output=not stream, timeout=None if stream else timeout, check=True, env=env)
         return result.stdout
 
     def ns(self, args, **kw):

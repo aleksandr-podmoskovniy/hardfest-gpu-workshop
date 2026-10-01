@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660" role="img" aria-labelledby="title desc">
+<title id="title">Платформа воспроизводит проверенную конфигурацию</title><desc id="desc">Схема управления: от модели и рецепта до ответа API. Не подтверждение готовности конкретного модуля.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
+<rect x="1" y="1" width="1198" height="658" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
+<text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="64" dy="0">Платформа воспроизводит проверенную конфигурацию</tspan>
+</text>
+<text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
+<tspan x="64" dy="0">Схема управления: от модели и рецепта до ответа API. Не подтверждение готовности конкретного модуля.</tspan>
+</text>
+<rect x="48" y="150" width="322" height="122" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="70" y="189" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="70" dy="0">AI Models</tspan>
+</text>
+<text x="70" y="226" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="70" dy="0">Модель и ревизия</tspan>
+<tspan x="70" dy="29.700000000000003">Проверенные файлы</tspan>
+</text>
+<rect x="418" y="150" width="734" height="122" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
+<text x="440" y="189" font-size="27" fill="#177c83" text-anchor="start" font-weight="700">
+<tspan x="440" dy="0">Рецепт + оборудование + стратегия</tspan>
+</text>
+<text x="440" y="226" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="440" dy="0">Совместимый runtime, параметры, измеренный бюджет памяти</tspan>
+<tspan x="440" dy="29.700000000000003">Latency / Throughput влияют на выбор плана</tspan>
+</text>
+<path d="M 210 274 V 312 H 171 V 348" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 786 274 V 312 H 210" fill="none" stroke="#177c83" stroke-width="3" stroke-linejoin="round"/>
+<rect x="48" y="350" width="246" height="117" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="64" y="391" font-size="25" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="64" dy="0">InferenceService</tspan>
+</text>
+<text x="64" y="432" font-size="20" fill="#252528" text-anchor="start">
+<tspan x="64" dy="0">Желаемое состояние</tspan>
+</text>
+<path d="M 296 408 H 332" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="334" y="350" width="246" height="117" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="350" y="391" font-size="25" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="350" dy="0">План</tspan>
+</text>
+<text x="350" y="432" font-size="20" fill="#252528" text-anchor="start">
+<tspan x="350" dy="0">Параметры и ресурсы</tspan>
+</text>
+<path d="M 582 408 H 618" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="620" y="350" width="246" height="117" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="636" y="391" font-size="25" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="636" dy="0">Claim + Pod</tspan>
+</text>
+<text x="636" y="432" font-size="20" fill="#252528" text-anchor="start">
+<tspan x="636" dy="0">DRA и движок</tspan>
+</text>
+<path d="M 868 408 H 904" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="906" y="350" width="246" height="117" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="922" y="391" font-size="25" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="922" dy="0">API</tspan>
+</text>
+<text x="922" y="432" font-size="20" fill="#252528" text-anchor="start">
+<tspan x="922" dy="0">Проверка ответа</tspan>
+</text>
+<rect x="48" y="506" width="1104" height="94" rx="14" fill="#fff2da" stroke="#a15b0b" stroke-width="2"/>
+<text x="72" y="545" font-size="29" fill="#a15b0b" text-anchor="start" font-weight="700">
+<tspan x="72" dy="0">Throughput — не переключатель всех оптимизаций.</tspan>
+</text>
+<text x="72" y="581" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="72" dy="0">KV-offload и MTP должны поддерживаться рецептом и реально появиться в аргументах движка.</tspan>
+</text>
+<text x="48" y="632" font-size="20" fill="#5e6572" text-anchor="start">
+<tspan x="48" dy="0">Не патчим Deployment контроллера вручную. Проверяем цепочку до API и подключаем её к тому же Bifrost.</tspan>
+</text>
+</svg>

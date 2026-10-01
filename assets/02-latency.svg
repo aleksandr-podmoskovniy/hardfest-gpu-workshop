@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="590" viewBox="0 0 1200 590" role="img" aria-labelledby="title desc">
+<title id="title">Первый токен — не то же самое, что первый ответ</title><desc id="desc">Условная временная шкала, не график измерений.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
+<rect x="1" y="1" width="1198" height="588" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
+<text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="64" dy="0">Первый токен — не то же самое, что первый ответ</tspan>
+</text>
+<text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
+<tspan x="64" dy="0">Условная временная шкала, не график измерений.</tspan>
+</text>
+<rect x="48" y="185" width="220" height="80" rx="0" fill="#fff2da" stroke="#a15b0b" stroke-width="2"/>
+<text x="158.0" y="233" font-size="26" fill="#a15b0b" text-anchor="middle" font-weight="700">
+<tspan x="158.0" dy="0">Очередь</tspan>
+</text>
+<rect x="268" y="185" width="340" height="80" rx="0" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="438.0" y="233" font-size="26" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="438.0" dy="0">Prefill</tspan>
+</text>
+<rect x="608" y="185" width="220" height="80" rx="0" fill="#efe9fc" stroke="#6844bc" stroke-width="2"/>
+<text x="718.0" y="233" font-size="26" fill="#6844bc" text-anchor="middle" font-weight="700">
+<tspan x="718.0" dy="0">Рассуждение</tspan>
+</text>
+<rect x="828" y="185" width="324" height="80" rx="0" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
+<text x="990.0" y="233" font-size="26" fill="#177c83" text-anchor="middle" font-weight="700">
+<tspan x="990.0" dy="0">Текст ответа</tspan>
+</text>
+<path d="M 48 155 V 281" fill="none" stroke="#5e6572" stroke-width="2" stroke-linejoin="round" stroke-dasharray="7 6"/>
+<text x="48" y="303" font-size="19" fill="#5e6572" text-anchor="start">
+<tspan x="48" dy="0">Запрос</tspan>
+</text>
+<path d="M 608 155 V 281" fill="none" stroke="#5e6572" stroke-width="2" stroke-linejoin="round" stroke-dasharray="7 6"/>
+<text x="616" y="303" font-size="19" fill="#5e6572" text-anchor="start">
+<tspan x="616" dy="0">Первый</tspan>
+<tspan x="616" dy="25.650000000000002">токен</tspan>
+</text>
+<path d="M 828 155 V 281" fill="none" stroke="#5e6572" stroke-width="2" stroke-linejoin="round" stroke-dasharray="7 6"/>
+<text x="836" y="303" font-size="19" fill="#5e6572" text-anchor="start">
+<tspan x="836" dy="0">Первое слово</tspan>
+<tspan x="836" dy="25.650000000000002">ответа</tspan>
+</text>
+<path d="M 48 363 V 372 H 608 V 363" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round"/>
+<text x="328.0" y="359" font-size="23" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="328.0" dy="0">TTFT клиента</tspan>
+</text>
+<path d="M 48 412 V 421 H 828 V 412" fill="none" stroke="#6844bc" stroke-width="3" stroke-linejoin="round"/>
+<text x="438.0" y="408" font-size="23" fill="#6844bc" text-anchor="middle" font-weight="700">
+<tspan x="438.0" dy="0">До первого текста ответа</tspan>
+</text>
+<path d="M 48 461 V 470 H 1152 V 461" fill="none" stroke="#177c83" stroke-width="3" stroke-linejoin="round"/>
+<text x="600.0" y="457" font-size="23" fill="#177c83" text-anchor="middle" font-weight="700">
+<tspan x="600.0" dy="0">Полное время запроса</tspan>
+</text>
+<text x="48" y="527" font-size="24" fill="#252528" text-anchor="start">
+<tspan x="48" dy="0">Очередь и prefill измеряем отдельно. Вычитать один p95 из другого нельзя.</tspan>
+</text>
+<text x="48" y="562" font-size="20" fill="#5e6572" text-anchor="start">
+<tspan x="48" dy="0">Рассуждение может отсутствовать. Между фазами есть накладные расходы сети и движка.</tspan>
+</text>
+</svg>

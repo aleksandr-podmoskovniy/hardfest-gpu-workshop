@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+<title id="title">MIG — геометрия карты, MPS — совместное выполнение</title><desc id="desc">Целевая схема A30. Режим MIG включён заранее, разделы создаёт драйвер по заявкам.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
+<rect x="1" y="1" width="1198" height="698" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
+<text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="64" dy="0">MIG — геометрия карты, MPS — совместное выполнение</tspan>
+</text>
+<text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
+<tspan x="64" dy="0">Целевая схема A30. Режим MIG включён заранее, разделы создаёт драйвер по заявкам.</tspan>
+</text>
+<rect x="48" y="143" width="246" height="106" rx="14" fill="#f1f4f8" stroke="#cbd5e1" stroke-width="2"/>
+<text x="64" y="181" font-size="22" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="64" dy="0">GPUClass / GPUPool</tspan>
+</text>
+<text x="64" y="218" font-size="21" fill="#252528" text-anchor="start">
+<tspan x="64" dy="0">Выбор GPU</tspan>
+</text>
+<path d="M 296 197 H 332" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="334" y="143" width="246" height="106" rx="14" fill="#f1f4f8" stroke="#cbd5e1" stroke-width="2"/>
+<text x="350" y="181" font-size="22" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="350" dy="0">DeviceClass</tspan>
+</text>
+<text x="350" y="218" font-size="21" fill="#252528" text-anchor="start">
+<tspan x="350" dy="0">Классы профилей</tspan>
+</text>
+<path d="M 582 197 H 618" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="620" y="143" width="246" height="106" rx="14" fill="#f1f4f8" stroke="#cbd5e1" stroke-width="2"/>
+<text x="636" y="181" font-size="22" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="636" dy="0">ResourceClaim</tspan>
+</text>
+<text x="636" y="218" font-size="21" fill="#252528" text-anchor="start">
+<tspan x="636" dy="0">Заявка Pod</tspan>
+</text>
+<path d="M 868 197 H 904" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="906" y="143" width="246" height="106" rx="14" fill="#f1f4f8" stroke="#cbd5e1" stroke-width="2"/>
+<text x="922" y="181" font-size="22" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="922" dy="0">DRA-драйвер</tspan>
+</text>
+<text x="922" y="218" font-size="21" fill="#252528" text-anchor="start">
+<tspan x="922" dy="0">Подготовка MIG</tspan>
+</text>
+<text x="48" y="301" font-size="29" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">A30 24 GB</tspan>
+</text>
+<rect x="48" y="327" width="266" height="230" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="70" y="370" font-size="30" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="70" dy="0">1g.6gb</tspan>
+</text>
+<text x="70" y="414" font-size="26" fill="#252528" text-anchor="start">
+<tspan x="70" dy="0">Эмбеддер</tspan>
+<tspan x="70" dy="35.1">Отдельный</tspan>
+<tspan x="70" dy="35.1">MIG-раздел</tspan>
+</text>
+<rect x="330" y="327" width="540" height="230" rx="14" fill="#efe9fc" stroke="#6844bc" stroke-width="2"/>
+<text x="352" y="370" font-size="30" fill="#6844bc" text-anchor="start" font-weight="700">
+<tspan x="352" dy="0">2g.12gb + MPS</tspan>
+</text>
+<rect x="350" y="395" width="244" height="112" rx="14" fill="#ffffff" stroke="#6844bc" stroke-width="2"/>
+<text x="372" y="434" font-size="27" fill="#6844bc" text-anchor="start" font-weight="700">
+<tspan x="372" dy="0">Эмбеддер</tspan>
+</text>
+<text x="372" y="471" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="372" dy="0">Квота SM + RAM</tspan>
+</text>
+<rect x="608" y="395" width="242" height="112" rx="14" fill="#ffffff" stroke="#6844bc" stroke-width="2"/>
+<text x="630" y="434" font-size="27" fill="#6844bc" text-anchor="start" font-weight="700">
+<tspan x="630" dy="0">Реранкер</tspan>
+</text>
+<text x="630" y="471" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="630" dy="0">Квота SM + RAM</tspan>
+</text>
+<text x="352" y="539" font-size="24" fill="#6844bc" text-anchor="start">
+<tspan x="352" dy="0">Один MIG UUID у обоих клиентов</tspan>
+</text>
+<rect x="886" y="327" width="266" height="230" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="908" y="370" font-size="30" fill="#177c83" text-anchor="start" font-weight="700">
+<tspan x="908" dy="0">1g из 4</tspan>
+</text>
+<text x="908" y="414" font-size="25" fill="#252528" text-anchor="start">
+<tspan x="908" dy="0">Свободная доля</tspan>
+<tspan x="908" dy="33.75">для следующей</tspan>
+<tspan x="908" dy="33.75">заявки</tspan>
+</text>
+<text x="48" y="604" font-size="25" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">Удаление workload → освобождение claim → проверка доступной геометрии</tspan>
+</text>
+<text x="48" y="672" font-size="20" fill="#5e6572" text-anchor="start">
+<tspan x="48" dy="0">25% квоты MPS не равны 25% производительности. Размеры профилей — не точный объём памяти приложения.</tspan>
+</text>
+</svg>

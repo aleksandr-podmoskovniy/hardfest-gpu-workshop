@@ -27,22 +27,30 @@ python3 scripts/hf.py preflight
 python3 scripts/hf.py get nodes
 python3 scripts/hf.py get deviceclasses
 python3 scripts/hf.py get resourceclaims
-python3 scripts/hf.py render a
-python3 scripts/hf.py diff a b-tuned
+python3 scripts/hf.py render a-chunked
+python3 scripts/hf.py diff a-chunked b-tuned
 python3 scripts/hf.py diff b-tuned b-cache
 python3 scripts/hf.py diff b-tuned b-spec
 ```
 
 `render` и `diff` работают локально. Чтобы посмотреть пример без настройки стенда, укажите `--site config/site.example.json` перед именем подкоманды.
 
+Память KV для Gemma можно посчитать без кластера:
+
+```bash
+python3 scripts/kv_math.py --model gemma-4-31b --tokens 133120 --element-bytes 1
+```
+
+Это только полезные данные KV. RAM процессов, загрузка весов и shared memory разобраны в [расчёте бюджета](MEMORY_BUDGET.md); последовательность первого запуска — в [плане развёртывания](DEPLOYMENT.md).
+
 ## Запустить конфигурацию
 
 ```bash
-python3 scripts/hf.py apply a --ack
-python3 scripts/hf.py start a --ack
-python3 scripts/hf.py logs a
-python3 scripts/hf.py model-info a
-python3 scripts/hf.py snapshot a --out .local/runs/a-before.json
+python3 scripts/hf.py apply a-chunked --ack
+python3 scripts/hf.py start a-chunked --ack
+python3 scripts/hf.py logs a-chunked
+python3 scripts/hf.py model-info a-chunked
+python3 scripts/hf.py snapshot a-chunked --out .local/runs/a-before.json
 ```
 
 `apply` проверяет принадлежность ресурсов, выполняет серверную проверку манифеста и создаёт Deployment с нулём реплик. `start` проверяет ноду, увеличивает число реплик до одной и ждёт готовности до 300 секунд. При таймауте Pod остаётся в кластере — проверьте его состояние и логи.
@@ -54,7 +62,7 @@ python3 scripts/hf.py snapshot a --out .local/runs/a-before.json
 После готовности A:
 
 ```bash
-python3 scripts/hf.py dataset a --input-fraction 0.5 --output-tokens 2048 \
+python3 scripts/hf.py dataset a-chunked --input-fraction 0.5 --output-tokens 2048 \
   --documents 32 --out .local/long.jsonl
 ```
 
@@ -65,7 +73,7 @@ python3 scripts/hf.py dataset a --input-fraction 0.5 --output-tokens 2048 \
 T1:
 
 ```bash
-python3 scripts/hf.py port-forward a 18001
+python3 scripts/hf.py port-forward a-chunked 18001
 ```
 
 T2:

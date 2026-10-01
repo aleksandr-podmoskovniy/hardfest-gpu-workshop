@@ -6,6 +6,16 @@ import math
 import sys
 
 
+def chat_token_count(tokenizer, messages):
+    # Transformers releases differ in their default return type. Counting a
+    # BatchEncoding measures its keys, not tokens. Request the flat token list.
+    tokens = tokenizer.apply_chat_template(
+        messages, tokenize=True, add_generation_prompt=True, return_dict=False)
+    if not isinstance(tokens, list) or not all(isinstance(t, int) for t in tokens):
+        raise ValueError("Tokenizer did not return a flat list of token IDs")
+    return len(tokens)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--tokenizer", required=True)
@@ -28,7 +38,7 @@ def main():
         limit = args.input_tokens
         for _ in range(20):
             messages = [{"role": "user", "content": tok.decode(ids[:limit])}]
-            actual = len(tok.apply_chat_template(messages, tokenize=True, add_generation_prompt=True))
+            actual = chat_token_count(tok, messages)
             delta = actual - args.input_tokens
             if abs(delta) <= 8:
                 break

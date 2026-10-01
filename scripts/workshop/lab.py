@@ -49,7 +49,7 @@ def dataset(k, site, stage, args):
         raise ValueError("Input and output do not fit the common context")
     source = (ROOT / "scripts/make_workload.py").read_text()
     raw = k.ns(["exec", "-i", "deployment/" + STAGES[stage][0], "-c", "vllm", "--",
-                "python", "-", "--tokenizer", "/models/" + STAGES[stage][2],
+                "python3", "-", "--tokenizer", "/models/" + STAGES[stage][2],
                 "--input-tokens", str(input_tokens), "--output-tokens", str(args.output_tokens),
                 "--context", str(context), "--documents", str(args.documents)], data=source, timeout=600)
     rows = [json.loads(line) for line in raw.splitlines() if line.strip()]
@@ -66,13 +66,13 @@ def model_info(k, stage):
     code = '''import json, pathlib, sys
 p=pathlib.Path(sys.argv[1])/"config.json"
 c=json.loads(p.read_text())
-fields=("architectures","model_type","num_hidden_layers","num_attention_heads","num_key_value_heads","head_dim","hidden_size","sliding_window","layer_types","max_position_embeddings","torch_dtype","dtype","quantization_config")
+fields=("architectures","model_type","num_hidden_layers","num_attention_heads","num_key_value_heads","num_global_key_value_heads","head_dim","global_head_dim","attention_k_eq_v","num_kv_shared_layers","hidden_size","sliding_window","layer_types","max_position_embeddings","torch_dtype","dtype","quantization_config")
 out={"config":{k:c[k] for k in fields if k in c}}
 if "text_config" in c: out["text_config"]={k:c["text_config"][k] for k in fields if k in c["text_config"]}
 print(json.dumps(out,indent=2))
 '''
     return k.ns(["exec", "-i", "deployment/" + STAGES[stage][0], "-c", "vllm", "--",
-                 "python", "-", "/models/" + STAGES[stage][2]], data=code)
+                 "python3", "-", "/models/" + STAGES[stage][2]], data=code)
 
 
 def snapshot(k, site, stage, out):

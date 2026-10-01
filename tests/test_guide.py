@@ -35,6 +35,8 @@ class Guide(unittest.TestCase):
         self.assertIn("Александр Подмосковный, Флант / Deckhouse Platform", readme)
         top = readme.split("# " + title, 1)[0]
         self.assertIn('src="assets/workshop-qr.svg"', top)
+        self.assertIn('<p align="center">', top)
+        self.assertIn('width="250" height="250"', top)
         self.assertIn(f'href="{url}"', top)
         for section in ("## Содержание", "## Подготовка окружения", "## Схема стенда",
                         "## 1. Из чего складывается время ответа", "## 10. Остановка"):
@@ -44,12 +46,38 @@ class Guide(unittest.TestCase):
         self.assertEqual(svg.find("{http://www.w3.org/2000/svg}title").text, title)
         self.assertNotIn("<script", (ROOT / "assets/workshop-qr.svg").read_text())
 
+    def test_illustrations_are_local_accessible_and_self_contained(self):
+        readme = (ROOT / "README.md").read_text()
+        images = re.findall(r"!\[([^]]+)\]\((assets/\d[^)]+\.svg)\)", readme)
+        self.assertEqual(len(images), 10)
+        for alt, filename in images:
+            with self.subTest(filename=filename):
+                self.assertGreater(len(alt), 20)
+                raw = (ROOT / filename).read_text()
+                svg = ET.fromstring(raw)
+                self.assertEqual(svg.attrib["viewBox"].split()[2], "1200")
+                self.assertIsNotNone(svg.find("{http://www.w3.org/2000/svg}title"))
+                self.assertIsNotNone(svg.find("{http://www.w3.org/2000/svg}desc"))
+                for node in svg.iter():
+                    self.assertNotIn(node.tag.rsplit("}", 1)[-1], ("script", "foreignObject", "image"))
+                    self.assertFalse(any(k.rsplit("}", 1)[-1] == "href" for k in node.attrib))
+
+    def test_expanded_context_is_separate_from_ab(self):
+        readme = (ROOT / "README.md").read_text()
+        ram = readme.split('id="ram"', 1)[1].split('id="compute"', 1)[0]
+        self.assertIn("site['context_tokens'] = 131072", ram)
+        self.assertIn("site['kv_offload_gib'] = 32", ram)
+        self.assertIn("os.O_EXCL", ram)
+        for command in ("apply b-tuned", "start b-tuned", "apply b-cache", "start b-cache"):
+            self.assertIn("--site .local/site-expanded.json " + command, ram)
+
     def test_participant_docs_do_not_contain_speaker_directions(self):
         paths = [ROOT / "README.md", ROOT / "WORKSHOP.md"]
         paths += list((ROOT / "labs").glob("*.md"))
         paths += list((ROOT / "docs/chapters").glob("*.md"))
         paths += [ROOT / "docs" / name for name in (
-            "COMMANDS.md", "SETUP.md", "THEORY.md", "REHEARSAL.md", "STATUS.md")]
+            "COMMANDS.md", "SETUP.md", "THEORY.md", "REHEARSAL.md", "STATUS.md",
+            "MEMORY_BUDGET.md", "DEPLOYMENT.md")]
         forbidden = re.compile(
             r"\*\*сказать|предложить аудитории|вопрос залу|предъявить аудитории|"
             r"на сцене|до сцены|перед выступлением|ведущего|live-слот|"
@@ -71,6 +99,16 @@ class Guide(unittest.TestCase):
         self.assertIn("[README.md](README.md)", alias)
         self.assertNotIn("## ", alias)
         self.assertNotIn("```", alias)
+
+    def test_chat_path_is_present_from_manual_to_platform_stages(self):
+        readme = (ROOT / "README.md").read_text()
+        self.assertLess(readme.index('id="chat"'), readme.index('id="setup"'))
+        self.assertIn("Open WebUI → HA Bifrost", readme)
+        self.assertIn("Qwen TP2 через AI Inference", readme)
+        self.assertIn("docs/CHAT_AND_ACCESS.md", readme)
+        guide = (ROOT / "docs/CHAT_AND_ACCESS.md").read_text()
+        for term in ("pending", "Virtual Key", "OIDC", "MCP", "ACL", "отзыв"):
+            self.assertIn(term, guide)
 
     def test_architecture_precedes_setup_with_plain_navigation(self):
         readme = (ROOT / "README.md").read_text()
@@ -101,6 +139,15 @@ class Guide(unittest.TestCase):
         self.assertEqual(maths.calculate(sessions=8)["all_sessions_gib"], 36.03515625)
         self.assertEqual(maths.calculate()["ideal_full_sessions"], 3)
         self.assertEqual(maths.calculate(element_bytes=1)["one_session_gib"], maths.calculate()["one_session_gib"] / 2)
+
+    def test_gemma_math_uses_global_kv_heads_and_sliding_window(self):
+        for tokens, bf16 in ((131072, 10.78125), (133120, 10.9375), (262144, 20.78125)):
+            with self.subTest(tokens=tokens):
+                self.assertEqual(maths.calculate_gemma(tokens=tokens)["one_session_gib"], bf16)
+                self.assertEqual(maths.calculate_gemma(tokens=tokens, element_bytes=1)["one_session_gib"], bf16 / 2)
+        self.assertEqual(maths.calculate_gemma(tokens=512)["sliding_attention_gib"], .390625)
+        self.assertEqual(maths.calculate_gemma(tokens=262144)["sliding_attention_gib"], .78125)
+        self.assertEqual(maths.calculate_gemma(tokens=133120, sessions=8, element_bytes=1)["all_sessions_gib"], 43.75)
 
     def test_public_output_rejected(self):
         with self.assertRaises(ValueError):
