@@ -28,3 +28,12 @@ jobs:
       - run: python3 -m unittest discover -s tests -v
       - run: python3 scripts/check_public.py
       - run: python3 scripts/check_docs.py
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: integrations/webui-access/bridge/go.mod
+          cache: false
+      - name: Check personal access adapter
+        working-directory: integrations/webui-access/bridge
+        run: go vet ./... && go test -race ./...
+      - name: Lint personal access chart
+        run: helm lint charts/webui-access --strict
