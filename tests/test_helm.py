@@ -1,6 +1,5 @@
 import copy
 import hashlib
-import json
 from pathlib import Path
 import subprocess
 import sys
@@ -15,30 +14,42 @@ import check_manifests as checker
 
 
 class HelmProfiles(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.before = json.loads((ROOT / "tests/fixtures/pre-helm.json").read_text())
-
-    def test_all_profiles_preserve_pre_migration_runtime_and_allocation(self):
-        self.assertEqual(len(self.before), 8)
-        for name, old in self.before.items():
-            with self.subTest(profile=name):
-                actual = checker.render(ROOT / "values" / (name + ".yaml"))
+    def test_all_profiles_validate_and_use_explicit_gpu_count(self):
+        profiles = sorted((ROOT / "values").glob("*.yaml"))
+        self.assertEqual(len(profiles), 8)
+        for path in profiles:
+            with self.subTest(profile=path.name):
+                actual = checker.render(path)
                 self.assertEqual(checker.validate_objects(actual), [])
-                old_config = yaml.safe_load(old["configmap"]["data"]["profile.yaml"])
-                new_config = yaml.safe_load(actual["ConfigMap"]["data"]["profile.yaml"])
-                self.assertEqual(new_config, old_config)
-                self.assertEqual(actual["ResourceClaimTemplate"]["spec"], old["resourceclaimtemplate"]["spec"])
-                for kind, filename in (("Service", "service"), ("NetworkPolicy", "networkpolicy")):
-                    self.assertEqual(actual[kind]["spec"], old[filename]["spec"])
-                    self.assertEqual(actual[kind]["metadata"]["name"], old[filename]["metadata"]["name"])
-                # Only derived hash/name are allowed to change in the Deployment.
-                dep = copy.deepcopy(actual["Deployment"])
-                pod = dep["spec"]["template"]
-                old_pod = old["deployment"]["spec"]["template"]
-                pod["metadata"]["annotations"]["checksum/vllm-config"] = old_pod["metadata"]["annotations"]["checksum/vllm-config"]
-                pod["spec"]["resourceClaims"] = old_pod["spec"]["resourceClaims"]
-                self.assertEqual(dep, old["deployment"])
+                config = yaml.safe_load(actual["ConfigMap"]["data"]["profile.yaml"])
+                count = actual["ResourceClaimTemplate"]["spec"]["spec"]["devices"]["requests"][0]["exactly"]["count"]
+                self.assertEqual(count, config.get("tensor-parallel-size", 1))
+                self.assertNotIn("cpu-offload-gb", config)
+                self.assertEqual(actual["Deployment"]["spec"]["replicas"], 0)
+
+    def test_ab_keeps_weights_context_and_gpu_budget_equal(self):
+        profiles = [yaml.safe_load(checker.render(ROOT / "values" / name)["ConfigMap"]["data"]["profile.yaml"])
+                    for name in ("gemma-a.yaml", "gemma-b.yaml")]
+        for field in ("model", "max-model-len", "dtype", "gpu-memory-utilization"):
+            self.assertEqual(profiles[0][field], profiles[1][field])
+        self.assertEqual(profiles[0]["max-model-len"], 65536)
+        self.assertTrue(profiles[0]["enforce-eager"])
+        self.assertTrue(profiles[0]["no-enable-prefix-caching"])
+        self.assertTrue(profiles[0]["enable-chunked-prefill"])
+        self.assertEqual(profiles[0]["max-num-batched-tokens"], profiles[1]["max-num-batched-tokens"])
+        self.assertEqual(profiles[1]["kv-cache-dtype"], "fp8")
+        self.assertTrue(profiles[1]["enable-prefix-caching"])
+
+    def test_ram_profile_accounts_for_shared_memory(self):
+        actual = checker.render(ROOT / "values/gemma-b-ram.yaml")
+        config = yaml.safe_load(actual["ConfigMap"]["data"]["profile.yaml"])
+        self.assertEqual(config["kv-transfer-config"]["kv_connector_extra_config"]["cpu_bytes_to_use"], 32 * 1024**3)
+        pod = actual["Deployment"]["spec"]["template"]["spec"]
+        self.assertEqual(next(v for v in pod["volumes"] if v["name"] == "shm")["emptyDir"],
+                         {"medium": "Memory", "sizeLimit": "40Gi"})
+        resources = pod["containers"][0]["resources"]
+        self.assertEqual(resources["requests"]["memory"], "56Gi")
+        self.assertEqual(resources["limits"]["memory"], "80Gi")
 
     def render_override(self, overrides, success=True):
         with tempfile.TemporaryDirectory() as tmp:

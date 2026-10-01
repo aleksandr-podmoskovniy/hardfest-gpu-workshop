@@ -36,4 +36,6 @@ jobs:
         working-directory: integrations/webui-access/bridge
         run: go vet ./... && go test -race ./...
       - name: Lint personal access chart
-        run: helm lint charts/webui-access --strict
+        run: |
+          helm lint charts/webui-access --strict
+          helm lint charts/webui-access --strict -f examples/webui-access.yaml

@@ -1,0 +1,24 @@
+# Overlay for charts/webui-access. Names and prices belong to this example,
+# not to the adapter. Replace provider key IDs and image in private site values.
+config:
+  managed_by: workshop-webui
+  key_name_prefix: Workshop
+  provisioning_mode: create
+  chat_models:
+    - vllm/gemma-a
+    - vllm/gemma-b
+  providers:
+    - provider: vllm
+      allowed_models: [gemma-a, gemma-b, gemma-4-31b]
+      key_ids: [REPLACE_WITH_ROUTE_A_ID, REPLACE_WITH_ROUTE_B_ID]
+  budget_usd: 500
+  pricing:
+    - model: gemma-4-31b
+      input_usd_per_million_tokens: 10
+      output_usd_per_million_tokens: 20
+    - model: gemma-a
+      input_usd_per_million_tokens: 10
+      output_usd_per_million_tokens: 20
+    - model: gemma-b
+      input_usd_per_million_tokens: 10
+      output_usd_per_million_tokens: 20

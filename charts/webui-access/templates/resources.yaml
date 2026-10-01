@@ -1,6 +1,14 @@
 {{- if or (lt (int .Values.replicaCount) 0) (gt (int .Values.replicaCount) 1) }}
 {{- fail "webui-access supports zero or one replica; multi-replica key allocation needs a distributed lock" }}
 {{- end }}
+{{- if eq (int .Values.replicaCount) 1 }}
+{{- if or (not .Values.config.providers) (not .Values.config.chat_models) (contains "REPLACE" (.Values.config | toJson)) }}
+{{- fail "configure explicit providers, chat models and installation identity before starting webui-access" }}
+{{- end }}
+{{- if not (regexMatch "@sha256:[a-f0-9]{64}$" .Values.image) }}
+{{- fail "pin the webui-access image by digest before starting" }}
+{{- end }}
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -51,7 +59,7 @@ spec:
           {{- if .Values.caConfigMap }}
           env:
             - name: SSL_CERT_DIR
-              value: /etc/hardfest-ca:/etc/ssl/certs
+              value: /etc/webui-access-ca:/etc/ssl/certs
           {{- end }}
           ports:
             - name: http
@@ -74,7 +82,7 @@ spec:
               readOnly: true
             {{- if .Values.caConfigMap }}
             - name: ca
-              mountPath: /etc/hardfest-ca
+              mountPath: /etc/webui-access-ca
               readOnly: true
             {{- end }}
       volumes:

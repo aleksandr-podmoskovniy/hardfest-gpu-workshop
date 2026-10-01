@@ -1,0 +1,196 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+      "maxLength": 63
+    },
+    "image": {
+      "type": "string",
+      "minLength": 1
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "existingSecret": {
+      "type": "string",
+      "minLength": 1
+    },
+    "caConfigMap": {
+      "type": "string"
+    },
+    "webuiSelector": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "webui_url",
+        "gateway_url",
+        "service_user_id",
+        "managed_by",
+        "chat_models",
+        "providers",
+        "budget_usd",
+        "budget_reset",
+        "requests_per_minute",
+        "tokens_per_minute",
+        "max_concurrent_total"
+      ],
+      "properties": {
+        "webui_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gateway_url": {
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "service_user_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "managed_by": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]{1,64}$"
+        },
+        "key_name_prefix": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "provisioning_mode": {
+          "enum": [
+            "create",
+            "reserve"
+          ]
+        },
+        "chat_models": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "provider",
+              "allowed_models",
+              "key_ids"
+            ],
+            "properties": {
+              "provider": {
+                "type": "string",
+                "minLength": 1
+              },
+              "allowed_models": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true,
+                "minItems": 1
+              },
+              "key_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true,
+                "minItems": 1
+              }
+            }
+          }
+        },
+        "pricing": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "model",
+              "input_usd_per_million_tokens",
+              "output_usd_per_million_tokens"
+            ],
+            "properties": {
+              "model": {
+                "type": "string",
+                "minLength": 1
+              },
+              "input_usd_per_million_tokens": {
+                "type": "number",
+                "minimum": 0
+              },
+              "output_usd_per_million_tokens": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "budget_usd": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "budget_reset": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*(s|m|h|d)$"
+        },
+        "requests_per_minute": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tokens_per_minute": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_concurrent_total": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_concurrent_per_user": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reconcile_interval_seconds": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 3600
+        }
+      }
+    }
+  }
+}

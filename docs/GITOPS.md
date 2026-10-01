@@ -43,8 +43,8 @@ cp ../hardfest-gpu-workshop/argocd/gemma-a.yaml "$DEMO_DIR/argo-app/"
 cp ../hardfest-gpu-workshop/argocd/gemma-b.yaml "$DEMO_DIR/argo-app/"
 ```
 
-Не копируйте поверх действующей установки без проверки diff:
-[переход с прежних YAML](#миграция-с-прежних-yaml) описан отдельно.
+При обновлении существующей установки сначала сравните diff и рендер:
+имена Service, selectors и ссылки на PVC должны сохраняться.
 
 В `site/gemma.yaml` замените ноду, созданный контроллером DeviceClass, PVC и subPath.
 Добавьте точные tolerations и разрешения NetworkPolicy для Bifrost/мониторинга.
@@ -181,29 +181,6 @@ git push
 Синхронизируйте получившуюся ревизию. Helm rollback здесь не используется:
 источник состояния — Git и Argo CD.
 
-## Миграция с прежних YAML
-
-1. Сохраните SHA прежней версии и параметры нод, PVC, DeviceClass, tolerations и NetworkPolicy.
-2. Перенесите их в site-values. Сравните helm template с действующими ресурсами.
-   Имена Deployment, Service, labels и selectors сохранены; Bifrost остаётся на прежних адресах.
-3. Переводите сервисы по одному: сначала A, затем B после проверки ответа A.
-   Подготовьте Helm-профиль с replicaCount=0 и отправьте его в Git.
-4. В том же Application замените прежний source.path на путь чарта и задайте helm.valueFiles.
-   Если поле directory или kustomize задано явно, удалите его; сохраните имя Application,
-   project и destination. Первый Helm-sync выполните без prune и force.
-5. Дождитесь нуля реплик и освобождения прежней DRA-заявки. Проверьте Service,
-   PVC и новые ресурсы, затем включите этот сервис через replicaCount=1 и новый commit/sync.
-   Дождитесь Ready, ответа API и ответа через Bifrost, прежде чем переходить ко второму сервису.
-6. Чарт использует новый алгоритм имени DRA-шаблона. При prune=false прежние
-   ConfigMap с хешем и ResourceClaimTemplate останутся, а Argo покажет OutOfSync.
-   Сначала проверьте ссылки из работающих Pod, Deployment и заявок. Удалите только
-   подтверждённо неиспользуемые старые объекты по точным именам — без общего prune.
-   Старые исходные YAML уберите из Git отдельным коммитом после миграции обоих сервисов.
-   Они остаются восстановимыми из истории; откат выполняется через Git/Argo,
-   не через старую ReplicaSet, которая может ссылаться на удалённый ConfigMap.
-
-Если эти workloads управляются Argo CD, не создавайте поверх них отдельный Helm release.
-
 ## 6. Секреты и публичная копия
 
 В GitHub входят `charts/`, `values/`, обезличенные `argocd/`, документация, схемы и
@@ -215,27 +192,35 @@ External Secrets / SOPS / Sealed Secrets, либо создайте Secret из 
 локального файла. Base64 в обычном Secret YAML **не является шифрованием**.
 Не выгружайте `kubectl get secret -o yaml` в репозиторий или результаты замеров.
 
-Например, ограниченный Virtual Key сначала создаётся **в Bifrost**: случайная строка
-из openssl не заменяет зарегистрированный ключ шлюза. Выгрузите только этот ключ
-из менеджера секретов в защищённый файл вне репозитория. Импорт в namespace WebUI:
+Для адаптера доступа используйте отдельный Secret с четырьмя полями.
+Выгрузите значения из менеджера секретов в защищённый каталог вне репозитория.
+Management-ключ выпускается в Bifrost, ключ служебной учётки — в Open WebUI;
+транспортный и JWT-секреты генерируются отдельно. Личные VK затем создаёт адаптер.
 
 ```bash
 export WEBUI_CONTEXT=chat-cluster
 export WEBUI_NAMESPACE=chat
-export KEY_FILE=/secure/path/bifrost-workshop-key
-test -s "$KEY_FILE"
-chmod 600 "$KEY_FILE"
+export SECRET_DIR=/secure/path/webui-access
+for FIELD in WEBUI_ADMIN_API_KEY BIFROST_MANAGEMENT_KEY WEBUI_TRANSPORT_KEY FORWARD_USER_INFO_HEADER_JWT_SECRET; do
+  test -s "$SECRET_DIR/$FIELD" || exit 1
+  chmod 600 "$SECRET_DIR/$FIELD"
+done
+set -o pipefail
 kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" \
-  create secret generic hardfest-gemma-access \
-  --from-file=api-key="$KEY_FILE" --dry-run=client -o yaml | \
+  create secret generic webui-access \
+  --from-file=WEBUI_ADMIN_API_KEY="$SECRET_DIR/WEBUI_ADMIN_API_KEY" \
+  --from-file=BIFROST_MANAGEMENT_KEY="$SECRET_DIR/BIFROST_MANAGEMENT_KEY" \
+  --from-file=WEBUI_TRANSPORT_KEY="$SECRET_DIR/WEBUI_TRANSPORT_KEY" \
+  --from-file=FORWARD_USER_INFO_HEADER_JWT_SECRET="$SECRET_DIR/FORWARD_USER_INFO_HEADER_JWT_SECRET" \
+  --dry-run=client -o yaml |
 kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" apply --server-side -f -
 ```
 
-Здесь ключ не попадает в аргументы процесса, историю команд или YAML-файл в Git.
-Не выполняйте блок с `set -x`, не добавляйте `tee` и не показывайте содержимое файла.
-Сам Secret ещё не настраивает WebUI: подключение к Bifrost задаётся отдельно по
-[схеме доступа](CHAT_AND_ACCESS.md). Для постоянной эксплуатации предпочтительнее
-принятый на площадке контроллер секретов. Не создавайте два владельца одного Secret.
+Ключи не попадают в аргументы процесса или YAML-файл в Git.
+Не выполняйте блок с `set -x`, не добавляйте `tee` и не показывайте содержимое файлов.
+Подключение WebUI и значения полей описаны в [интеграции](../integrations/webui-access/README.md).
+Если Secret управляется контроллером секретов, настраивайте его через этот контроллер,
+а не создавайте второго владельца командой выше.
 
 При переносе проверяйте конкретный diff; не выполняйте `git add .` в большой рабочей
 репе. Для общедоступного репозитория предусмотрена отдельная проверка публичных файлов

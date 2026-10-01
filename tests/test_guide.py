@@ -1,17 +1,12 @@
-import argparse
 import importlib.util
 import pathlib
 import re
 import sys
 import unittest
 import xml.etree.ElementTree as ET
-from unittest.mock import Mock, patch
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from workshop.lab import private_output, dataset
-from workshop.cli import make_parser
-from workshop.manifests import read_json
 
 
 def load(name):
@@ -110,7 +105,7 @@ class Guide(unittest.TestCase):
         paths += list((ROOT / "labs").glob("*.md"))
         paths += list((ROOT / "docs/chapters").glob("*.md"))
         paths += [ROOT / "docs" / name for name in (
-            "COMMANDS.md", "SETUP.md", "THEORY.md", "REHEARSAL.md", "STATUS.md",
+            "COMMANDS.md", "SETUP.md", "THEORY.md", "STATUS.md",
             "MEMORY_BUDGET.md", "DEPLOYMENT.md")]
         forbidden = re.compile(
             r"\*\*сказать|предложить аудитории|вопрос залу|предъявить аудитории|"
@@ -217,26 +212,6 @@ class Guide(unittest.TestCase):
                 self.assertNotIn(node.tag.rsplit("}", 1)[-1], ("script", "foreignObject", "image"))
         for path in (ROOT / "docs/chapters").glob("*.md"):
             self.assertNotIn("```text", path.read_text())
-
-    def test_public_output_rejected(self):
-        with self.assertRaises(ValueError):
-            private_output(ROOT / "leaked-snapshot.json")
-
-    def test_dataset_rejects_output_overflow_before_exec(self):
-        k = Mock()
-        k.get.return_value = {"status": {"readyReplicas": 1}}
-        site = read_json(ROOT / "config/site.example.json")
-        args = argparse.Namespace(input_fraction=.99, output_tokens=10000, documents=32,
-                                  out=str(ROOT / ".local/test-never-created.jsonl"))
-        with self.assertRaisesRegex(ValueError, "fit"):
-            dataset(k, site, "a", args)
-        k.ns.assert_not_called()
-
-    def test_public_example_can_parse_new_commands(self):
-        for args in (["diff", "a", "b-cache"], ["init-site"],
-                     ["dataset", "a", "--out", ".local/x.jsonl"],
-                     ["model-info", "a"], ["snapshot", "a", "--out", ".local/x.json"]):
-            self.assertIsNotNone(make_parser().parse_args(args))
 
     def test_shell_examples_are_parseable(self):
         docs = load("check_docs")

@@ -28,6 +28,8 @@ git diff --stat
 ```bash
 python3 -m pip install -r requirements-dev.txt
 helm lint charts/vllm-runtime --strict -f values/gemma-b.yaml
+helm lint charts/webui-access --strict -f examples/webui-access.yaml
+(cd integrations/webui-access/bridge && go vet ./... && go test -race ./...)
 python3 scripts/check_manifests.py
 python3 -m unittest discover -s tests -v
 python3 scripts/check_public.py

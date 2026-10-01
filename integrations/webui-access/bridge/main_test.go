@@ -94,7 +94,7 @@ func fixture(t *testing.T, role string) (*Bridge, *int) {
 		io.WriteString(w, "data: {\"choices\":[]}\n\ndata: [DONE]\n\n")
 	}))
 	t.Cleanup(gw.Close)
-	b := &Bridge{cfg: Config{WebUIURL: ui.URL, GatewayURL: gw.URL, ChatModels: []string{"vllm/a", "vllm/b"}, MaxConcurrent: 8}, client: ui.Client(), streamClient: gw.Client(), webUIKey: "admin-test", transportKey: "transport-test", signingKey: strings.Repeat("s", 32), now: time.Now, keys: map[string]credential{subjectID: {"key-id", "personal-key"}}, activeUsers: map[string]bool{}}
+	b := &Bridge{cfg: Config{ManagedBy: "test-webui", WebUIURL: ui.URL, GatewayURL: gw.URL, ChatModels: []string{"vllm/a", "vllm/b"}, MaxConcurrent: 8, MaxConcurrentPerUser: 1}, client: ui.Client(), streamClient: gw.Client(), webUIKey: "admin-test", transportKey: "transport-test", signingKey: strings.Repeat("s", 32), now: time.Now, keys: map[string]credential{subjectID: {"key-id", "personal-key"}}, activeUsers: map[string]int{}}
 	return b, calls
 }
 func request(b *Bridge, path, body string) *http.Request {
@@ -167,7 +167,7 @@ func TestConcurrencyLimit(t *testing.T) {
 }
 func TestNativePricingAndBudget(t *testing.T) {
 	var captured object
-	key := object{"id": "reserved", "value": "private", "is_active": false, "description": reserveMarker,
+	key := object{"id": "reserved", "value": "private", "is_active": false, "description": "managed-by=test-webui; reserve",
 		"provider_configs": []any{object{"provider": "vllm", "allowed_models": []string{"a"}, "allow_all_keys": false, "keys": []any{object{"key_id": "route-a"}}}},
 		"mcp_configs":      []any{}, "budgets": []any{object{"max_limit": 500, "reset_duration": "24h", "current_usage": 0}},
 		"rate_limit": object{"request_max_limit": 10, "request_reset_duration": "60s", "token_max_limit": 200000, "token_reset_duration": "60s"}}
@@ -183,7 +183,7 @@ func TestNativePricingAndBudget(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(object{"virtual_key": object{"id": "id", "value": "private"}})
 	}))
 	defer s.Close()
-	b := &Bridge{cfg: Config{GatewayURL: s.URL, BudgetUSD: 500, BudgetReset: "24h", RequestsPerMinute: 10, TokensPerMinute: 200000, AllowedModels: []string{"a"}, ProviderKeyIDs: []string{"route-a"}}, client: s.Client()}
+	b := &Bridge{cfg: Config{ManagedBy: "test-webui", ProvisioningMode: "reserve", KeyNamePrefix: "WebUI", GatewayURL: s.URL, BudgetUSD: 500, BudgetReset: "24h", RequestsPerMinute: 10, TokensPerMinute: 200000, Providers: []ProviderPolicy{{Provider: "vllm", Models: []string{"a"}, KeyIDs: []string{"route-a"}}}}, client: s.Client()}
 	if _, err := b.newKey(context.Background(), User{ID: subjectID, Name: "Test"}); err != nil {
 		t.Fatal(err)
 	}
@@ -192,7 +192,7 @@ func TestNativePricingAndBudget(t *testing.T) {
 			t.Fatalf("assignment changes protected field %s", name)
 		}
 	}
-	if captured["description"] != marker+subjectID {
+	if b.keyUserID(captured) != subjectID {
 		t.Fatal("wrong recipient")
 	}
 }
@@ -205,7 +205,7 @@ func TestReserveExhaustionFailsClosed(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(object{"virtual_keys": []any{}, "total_count": 0})
 	}))
 	defer s.Close()
-	b := &Bridge{cfg: Config{GatewayURL: s.URL}, client: s.Client()}
+	b := &Bridge{cfg: Config{GatewayURL: s.URL, ProvisioningMode: "reserve"}, client: s.Client()}
 	if _, err := b.newKey(context.Background(), User{ID: subjectID}); err == nil {
 		t.Fatal("exhausted reserve accepted")
 	}
@@ -232,7 +232,7 @@ func TestPricesIncludeStreaming(t *testing.T) {
 		w.WriteHeader(201)
 	}))
 	defer s.Close()
-	b := &Bridge{cfg: Config{GatewayURL: s.URL, PriceModels: []string{"a"}, InputPrice: 10, OutputPrice: 20}, client: s.Client()}
+	b := &Bridge{cfg: Config{GatewayURL: s.URL, KeyNamePrefix: "WebUI", Pricing: []PriceRule{{Model: "a", Input: 10, Output: 20}}}, client: s.Client()}
 	if err := b.ensurePricing(context.Background(), "personal"); err != nil {
 		t.Fatal(err)
 	}
@@ -246,7 +246,7 @@ func TestPricesIncludeStreaming(t *testing.T) {
 
 func TestExistingNativePriceDoesNotRequireEnabledField(t *testing.T) {
 	for _, disabled := range []bool{false, true} {
-		p := object{"name": "HardFest personal a", "virtual_key_id": "personal", "scope_kind": "virtual_key", "pattern": "a", "match_type": "exact", "request_types": []string{"chat_completion"}, "pricing_patch": `{"input_cost_per_token":0.00001,"output_cost_per_token":0.00002}`}
+		p := object{"name": "WebUI personal a", "virtual_key_id": "personal", "scope_kind": "virtual_key", "pattern": "a", "match_type": "exact", "request_types": []string{"chat_completion"}, "pricing_patch": `{"input_cost_per_token":0.00001,"output_cost_per_token":0.00002}`}
 		if disabled {
 			p["enabled"] = false
 		}
@@ -256,7 +256,7 @@ func TestExistingNativePriceDoesNotRequireEnabledField(t *testing.T) {
 			}
 			_ = json.NewEncoder(w).Encode(object{"pricing_overrides": []object{p}, "total_count": 1})
 		}))
-		b := &Bridge{cfg: Config{GatewayURL: s.URL, PriceModels: []string{"a"}, InputPrice: 10, OutputPrice: 20}, client: s.Client()}
+		b := &Bridge{cfg: Config{GatewayURL: s.URL, KeyNamePrefix: "WebUI", Pricing: []PriceRule{{Model: "a", Input: 10, Output: 20}}}, client: s.Client()}
 		err := b.ensurePricing(context.Background(), "personal")
 		s.Close()
 		if (err != nil) != disabled {
