@@ -1,0 +1,26 @@
+# Copy to the private GitOps repository as site/gemma.yaml.
+# Do not override replicaCount, profile, vllm, resources or shmSize here.
+nodeSelector:
+  kubernetes.io/hostname: REPLACE_H100_NODE
+tolerations: []
+dra:
+  deviceClassName: REPLACE_GENERATED_H100_DEVICECLASS
+modelVolumes:
+  - name: gemma
+    claimName: REPLACE_GEMMA_PVC
+    mountPath: /models/gemma
+    subPath: REPLACE_GEMMA_MODEL_SUBPATH
+networkPolicy:
+  extraIngress: []
+# Bifrost in another namespace of the same cluster:
+#  extraIngress:
+#    - from:
+#        - namespaceSelector:
+#            matchLabels:
+#              kubernetes.io/metadata.name: REPLACE_GATEWAY_NAMESPACE
+#          podSelector:
+#            matchLabels:
+#              app.kubernetes.io/name: REPLACE_GATEWAY_APP
+#      ports:
+#        - port: 8000
+#          protocol: TCP

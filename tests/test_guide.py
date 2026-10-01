@@ -69,8 +69,8 @@ class Guide(unittest.TestCase):
         self.assertIn("max-model-len: 131072", ram)
         self.assertIn("cpu_bytes_to_use: 34359738368", ram)
         self.assertIn("остановите A через Git", ram)
-        self.assertIn("deploy/gemma-b-128k/configmap.yaml", ram)
-        self.assertIn("deploy/gemma-b-ram/configmap.yaml", ram)
+        self.assertIn("values/gemma-b-128k.yaml", ram)
+        self.assertIn("values/gemma-b-ram.yaml", ram)
         self.assertIn("того же Application B", ram)
 
     def test_primary_workshop_uses_gitops_not_private_python_wrappers(self):
@@ -85,23 +85,22 @@ class Guide(unittest.TestCase):
         for term in ("ARGO_CONTEXT", "GPU_CONTEXT", "operation:{sync", "revision:$rev", "prune:false"):
             self.assertIn(term, gitops)
 
-    def test_native_manifests_are_safe_and_complete(self):
-        profiles = list((ROOT / "deploy").glob("*/configmap.yaml"))
+    def test_helm_profiles_are_safe_and_complete(self):
+        profiles = list((ROOT / "values").glob("*.yaml"))
         self.assertEqual(len(profiles), 8)
         self.assertEqual(manifests.check(), [])
         for path in profiles:
-            with self.subTest(profile=path.parent.name):
-                resources = (path.parent / "deployment.yaml").read_text()
-                self.assertFalse((path.parent / "kustomization.yaml").exists())
-                self.assertIn("checksum/vllm-config", resources)
-                self.assertIn("replicas: 0", resources)
-                self.assertIn('type: "Recreate"', resources)
-                claim = (path.parent / "resourceclaimtemplate.yaml").read_text()
-                self.assertIn('kind: "ResourceClaimTemplate"', claim)
+            with self.subTest(profile=path.stem):
+                objects = manifests.render(path)
+                resources = objects["Deployment"]
+                self.assertIn("checksum/vllm-config", resources["spec"]["template"]["metadata"]["annotations"])
+                self.assertEqual(resources["spec"]["replicas"], 0)
+                self.assertEqual(resources["spec"]["strategy"]["type"], "Recreate")
+                self.assertIn("ResourceClaimTemplate", objects)
                 self.assertNotIn("cpu-offload-gb", path.read_text())
-                self.assertRegex(resources, r"@sha256:[0-9a-f]{64}")
+                self.assertRegex(resources["spec"]["template"]["spec"]["containers"][0]["image"], r"@sha256:[0-9a-f]{64}")
         for name in ("gemma-a", "gemma-b"):
-            self.assertIn("max-model-len: 65536", (ROOT / "deploy" / name / "configmap.yaml").read_text())
+            self.assertIn("max-model-len: 65536", (ROOT / "values" / (name + ".yaml")).read_text())
         for path in (ROOT / "argocd").glob("*.yaml"):
             self.assertNotIn("automated:", path.read_text())
             self.assertNotIn("finalizers:", path.read_text())

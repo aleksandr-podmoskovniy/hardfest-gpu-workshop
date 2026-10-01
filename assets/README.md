@@ -17,7 +17,7 @@
 | [09-platform.svg](09-platform.svg) | Модель, рецепт, план, GPU-заявка и API |
 | [10-tp2.svg](10-tp2.svg) | Один экземпляр модели на двух связанных GPU |
 | [11-gemma-kv.svg](11-gemma-kv.svg) | Крупная формула полного и локального attention |
-| [12-gitops.svg](12-gitops.svg) | GitLab, Argo CD и обычные YAML двух кластеров |
+| [12-gitops.svg](12-gitops.svg) | Helm, GitLab и Argo CD двух кластеров |
 | [13-attention.svg](13-attention.svg) | Q, K, V и формула attention |
 | [14-prefix.svg](14-prefix.svg) | Совпадение префикса на уровне токенов |
 | [15-gptoss-kv.svg](15-gptoss-kv.svg) | Отдельная математическая задача GPT-OSS из презентации |

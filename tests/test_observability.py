@@ -1,8 +1,11 @@
 import json
 import pathlib
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from check_manifests import render
 
 
 class Observability(unittest.TestCase):
@@ -46,11 +49,11 @@ class Observability(unittest.TestCase):
             self.assertNotIn("$inference_service", target["expr"])
 
     def test_named_service_ports_and_scoped_scrape_policy(self):
-        paths = list((ROOT / "deploy").glob("*/service.yaml"))
+        paths = list((ROOT / "values").glob("*.yaml"))
         self.assertEqual(len(paths), 8)
         for path in paths:
-            service = path.read_text()
-            self.assertIn('name: "http"', service)
+            service = render(path)["Service"]
+            self.assertEqual(service["spec"]["ports"][0]["name"], "http")
         monitor = (ROOT / "observability/monitoring.yaml").read_text()
         self.assertIn("port: http", monitor)
         self.assertIn("scrapeTimeout: 5s", monitor)

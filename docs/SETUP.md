@@ -1,6 +1,6 @@
 # Подготовка стенда
 
-Основной способ развёртывания — [GitOps](GITOPS.md). Исходники — обычные Kubernetes YAML, команды управления — Git и kubectl. Python на ноутбуке не нужен.
+Основной способ развёртывания — [GitOps](GITOPS.md). Исходники — Helm-чарт и values, команды управления — Helm, Git и kubectl. Python на ноутбуке не нужен.
 
 ## 1. Предпосылки
 
@@ -16,15 +16,15 @@
 
 ## 2. Параметры своего стенда
 
-Скопируйте [deploy](../deploy/README.md) в GitLab и замените placeholders:
+Скопируйте [чарт и values](../charts/vllm-runtime/README.md) в GitLab и замените placeholders:
 
 | Где | Что задать |
 | --- | --- |
-| Deployment / nodeSelector | Нода с двумя H100 |
-| ResourceClaimTemplate | Физический DeviceClass от GPUClass/GPUPool |
-| Volume / PVC | Уже существующий PVC с весами |
-| VolumeMount / subPath | Каталог конкретной модели внутри PVC |
-| Deployment / tolerations | Только нужный taint выделенной ноды |
+| site-values / nodeSelector | Нода с двумя H100 |
+| site-values / dra.deviceClassName | Физический DeviceClass от GPUClass/GPUPool |
+| site-values / modelVolumes.claimName | Уже существующий PVC с весами |
+| site-values / modelVolumes.subPath | Каталог конкретной модели внутри PVC |
+| site-values / tolerations | Только нужный taint выделенной ноды |
 | Application / source | Свой repoURL, ветка и каталог |
 | Application / destination | Зарегистрированный в Argo GPU-кластер |
 
@@ -54,8 +54,11 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pvc,resourceclaims,pods
 ## 4. Контроль перед sync
 
 ```bash
-yq '.data."profile.yaml"' "$DEMO_DIR/gemma-a/configmap.yaml"
-kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f "$DEMO_DIR/gemma-a"
+yq '.vllm' "$DEMO_DIR/values/gemma-a.yaml"
+set -o pipefail
+helm template hf-gemma-a "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
+  -f "$DEMO_DIR/values/gemma-a.yaml" -f "$DEMO_DIR/site/gemma.yaml" |
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f -
 git diff -- "$DEMO_DIR"
 ```
 

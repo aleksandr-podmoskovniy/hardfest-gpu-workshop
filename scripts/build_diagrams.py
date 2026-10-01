@@ -148,19 +148,19 @@ def gemma_formula():
 
 
 def gitops():
-    d = Diagram('12-gitops', 'Доставка манифестов через Argo CD',
-                'Обычные YAML; управление и GPU-нагрузка находятся в разных кластерах.', 670)
+    d = Diagram('12-gitops', 'Helm через GitLab и Argo CD',
+                'Один чарт, отдельные values; управление и GPU-нагрузка в разных кластерах.', 670)
     d.card(48, 151, 322, 150, 'GitHub', ['Общие примеры', 'Документация и схемы', 'Без секретов'], GRAY, MUTED)
-    d.card(440, 151, 712, 150, 'GitLab / k8s-config', ['Пять YAML на сервис + Application', 'Имена нод, PVC и классов вашей площадки', 'diff → подписанный commit → push'])
+    d.card(440, 151, 712, 150, 'GitLab / k8s-config', ['Чарт + профиль values + привязки площадки', 'Application: Helm source, без autosync', 'diff → подписанный commit → push'])
     d.path('M 372 225 H 438', BLUE, True)
     d.text(405, 207, 'копия', 18, MUTED, anchor='middle')
-    d.card(48, 382, 485, 181, 'Управляющий кластер', ['Argo CD / Application', 'source: GitLab + каталог + ревизия', 'destination: GPU-кластер'], PALE, BLUE)
+    d.card(48, 382, 485, 181, 'Управляющий кластер', ['Argo CD: Helm render → sync', 'source: GitLab + чарт + values', 'destination: GPU-кластер'], PALE, BLUE)
     d.card(642, 382, 510, 181, 'GPU-кластер', ['ConfigMap + Deployment', 'ResourceClaimTemplate + Service', 'NetworkPolicy'], MINT, TEAL)
     d.path('M 796 303 V 339 H 290 V 380', BLUE, True)
     d.text(519, 330, 'выбранный коммит', 20, MUTED, anchor='middle')
     d.path('M 535 472 H 640', TEAL, True)
     d.text(587, 453, 'sync', 20, TEAL, anchor='middle')
-    d.text(48, 611, 'Новая конфигурация vLLM → новый checksum Pod → перезапуск Recreate', 25, INK, True)
+    d.text(48, 611, 'Изменение values → checksum от Helm → перезапуск Recreate', 25, INK, True)
     d.footer('Примеры выключены: replicas = 0, без autosync. Секреты передаются отдельно от Git.')
     d.save()
 

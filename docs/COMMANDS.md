@@ -6,9 +6,11 @@
 ## Посмотреть профиль и итоговый YAML
 
 ```bash
-diff -u "$DEMO_DIR/gemma-a/configmap.yaml" "$DEMO_DIR/gemma-b/configmap.yaml"
-yq '.data."profile.yaml"' "$DEMO_DIR/gemma-b/configmap.yaml"
-kubectl --context "$GPU_CONTEXT" diff -f "$DEMO_DIR/gemma-b"
+diff -u "$DEMO_DIR/values/gemma-a.yaml" "$DEMO_DIR/values/gemma-b.yaml"
+yq '.vllm' "$DEMO_DIR/values/gemma-b.yaml"
+helm template hf-gemma-b "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
+  -f "$DEMO_DIR/values/gemma-b.yaml" -f "$DEMO_DIR/site/gemma.yaml" |
+  kubectl --context "$GPU_CONTEXT" diff -f -
 ```
 
 У diff код 1 означает различия. Проверяйте конкретные ресурсы, а не весь большой
@@ -17,9 +19,12 @@ GitOps-репозиторий.
 ## Проверить и отправить изменение
 
 ```bash
-kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f "$DEMO_DIR/gemma-b"
-git diff -- "$DEMO_DIR/gemma-b"
-git add -- "$DEMO_DIR/gemma-b"
+set -o pipefail
+helm template hf-gemma-b "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
+  -f "$DEMO_DIR/values/gemma-b.yaml" -f "$DEMO_DIR/site/gemma.yaml" |
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f - || exit 1
+git diff -- "$DEMO_DIR/values/gemma-b.yaml"
+git add -- "$DEMO_DIR/values/gemma-b.yaml"
 git diff --cached --check
 git commit -S -s -m "Tune Gemma B"
 git push

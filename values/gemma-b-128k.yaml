@@ -1,0 +1,48 @@
+# Standalone profile; do not stack B variants.
+fullnameOverride: hf-gemma-b
+replicaCount: 0
+profile: b-tuned
+nodeSelector:
+  kubernetes.io/hostname: REPLACE_H100_NODE
+dra:
+  deviceClassName: REPLACE_GENERATED_H100_DEVICECLASS
+  count: 1
+  capacity: {}
+  config: []
+modelVolumes:
+  - name: gemma
+    claimName: REPLACE_GEMMA_PVC
+    mountPath: /models/gemma
+    subPath: REPLACE_GEMMA_MODEL_SUBPATH
+resources:
+  requests:
+    cpu: "4"
+    memory: 24Gi
+    ephemeral-storage: 4Gi
+  limits:
+    memory: 48Gi
+    ephemeral-storage: 24Gi
+shmSize: 8Gi
+vllm:
+  model: /models/gemma
+  served-model-name: gemma-4-31b
+  host: 0.0.0.0
+  port: 8000
+  dtype: bfloat16
+  safetensors-load-strategy: lazy
+  tensor-parallel-size: 1
+  max-model-len: 131072
+  max-num-seqs: 32
+  gpu-memory-utilization: 0.9
+  language-model-only: true
+  reasoning-parser: gemma4
+  tool-call-parser: gemma4
+  enable-auto-tool-choice: true
+  generation-config: vllm
+  kv-cache-dtype: fp8
+  attention-backend: TRITON_ATTN
+  enable-prefix-caching: true
+  enable-chunked-prefill: true
+  max-num-batched-tokens: 4096
+  enforce-eager: false
+  max-cudagraph-capture-size: 32

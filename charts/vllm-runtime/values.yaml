@@ -1,0 +1,33 @@
+# Use exactly one values/<profile>.yaml, then your private site values.
+fullnameOverride: ""
+replicaCount: 0
+profile: custom
+image: vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40
+imagePullSecrets: []
+nodeSelector: {}
+tolerations: []
+dra:
+  deviceClassName: REPLACE_GENERATED_DEVICECLASS
+  count: 1
+  capacity: {}
+  config: []
+modelVolumes: []
+resources:
+  requests:
+    cpu: "4"
+    memory: 24Gi
+    ephemeral-storage: 4Gi
+  limits:
+    memory: 48Gi
+    ephemeral-storage: 24Gi
+shmSize: 8Gi
+runtimeSize: 20Gi
+vllm:
+  model: /models/model
+  served-model-name: REPLACE_MODEL
+  host: 0.0.0.0
+  port: 8000
+extraEnv: []
+networkPolicy:
+  # Same-namespace clients. Add narrowly scoped Bifrost/monitoring peers in site values.
+  extraIngress: []

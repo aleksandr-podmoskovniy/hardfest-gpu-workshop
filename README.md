@@ -49,9 +49,9 @@
 
 ## Подготовка окружения
 
-Нужны Git, kubectl, jq и **yq Mike Farah v4**. На ноутбуке не нужны Python, CUDA и веса моделей.
+Нужны Git, Helm 3+, kubectl, jq и **yq Mike Farah v4**. На ноутбуке не нужны Python, CUDA и веса моделей.
 
-Исходники — обычные Kubernetes YAML. В GitLab лежит их копия с параметрами площадки; Argo CD применяет выбранный коммит в GPU-кластер.
+Один Helm-чарт описывает запуск vLLM, отдельные values — настройки каждого эксперимента. В GitLab лежат чарт, профили и привязки площадки; Argo CD рендерит выбранный коммит и применяет его в GPU-кластер.
 
 ![Публичные примеры переносятся в GitLab; Argo CD управляющего кластера применяет выбранный коммит в GPU-кластер](assets/12-gitops.svg)
 
@@ -71,17 +71,15 @@ kubectl --context "$GPU_CONTEXT" get deviceclasses
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pvc,pods,resourceclaims
 ```
 
-Для каждого запуска есть пять файлов:
+Для запуска нужны три части:
 
 | Файл | Назначение |
 | --- | --- |
-| [configmap.yaml](deploy/gemma-b/configmap.yaml) | Параметры vLLM в `data.profile.yaml` |
-| [deployment.yaml](deploy/gemma-b/deployment.yaml) | Реплики, CPU/RAM, PVC, нода, checksum конфигурации |
-| [resourceclaimtemplate.yaml](deploy/gemma-b/resourceclaimtemplate.yaml) | Класс GPU и количество устройств |
-| [service.yaml](deploy/gemma-b/service.yaml) | Постоянный адрес API |
-| [networkpolicy.yaml](deploy/gemma-b/networkpolicy.yaml) | Доступ к API |
+| [charts/vllm-runtime](charts/vllm-runtime/README.md) | Deployment, ConfigMap, DRA-заявка, Service и NetworkPolicy |
+| [values/gemma-b.yaml](values/gemma-b.yaml) | Параметры vLLM, GPU и CPU/RAM; `replicaCount` |
+| `site/gemma.yaml` в вашей GitLab-репе | Нода, DeviceClass, существующий PVC и доступ Bifrost; [пример](examples/site-gemma.yaml) |
 
-В примерах `replicas: 0`, autosync выключен. DeviceClass берём у GPUClass/GPUPool-контроллера, не создаём вручную. [Требования к RAM и ноде](docs/SETUP.md).
+В примерах `replicaCount: 0`, autosync выключен. DeviceClass берём у GPUClass/GPUPool-контроллера, не создаём вручную. [Требования к RAM и ноде](docs/SETUP.md).
 
 До нагрузки откройте **AI Inference / Live performance** в мониторинге Console. [Манифесты дашборда и сбор метрик](docs/OBSERVABILITY.md) доставляются тем же Argo CD.
 
@@ -142,16 +140,20 @@ A намеренно отключает prefix cache и CUDA graphs. Это **н
 
 ```bash
 diff -u \
-  <(yq '.data."profile.yaml"' "$DEMO_DIR/gemma-a/configmap.yaml") \
-  <(yq '.data."profile.yaml"' "$DEMO_DIR/gemma-b/configmap.yaml")
+  <(yq '.vllm' "$DEMO_DIR/values/gemma-a.yaml") \
+  <(yq '.vllm' "$DEMO_DIR/values/gemma-b.yaml")
 
-yq -i '.spec.replicas = 1' "$DEMO_DIR/gemma-a/deployment.yaml"
-yq -i '.spec.replicas = 1' "$DEMO_DIR/gemma-b/deployment.yaml"
+yq -i '.replicaCount = 1' "$DEMO_DIR/values/gemma-a.yaml"
+yq -i '.replicaCount = 1' "$DEMO_DIR/values/gemma-b.yaml"
 
-kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f "$DEMO_DIR/gemma-a"
-kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f "$DEMO_DIR/gemma-b"
+set -o pipefail
+for SLOT in a b; do
+  helm template "hf-gemma-$SLOT" "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
+    -f "$DEMO_DIR/values/gemma-$SLOT.yaml" -f "$DEMO_DIR/site/gemma.yaml" |
+    kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f - || exit 1
+done
 git diff -- "$DEMO_DIR"
-git add -- "$DEMO_DIR/gemma-a" "$DEMO_DIR/gemma-b"
+git add -- "$DEMO_DIR/values/gemma-a.yaml" "$DEMO_DIR/values/gemma-b.yaml"
 git diff --cached --check
 git commit -S -s -m "Start Gemma A and B at 64K"
 git push
@@ -210,7 +212,7 @@ done
 
 Используйте рецепт Gemma 64K: он переносит настройки ручного B в AI Inference. Для расширения контекста, KV-кэша в RAM, Gemma assistant и Qwen TP2 с MTP предусмотрены отдельные рецепты. [Состав рецептов и порядок запуска](labs/04-deckhouse.md).
 
-Остановите A: `spec.replicas: 0` в Deployment, commit/push/sync. Создайте в Console сервис `hf-platform-gemma`: те же веса, один H100, 64K, стратегия Throughput и рецепт Gemma 64K.
+Остановите A: `replicaCount: 0` в `values/gemma-a.yaml`, commit/push/sync. Создайте в Console сервис `hf-platform-gemma`: те же веса, один H100, 64K, стратегия Throughput и рецепт Gemma 64K. Helm-чарт обслуживает ручной эксперимент; платформенный Deployment создаёт AI Inference.
 
 Откройте сформированный план: runtime, FP8 KV, prefix cache, чанкирование и CUDA graphs заданы рецептом; веса остаются на GPU. Сопоставьте параметры с ручным B, повторите прежнюю нагрузку и подключите новый Service отдельным маршрутом Bifrost.
 
@@ -224,21 +226,17 @@ done
 
 ### Сначала только 128K
 
-В ConfigMap B поменяйте `max-model-len` на `131072`:
+В values B поменяйте `max-model-len` на `131072`:
 
 ```bash
-yq -i '.data."profile.yaml" |= (from_yaml | .max-model-len = 131072 | to_yaml)' \
-  "$DEMO_DIR/gemma-b/configmap.yaml"
-export CONFIG_SHA=$(yq -o=json '.' "$DEMO_DIR/gemma-b/configmap.yaml" | jq -j '.data["profile.yaml"]' | shasum -a 256 | awk '{print $1}')
-yq -i '.spec.template.metadata.annotations."checksum/vllm-config" = strenv(CONFIG_SHA)' \
-  "$DEMO_DIR/gemma-b/deployment.yaml"
+yq -i '.vllm.max-model-len = 131072' "$DEMO_DIR/values/gemma-b.yaml"
 ```
 
-Обновляйте checksum при **каждом** изменении конфигурации: изменение шаблона Pod вызывает перезапуск. Выполните commit/push/sync для того же Application B. [Полный образец B 128K](deploy/gemma-b-128k/configmap.yaml) нужен для сверки, не для второго приложения.
+Чарт сам обновляет checksum конфигурации: изменение шаблона Pod вызывает перезапуск. Выполните commit/push/sync для того же Application B. [Полный профиль B 128K](values/gemma-b-128k.yaml) нужен для сверки, не для второго приложения.
 
 ### Затем 32 GiB KV в RAM
 
-Добавьте в данные ConfigMap параметры из [B с offload](deploy/gemma-b-ram/configmap.yaml):
+В [профиле B с offload](values/gemma-b-ram.yaml) эти параметры находятся в `vllm`:
 
 ```yaml
 max-model-len: 131072
@@ -249,7 +247,14 @@ kv-transfer-config:
     cpu_bytes_to_use: 34359738368
 ```
 
-Это конфигурация vLLM **внутри** `data.profile.yaml`, не Kubernetes-ресурс. В том же коммите измените [Deployment](deploy/gemma-b-ram/deployment.yaml): RAM request 56 GiB, limit 80 GiB, `/dev/shm` 40 GiB; обновите checksum. 32 GiB offload уже входят в лимиты — повторно не прибавляются.
+Переключите активный профиль B целиком, вместе с лимитами памяти:
+
+```bash
+cp "$DEMO_DIR/values/gemma-b-ram.yaml" "$DEMO_DIR/values/gemma-b.yaml"
+yq -i '.replicaCount = 1' "$DEMO_DIR/values/gemma-b.yaml"
+```
+
+Выполните проверку, commit/push/sync того же Application B. Привязки остаются в `site/gemma.yaml`. Профиль задаёт RAM request 56 GiB, limit 80 GiB, `/dev/shm` 40 GiB; checksum рассчитывает чарт. 32 GiB offload уже входят в лимиты — повторно не прибавляются.
 
 ![Обработать документ, вытеснить его KV из GPU другими документами и загрузить сохранённые блоки из RAM](assets/05-kv-ram.svg)
 
@@ -269,7 +274,7 @@ RAM не заменяет HBM при вычислении: рабочие бло
 
 MIG выделяет аппаратную часть памяти и вычислительных ресурсов. MPS позволяет процессам работать внутри одного GPU или MIG-раздела. Time-slicing только чередует выполнение и не увеличивает память.
 
-Подготовлены [эмбеддер в MIG](deploy/embed-mig/deployment.yaml) и [эмбеддер с MPS](deploy/embed-mps/deployment.yaml). Скопируйте их в отдельные каталоги GitOps, задайте классы A30 и создайте отдельные Application.
+Подготовлены values для [эмбеддера в MIG](values/embed-mig.yaml) и [эмбеддера с MPS](values/embed-mps.yaml). Они используют тот же чарт, но отдельные [Application](argocd/embed-mig.yaml) и [Application MPS](argocd/embed-mps.yaml), собственные site-values и destination кластера с A30.
 
 ```bash
 export MIG_CONTEXT=cluster-with-a30
@@ -326,14 +331,14 @@ Gemma assistant — эксперимент вне основного A/B. Сра
 Сначала выгрузите результаты из `/runtime`: это временный каталог Pod. Затем остановите ручные Gemma через Git:
 
 ```bash
-yq -i '.spec.replicas = 0' "$DEMO_DIR/gemma-a/deployment.yaml"
-yq -i '.spec.replicas = 0' "$DEMO_DIR/gemma-b/deployment.yaml"
-git add -- "$DEMO_DIR/gemma-a/deployment.yaml" "$DEMO_DIR/gemma-b/deployment.yaml"
+yq -i '.replicaCount = 0' "$DEMO_DIR/values/gemma-a.yaml"
+yq -i '.replicaCount = 0' "$DEMO_DIR/values/gemma-b.yaml"
+git add -- "$DEMO_DIR/values/gemma-a.yaml" "$DEMO_DIR/values/gemma-b.yaml"
 git commit -S -s -m "Stop HardFest Gemma workloads"
 git push
 ```
 
-Синхронизируйте коммит по блоку из раздела A/B. Для других ручных сервисов повторите действие в их Deployment. Платформенные сервисы удаляйте через InferenceService, не через дочерний Deployment.
+Синхронизируйте коммит по блоку из раздела A/B. Для других ручных сервисов повторите действие в их values. Платформенные сервисы удаляйте через InferenceService, не через дочерний Deployment.
 
 ```bash
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims,pvc

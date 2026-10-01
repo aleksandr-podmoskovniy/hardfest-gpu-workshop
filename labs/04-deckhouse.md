@@ -23,7 +23,7 @@ API-модель, контекст и параметры генерации со
 ## Последовательность
 
 1. Откройте рецепт Gemma 64K и сопоставьте его параметры с ручным B.
-2. Остановите Application A изменением replicas в Git, push/sync.
+2. Остановите Application A изменением replicaCount в values, push/sync.
 3. Создайте в Console сервис `hf-platform-gemma` с той же моделью из ai-models,
    рецептом Gemma 64K и стратегией Throughput.
 4. Проверьте итоговый план: образ, GPU-класс, max-model-len, KV dtype, chunking,

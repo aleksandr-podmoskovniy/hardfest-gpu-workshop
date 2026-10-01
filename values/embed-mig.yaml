@@ -1,0 +1,35 @@
+# Standalone profile; do not stack B variants.
+fullnameOverride: hf-embed-mig
+replicaCount: 0
+profile: embed-mig
+nodeSelector:
+  kubernetes.io/hostname: REPLACE_MIG_NODE
+dra:
+  deviceClassName: REPLACE_GENERATED_MIG_DEVICECLASS
+  count: 1
+  capacity: {}
+  config: []
+modelVolumes:
+  - name: embedding
+    claimName: REPLACE_EMBEDDING_PVC
+    mountPath: /models/embedding
+    subPath: REPLACE_EMBEDDING_MODEL_SUBPATH
+resources:
+  requests:
+    cpu: "2"
+    memory: 4Gi
+    ephemeral-storage: 4Gi
+  limits:
+    memory: 12Gi
+    ephemeral-storage: 24Gi
+shmSize: 8Gi
+vllm:
+  model: /models/embedding
+  served-model-name: embedding
+  host: 0.0.0.0
+  port: 8000
+  runner: pooling
+  dtype: bfloat16
+  max-model-len: 8192
+  max-num-seqs: 8
+  gpu-memory-utilization: 0.75

@@ -8,7 +8,7 @@ GitHub содержит самостоятельный воркшоп, схем�
 
 1. Измените профиль в GitLab, review diff, commit/push/sync.
 2. Проверьте реально запущенный образ, флаги, GPU и ответ API.
-3. Перенесите только универсальные изменения в `deploy/` публичного репозитория.
+3. Перенесите только универсальные изменения в `values/` и `charts/` публичного репозитория.
 4. Обновите README, лабораторную и STATUS. Измерения публикуйте с условиями и исходными данными.
 5. Замените адреса, DeviceClass, PVC и ноды placeholders; не копируйте Secrets.
 
@@ -27,6 +27,7 @@ git diff --stat
 
 ```bash
 python3 -m pip install -r requirements-dev.txt
+helm lint charts/vllm-runtime --strict -f values/gemma-b.yaml
 python3 scripts/check_manifests.py
 python3 -m unittest discover -s tests -v
 python3 scripts/check_public.py

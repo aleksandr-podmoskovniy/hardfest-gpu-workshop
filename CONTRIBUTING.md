@@ -2,8 +2,14 @@
 
 Одна правка — одна понятная цель. Теорию отделять от измерений и от версии площадки. Любое число производительности сопровождается проверяемым отчётом.
 
+Для проверок нужны Python 3 и Helm 3+. Тесты рендерят все восемь профилей локально,
+сравнивают ресурсы с контрольным снимком до миграции и проверяют checksum/DRA-ссылки.
+
 ```bash
 python3 -m pip install -r requirements-dev.txt
+for profile in values/*.yaml; do
+  helm lint charts/vllm-runtime --strict -f "$profile" || exit 1
+done
 python3 scripts/check_manifests.py
 python3 -m unittest discover -s tests -v
 python3 scripts/check_public.py

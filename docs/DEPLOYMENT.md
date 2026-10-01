@@ -1,7 +1,7 @@
 # Порядок развёртывания
 
 1. Подготовьте ноды, DRA, классы, namespace и PVC по [SETUP](SETUP.md).
-2. Перенесите [манифесты](../deploy/README.md) в GitLab.
+2. Перенесите [чарт и values](../charts/vllm-runtime/README.md) в GitLab.
 3. Зарегистрируйте два Application в управляющем кластере.
 4. Примените через Argo коммит с нулём реплик и проверьте состав ресурсов.
 5. Включите A, дождитесь API; затем B. Две модели занимают две разные DRA-заявки.
@@ -29,7 +29,7 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-b --t
 
 A/B 64K → остановка A → платформенная Gemma 64K рядом с B →
 остановка платформенной Gemma → B 128K без RAM → B 128K с RAM.
-Для каждого этапа используется соответствующий [рецепт AI Inference](../labs/04-deckhouse.md#рецепты-мастер-класса).
+Ручные этапы используют соответствующие values; платформенные — [рецепты AI Inference](../labs/04-deckhouse.md#рецепты-мастер-класса).
 Assistant и Qwen — отдельные эксперименты; результаты подготовки и проверок
 фиксируются в [STATUS](STATUS.md).
 MIG/MPS использует собственные Application с правильным destination для A30.
@@ -38,7 +38,7 @@ MIG/MPS использует собственные Application с правил�
 
 Отмените свой коммит через git revert, отправьте изменения и синхронизируйте
 ту же Application. Не удаляйте PVC и не используйте force для неизменяемой DRA-заявки.
-Для нового DeviceClass создайте новый ResourceClaimTemplate и обновите ссылку в Pod.
+При изменении dra чарт создаёт новое имя ResourceClaimTemplate и обновляет ссылку Pod.
 
 Перед остановкой моделей согласуйте завершение работы участников.
 Open WebUI, Bifrost, базы знаний, namespace и веса не входят в очистку GPU-нагрузки.

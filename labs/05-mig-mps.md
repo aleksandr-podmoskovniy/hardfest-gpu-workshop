@@ -4,8 +4,8 @@
 MIG Manager config. GPUClass/GPUPool создаёт DeviceClass; DRA выдаёт заявки
 и формирует MIG-разделы по потребности.
 
-Подготовленные исходники: [MIG](../deploy/embed-mig/deployment.yaml) и
-[MPS поверх MIG](../deploy/embed-mps/deployment.yaml). Эти workload по умолчанию выключены.
+Подготовленные исходники: [MIG](../values/embed-mig.yaml) и
+[MPS поверх MIG](../values/embed-mps.yaml). Эти workload по умолчанию выключены.
 Их Application должен указывать на кластер с A30, не автоматически на кластер H100.
 
 ## Согласовать класс и квоту
@@ -26,8 +26,32 @@ MPS-пример запрашивает sharePercent 25 и задаёт 4 GiB pi
 
 ## Запуск через GitOps
 
-Перенесите каталоги в свою GitLab-репу и создайте отдельные Application.
+Используйте тот же чарт и отдельные values; создайте [Application MIG](../argocd/embed-mig.yaml) и [Application MPS](../argocd/embed-mps.yaml). Задайте для каждого собственный site-файл с классом, нодой и PVC.
 Порядок такой же, как для Gemma: diff → dry-run → commit/push → sync.
+Из k8s-config подготовьте привязки и Application:
+
+```bash
+for PROFILE in embed-mig embed-mps; do
+  cp "../hardfest-gpu-workshop/examples/site-$PROFILE.yaml" "$DEMO_DIR/site/$PROFILE.yaml"
+  cp "../hardfest-gpu-workshop/argocd/$PROFILE.yaml" "$DEMO_DIR/argo-app/$PROFILE.yaml"
+done
+```
+
+Заполните site-файлы, project, source и destination каждого Application.
+Затем включите реплики и проверьте рендер:
+
+```bash
+set -o pipefail
+for PROFILE in embed-mig embed-mps; do
+  yq -i '.replicaCount = 1' "$DEMO_DIR/values/$PROFILE.yaml"
+  helm template "hf-$PROFILE" "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
+    -f "$DEMO_DIR/values/$PROFILE.yaml" -f "$DEMO_DIR/site/$PROFILE.yaml" |
+    kubectl --context "$MIG_CONTEXT" apply --dry-run=server -f - || exit 1
+done
+```
+
+Отправьте коммит, зарегистрируйте эти два Application и выполните sync по
+[общему порядку](../docs/GITOPS.md#3-зарегистрировать-application-и-выполнить-sync).
 После запуска:
 
 ```bash
@@ -52,6 +76,6 @@ curl --fail --max-time 60 http://127.0.0.1:18003/v1/embeddings \
 Сравните одиночную и совместную нагрузку: latency, ошибки, пик памяти.
 25% квоты не равны 25% скорости. Аппаратная граница изоляции — MIG.
 
-Для освобождения изменяйте replicas через Git и sync. Проверяйте исчезновение
+Для освобождения изменяйте replicaCount в values через Git и sync. Проверяйте исчезновение
 заявок и доступную ёмкость. Геометрия может сохраняться согласно политике драйвера;
 это не повод удалять GPUClass, namespace или finalizers.

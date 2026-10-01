@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: hardfest-gemma-b
+  name: hardfest-qwen-tp2
   namespace: argocd
 spec:
   project: default
@@ -10,10 +10,10 @@ spec:
     targetRevision: hardfest-demo
     path: argo-projects/gpu-cluster/hardfest-demo/charts/vllm-runtime
     helm:
-      releaseName: hf-gemma-b
+      releaseName: hf-qwen-tp2
       valueFiles:
-        - ../../values/gemma-b.yaml
-        - ../../site/gemma.yaml
+        - ../../values/qwen-tp2.yaml
+        - ../../site/qwen-tp2.yaml
   destination:
     name: gpu-cluster
     namespace: hardfest-demo

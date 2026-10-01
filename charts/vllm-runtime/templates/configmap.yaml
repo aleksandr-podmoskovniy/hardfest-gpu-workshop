@@ -1,0 +1,11 @@
+{{- include "vllm.validate" . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "vllm.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vllm.labels" . | nindent 4 }}
+data:
+  profile.yaml: |-
+    {{- include "vllm.config" . | nindent 4 }}

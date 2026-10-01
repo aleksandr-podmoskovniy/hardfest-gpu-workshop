@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="670" viewBox="0 0 1200 670" role="img" aria-labelledby="title desc">
-<title id="title">Доставка манифестов через Argo CD</title><desc id="desc">Обычные YAML; управление и GPU-нагрузка находятся в разных кластерах.</desc>
+<title id="title">Helm через GitLab и Argo CD</title><desc id="desc">Один чарт, отдельные values; управление и GPU-нагрузка в разных кластерах.</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
 <rect x="1" y="1" width="1198" height="668" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
 <rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
 <text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="64" dy="0">Доставка манифестов через Argo CD</tspan>
+<tspan x="64" dy="0">Helm через GitLab и Argo CD</tspan>
 </text>
 <text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
-<tspan x="64" dy="0">Обычные YAML; управление и GPU-нагрузка находятся в разных кластерах.</tspan>
+<tspan x="64" dy="0">Один чарт, отдельные values; управление и GPU-нагрузка в разных кластерах.</tspan>
 </text>
 <rect x="48" y="151" width="322" height="150" rx="14" fill="#f1f4f8" stroke="#5e6572" stroke-width="2"/>
 <text x="70" y="190" font-size="27" fill="#5e6572" text-anchor="start" font-weight="700">
@@ -24,8 +24,8 @@
 <tspan x="462" dy="0">GitLab / k8s-config</tspan>
 </text>
 <text x="462" y="227" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="462" dy="0">Пять YAML на сервис + Application</tspan>
-<tspan x="462" dy="29.700000000000003">Имена нод, PVC и классов вашей площадки</tspan>
+<tspan x="462" dy="0">Чарт + профиль values + привязки площадки</tspan>
+<tspan x="462" dy="29.700000000000003">Application: Helm source, без autosync</tspan>
 <tspan x="462" dy="29.700000000000003">diff → подписанный commit → push</tspan>
 </text>
 <path d="M 372 225 H 438" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
@@ -37,8 +37,8 @@
 <tspan x="70" dy="0">Управляющий кластер</tspan>
 </text>
 <text x="70" y="458" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="70" dy="0">Argo CD / Application</tspan>
-<tspan x="70" dy="29.700000000000003">source: GitLab + каталог + ревизия</tspan>
+<tspan x="70" dy="0">Argo CD: Helm render → sync</tspan>
+<tspan x="70" dy="29.700000000000003">source: GitLab + чарт + values</tspan>
 <tspan x="70" dy="29.700000000000003">destination: GPU-кластер</tspan>
 </text>
 <rect x="642" y="382" width="510" height="181" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
@@ -59,7 +59,7 @@
 <tspan x="587" dy="0">sync</tspan>
 </text>
 <text x="48" y="611" font-size="25" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="48" dy="0">Новая конфигурация vLLM → новый checksum Pod → перезапуск Recreate</tspan>
+<tspan x="48" dy="0">Изменение values → checksum от Helm → перезапуск Recreate</tspan>
 </text>
 <text x="48" y="642" font-size="20" fill="#5e6572" text-anchor="start">
 <tspan x="48" dy="0">Примеры выключены: replicas = 0, без autosync. Секреты передаются отдельно от Git.</tspan>

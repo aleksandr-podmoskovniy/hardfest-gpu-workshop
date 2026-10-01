@@ -1,0 +1,13 @@
+# Private site binding; keep runtime and resource settings in the profile.
+nodeSelector:
+  kubernetes.io/hostname: REPLACE_H100_NODE
+tolerations: []
+dra:
+  deviceClassName: REPLACE_GENERATED_H100_DEVICECLASS
+modelVolumes:
+  - name: qwen
+    claimName: REPLACE_QWEN_PVC
+    mountPath: /models/qwen
+    subPath: REPLACE_QWEN_MODEL_SUBPATH
+networkPolicy:
+  extraIngress: []

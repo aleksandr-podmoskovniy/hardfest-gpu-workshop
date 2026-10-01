@@ -1,0 +1,250 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "replicaCount",
+    "image",
+    "dra",
+    "vllm",
+    "modelVolumes"
+  ],
+  "properties": {
+    "fullnameOverride": {
+      "type": "string",
+      "pattern": "^$|^[a-z][a-z0-9-]{0,40}[a-z0-9]$"
+    },
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "profile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "image": {
+      "type": "string",
+      "pattern": "^.+@sha256:[0-9a-f]{64}$"
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "nodeSelector": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "tolerations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "dra": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deviceClassName",
+        "count",
+        "capacity",
+        "config"
+      ],
+      "properties": {
+        "deviceClassName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "capacity": {
+          "type": "object"
+        },
+        "config": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "modelVolumes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "claimName",
+          "mountPath",
+          "subPath"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "claimName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mountPath": {
+            "type": "string",
+            "pattern": "^/models/[a-zA-Z0-9_-]+$"
+          },
+          "subPath": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^/].*$"
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requests",
+        "limits"
+      ],
+      "properties": {
+        "requests": {
+          "type": "object",
+          "required": [
+            "cpu",
+            "memory"
+          ],
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9]+(\\.[0-9]+)?(Ki|Mi|Gi|Ti|m)?$"
+          }
+        },
+        "limits": {
+          "type": "object",
+          "required": [
+            "memory"
+          ],
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9]+(\\.[0-9]+)?(Ki|Mi|Gi|Ti|m)?$"
+          }
+        }
+      }
+    },
+    "shmSize": {
+      "type": "string",
+      "pattern": "^[0-9]+(\\.[0-9]+)?(Ki|Mi|Gi|Ti|m)?$"
+    },
+    "runtimeSize": {
+      "type": "string",
+      "pattern": "^[0-9]+(\\.[0-9]+)?(Ki|Mi|Gi|Ti|m)?$"
+    },
+    "vllm": {
+      "type": "object",
+      "required": [
+        "model",
+        "served-model-name",
+        "host",
+        "port"
+      ],
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "served-model-name": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          ]
+        },
+        "host": {
+          "const": "0.0.0.0"
+        },
+        "port": {
+          "const": 8000
+        },
+        "tensor-parallel-size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max-model-len": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "enable-prefix-caching": {
+          "type": "boolean"
+        },
+        "enable-chunked-prefill": {
+          "type": "boolean"
+        },
+        "enforce-eager": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    },
+    "extraEnv": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {
+            "type": "string"
+          },
+          "valueFrom": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "networkPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "extraIngress"
+      ],
+      "properties": {
+        "extraIngress": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

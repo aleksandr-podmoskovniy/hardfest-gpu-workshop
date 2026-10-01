@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: hardfest-gemma-b
+  name: hardfest-embed-mig
   namespace: argocd
 spec:
   project: default
@@ -10,12 +10,12 @@ spec:
     targetRevision: hardfest-demo
     path: argo-projects/gpu-cluster/hardfest-demo/charts/vllm-runtime
     helm:
-      releaseName: hf-gemma-b
+      releaseName: hf-embed-mig
       valueFiles:
-        - ../../values/gemma-b.yaml
-        - ../../site/gemma.yaml
+        - ../../values/embed-mig.yaml
+        - ../../site/embed-mig.yaml
   destination:
-    name: gpu-cluster
+    name: cluster-with-a30
     namespace: hardfest-demo
   syncPolicy:
     syncOptions:

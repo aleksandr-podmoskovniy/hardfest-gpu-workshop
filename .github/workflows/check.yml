@@ -11,7 +11,15 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -r requirements-dev.txt
-      - name: Validate plain YAML and profile checksums
+      - uses: azure/setup-helm@v4.3.1
+        with:
+          version: v3.17.3
+      - name: Lint all runtime profiles
+        run: |
+          for profile in values/*.yaml; do
+            helm lint charts/vllm-runtime --strict -f "$profile"
+          done
+      - name: Validate rendered resources and automatic checksums
         run: python3 scripts/check_manifests.py
       - name: Verify committed illustrations match their source
         run: |

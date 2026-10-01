@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vllm.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vllm.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "vllm.name" . | quote }}
+  template:
+    metadata:
+      labels:
+        {{- include "vllm.labels" . | nindent 8 }}
+      annotations:
+        workshop/profile: {{ .Values.profile | quote }}
+        checksum/vllm-config: {{ include "vllm.config" . | sha256sum | quote }}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 120
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      resourceClaims:
+        - name: gpu
+          resourceClaimTemplateName: {{ include "vllm.claimName" . }}
+      containers:
+        - name: vllm
+          image: {{ .Values.image | quote }}
+          imagePullPolicy: IfNotPresent
+          command: [vllm, serve, --config, /etc/vllm/profile.yaml]
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: HF_HUB_OFFLINE
+              value: "1"
+            - name: TRANSFORMERS_OFFLINE
+              value: "1"
+            - name: HF_HOME
+              value: /runtime/huggingface
+            - name: VLLM_CACHE_ROOT
+              value: /runtime/vllm
+            - name: XDG_CACHE_HOME
+              value: /runtime/cache
+            - name: TOKENIZERS_PARALLELISM
+              value: "false"
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+            claims:
+              - name: gpu
+          volumeMounts:
+            - name: profile
+              mountPath: /etc/vllm
+              readOnly: true
+            - name: runtime
+              mountPath: /runtime
+            - name: shm
+              mountPath: /dev/shm
+            {{- range .Values.modelVolumes }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath | quote }}
+              subPath: {{ .subPath | quote }}
+              readOnly: true
+            {{- end }}
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+            failureThreshold: 180
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 5
+      volumes:
+        - name: profile
+          configMap:
+            name: {{ include "vllm.name" . }}
+        - name: runtime
+          emptyDir:
+            sizeLimit: {{ .Values.runtimeSize | quote }}
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.shmSize | quote }}
+        {{- range .Values.modelVolumes }}
+        - name: {{ .name }}
+          persistentVolumeClaim:
+            claimName: {{ .claimName | quote }}
+            readOnly: true
+        {{- end }}

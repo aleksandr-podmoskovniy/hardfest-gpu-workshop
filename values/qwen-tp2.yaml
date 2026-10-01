@@ -1,0 +1,49 @@
+# Standalone profile; do not stack B variants.
+fullnameOverride: hf-qwen-tp2
+replicaCount: 0
+profile: tp2
+nodeSelector:
+  kubernetes.io/hostname: REPLACE_H100_NODE
+dra:
+  deviceClassName: REPLACE_GENERATED_H100_DEVICECLASS
+  count: 2
+  capacity: {}
+  config: []
+modelVolumes:
+  - name: qwen
+    claimName: REPLACE_QWEN_PVC
+    mountPath: /models/qwen
+    subPath: REPLACE_QWEN_MODEL_SUBPATH
+resources:
+  requests:
+    cpu: "24"
+    memory: 96Gi
+    ephemeral-storage: 4Gi
+  limits:
+    memory: 200Gi
+    ephemeral-storage: 24Gi
+shmSize: 8Gi
+vllm:
+  model: /models/qwen
+  served-model-name: qwen3.8-flash-next
+  host: 0.0.0.0
+  port: 8000
+  dtype: bfloat16
+  tensor-parallel-size: 2
+  max-model-len: 262144
+  max-num-seqs: 16
+  gpu-memory-utilization: 0.9
+  language-model-only: true
+  reasoning-parser: qwen3
+  generation-config: vllm
+  enable-prefix-caching: true
+  enable-chunked-prefill: true
+  max-num-batched-tokens: 4096
+  enforce-eager: false
+  max-cudagraph-capture-size: 32
+  quantization: modelopt
+  moe-backend: marlin
+  engram-config:
+    cpu_offload: false
+  distributed-executor-backend: mp
+  mamba-cache-mode: align
