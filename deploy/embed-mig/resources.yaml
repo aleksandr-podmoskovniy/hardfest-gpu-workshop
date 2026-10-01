@@ -153,6 +153,7 @@ spec:
     app.kubernetes.io/name: "hf-embed-mig"
   ports:
     -
+      name: "http"
       port: 8000
       targetPort: 8000
   type: "ClusterIP"

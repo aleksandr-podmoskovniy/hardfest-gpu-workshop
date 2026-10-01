@@ -1,0 +1,44 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hardfest-vllm
+  namespace: d8-monitoring
+  labels:
+    prometheus: main
+    app.kubernetes.io/part-of: hardfest-gpu-workshop
+spec:
+  namespaceSelector:
+    matchNames:
+      - hardfest-demo
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: hardfest-gpu-workshop
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 10s
+      scrapeTimeout: 5s
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hardfest-prometheus
+  namespace: hardfest-demo
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: hardfest-gpu-workshop
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: d8-monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+              prometheus: main
+      ports:
+        - port: 8000
+          protocol: TCP

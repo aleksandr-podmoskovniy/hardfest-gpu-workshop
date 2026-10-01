@@ -1,0 +1,4122 @@
+apiVersion: observability.deckhouse.io/v1alpha1
+kind: ClusterObservabilityDashboard
+metadata:
+  name: ai-inference-live
+  annotations:
+    metadata.deckhouse.io/category: AI Platform
+    metadata.deckhouse.io/title: AI Inference / Live performance
+spec:
+  definition: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "description": "Скорость, очередь, prefill, decode и KV-кэш каждого vLLM-сервиса. Namespace и Service разделяют реплики с одинаковой моделью. GPU-панели показывают устройства выбранных узлов, а не потребление конкретного сервиса. Bifrost измеряется отдельно.",
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "links": [],
+      "liveNow": true,
+      "refresh": "10s",
+      "schemaVersion": 39,
+      "tags": [
+        "ai-inference",
+        "vllm",
+        "gpu",
+        "hardfest"
+      ],
+      "templating": {
+        "list": [
+          {
+            "current": {
+              "selected": false,
+              "text": "default",
+              "value": "default"
+            },
+            "hide": 0,
+            "includeAll": false,
+            "label": "Prometheus",
+            "multi": false,
+            "name": "ds_prometheus",
+            "options": [],
+            "query": "prometheus",
+            "refresh": 1,
+            "regex": "",
+            "skipUrlSync": false,
+            "type": "datasource"
+          },
+          {
+            "name": "namespace",
+            "label": "Namespace",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${ds_prometheus}"
+            },
+            "definition": "label_values(vllm:cache_config_info,namespace)",
+            "query": {
+              "qryType": 1,
+              "query": "label_values(vllm:cache_config_info,namespace)",
+              "refId": "namespace"
+            },
+            "hide": 0,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "options": [],
+            "refresh": 1,
+            "sort": 1,
+            "regex": "",
+            "skipUrlSync": false
+          },
+          {
+            "name": "inference_service",
+            "label": "Inference service",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${ds_prometheus}"
+            },
+            "definition": "label_values(vllm:cache_config_info{namespace=~\"$namespace\"},service)",
+            "query": {
+              "qryType": 1,
+              "query": "label_values(vllm:cache_config_info{namespace=~\"$namespace\"},service)",
+              "refId": "inference_service"
+            },
+            "hide": 0,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "options": [],
+            "refresh": 1,
+            "sort": 1,
+            "regex": "",
+            "skipUrlSync": false
+          },
+          {
+            "current": {
+              "selected": true,
+              "text": "20",
+              "value": "20"
+            },
+            "description": "Maximum number of series rendered in each multi-series chart.",
+            "hide": 0,
+            "includeAll": false,
+            "label": "Chart series",
+            "multi": false,
+            "name": "series_limit",
+            "options": [
+              {
+                "selected": false,
+                "text": "10",
+                "value": "10"
+              },
+              {
+                "selected": true,
+                "text": "20",
+                "value": "20"
+              },
+              {
+                "selected": false,
+                "text": "50",
+                "value": "50"
+              }
+            ],
+            "query": "10,20,50",
+            "skipUrlSync": false,
+            "type": "custom"
+          },
+          {
+            "name": "pod",
+            "label": "Runtime pod",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${ds_prometheus}"
+            },
+            "definition": "label_values(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"},pod)",
+            "query": {
+              "qryType": 1,
+              "query": "label_values(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"},pod)",
+              "refId": "pod"
+            },
+            "hide": 0,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "options": [],
+            "refresh": 1,
+            "sort": 1,
+            "regex": "",
+            "skipUrlSync": false
+          },
+          {
+            "name": "node",
+            "label": "GPU node",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${ds_prometheus}"
+            },
+            "definition": "label_values(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\"},node)",
+            "query": {
+              "qryType": 1,
+              "query": "label_values(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\"},node)",
+              "refId": "node"
+            },
+            "hide": 0,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "options": [],
+            "refresh": 1,
+            "sort": 1,
+            "regex": "",
+            "skipUrlSync": false
+          },
+          {
+            "name": "gateway_namespace",
+            "label": "Bifrost namespace",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${ds_prometheus}"
+            },
+            "definition": "label_values(bifrost_success_requests_total,namespace)",
+            "query": {
+              "qryType": 1,
+              "query": "label_values(bifrost_success_requests_total,namespace)",
+              "refId": "gateway_namespace"
+            },
+            "hide": 0,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "options": [],
+            "refresh": 1,
+            "sort": 1,
+            "regex": "",
+            "skipUrlSync": false
+          },
+          {
+            "name": "gateway_model",
+            "label": "Bifrost model",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${ds_prometheus}"
+            },
+            "definition": "label_values(bifrost_success_requests_total{namespace=~\"$gateway_namespace\"},model)",
+            "query": {
+              "qryType": 1,
+              "query": "label_values(bifrost_success_requests_total{namespace=~\"$gateway_namespace\"},model)",
+              "refId": "gateway_model"
+            },
+            "hide": 0,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "options": [],
+            "refresh": 1,
+            "sort": 1,
+            "regex": "",
+            "skipUrlSync": false
+          }
+        ]
+      },
+      "time": {
+        "from": "now-30m",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": [
+          "5s",
+          "10s",
+          "30s",
+          "1m",
+          "5m"
+        ]
+      },
+      "timezone": "browser",
+      "title": "AI Inference / Live performance",
+      "uid": "ai-inference-live",
+      "version": 3,
+      "weekStart": "",
+      "panels": [
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "id": 100,
+          "panels": [],
+          "title": "Inference fleet overview",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Наличие метрик и результат последнего scrape. UP=1 не означает успешный ответ модели. При отсутствии scrape более часа строка исчезнет.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "color-background"
+                },
+                "filterable": true,
+                "inspect": false
+              },
+              "decimals": 0,
+              "mappings": [
+                {
+                  "options": {
+                    "0": {
+                      "color": "red",
+                      "index": 0,
+                      "text": "DOWN"
+                    },
+                    "1": {
+                      "color": "green",
+                      "index": 1,
+                      "text": "UP"
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Service"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "auto"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 1
+          },
+          "id": 1,
+          "options": {
+            "cellHeight": "sm",
+            "enablePagination": true,
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": false,
+                "displayName": "Service"
+              }
+            ]
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "max by(namespace,service,pod)(up{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}) and on(namespace,service,pod) max by(namespace,service,pod)(max_over_time(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[1h]))",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "{{namespace}} / {{service}}",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "title": "Inference service inventory",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                },
+                "indexByName": {
+                  "namespace": 0,
+                  "service": 1,
+                  "pod": 2,
+                  "Value": 3
+                },
+                "renameByName": {
+                  "namespace": "Namespace",
+                  "service": "Service",
+                  "pod": "Pod",
+                  "Value": "Scrape UP"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 9
+          },
+          "id": 101,
+          "panels": [],
+          "title": "vLLM: пропускная способность и задержка",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Completed requests excluding aborts and runtime errors.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed",
+                "fixedColor": "green"
+              },
+              "decimals": 2,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 0,
+            "y": 10
+          },
+          "id": 5,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum(rate(vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",finished_reason!~\"abort|error\"}[$__rate_interval]))",
+              "legendFormat": "Successful requests/s",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "Successful requests/s",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Только завершения с finished_reason=abort|error внутри vLLM. Не включает HTTP-ошибки до движка. Нет запросов — нет значения.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 1,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.01
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.05
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 4,
+            "y": 10
+          },
+          "id": 6,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum(rate(vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",finished_reason=~\"abort|error\"}[$__rate_interval])) / (sum(rate(vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "legendFormat": "Error ratio",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "Engine abort / error ratio",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Prompt-processing throughput for the selected services.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed",
+                "fixedColor": "blue"
+              },
+              "decimals": 1,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 8,
+            "y": 10
+          },
+          "id": 7,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum(rate(vllm:prompt_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))",
+              "legendFormat": "Input tokens/s",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "Input tokens/s",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Generation throughput for the selected services.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed",
+                "fixedColor": "green"
+              },
+              "decimals": 1,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 12,
+            "y": 10
+          },
+          "id": 8,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum(rate(vllm:generation_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))",
+              "legendFormat": "Output tokens/s",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "Output tokens/s",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "TTFT внутри vLLM включает ожидание в очереди и работу до первого токена. Не равно времени prefill и не включает весь путь браузер → gateway.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 3,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.5
+                  },
+                  {
+                    "color": "red",
+                    "value": 2
+                  }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 16,
+            "y": 10
+          },
+          "id": 9,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:time_to_first_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "legendFormat": "TTFT p95",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "TTFT p95",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Полная длительность запроса по измерению vLLM, не браузера. Для embedding/reranker ориентируйтесь на requests/s и E2E, не на генерацию токенов.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 3,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 5
+                  }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 20,
+            "y": 10
+          },
+          "id": 10,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:e2e_request_latency_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\"}[$__rate_interval])))",
+              "legendFormat": "End-to-end p95",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "End-to-end p95",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Successful request rate split by platform inference service.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "min": 0,
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 15
+          },
+          "id": 11,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, sum by(namespace, service)(rate(vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",finished_reason!~\"abort|error\"}[$__rate_interval])))",
+              "legendFormat": "{{namespace}} / {{service}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Requests/s by service",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Input and output token throughput. Non-generative services can legitimately report near-zero output tokens.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "min": 0,
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 15
+          },
+          "id": 12,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, sum by (namespace, service) (rate(vllm:prompt_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "legendFormat": "{{namespace}} / {{service}} / input",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, sum by (namespace, service) (rate(vllm:generation_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "legendFormat": "{{namespace}} / {{service}} / output",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Token throughput by service",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "TTFT внутри vLLM включает ожидание в очереди и работу до первого токена. Не равно времени prefill и не включает весь путь браузер → gateway.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 3,
+              "min": 0,
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 15
+          },
+          "id": 13,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:time_to_first_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))))",
+              "legendFormat": "{{namespace}} / {{service}} / TTFT",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:e2e_request_latency_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\"}[$__rate_interval]))))",
+              "legendFormat": "{{namespace}} / {{service}} / E2E",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Latency p95 by service",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 23
+          },
+          "id": 102,
+          "panels": [],
+          "title": "Scheduler and concurrency",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Requests currently executing across the selected services.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed",
+                "fixedColor": "blue"
+              },
+              "decimals": 1,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "blue",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 0,
+            "y": 24
+          },
+          "id": 14,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum(vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})",
+              "legendFormat": "Running now",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "Running now",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Queued requests. Sustained non-zero values indicate saturation or long prefill.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 1,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 4
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 6,
+            "y": 24
+          },
+          "id": 15,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum(vllm:num_requests_waiting{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})",
+              "legendFormat": "Waiting now",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "Waiting now",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Scheduler preemptions in the visible time range. Production target is zero.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 1,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 12,
+            "y": 24
+          },
+          "id": 16,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum(increase(vllm:num_preemptions_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__range]))",
+              "legendFormat": "Preemptions in range",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "Preemptions in range",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "95th percentile time spent waiting in the scheduler queue.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 3,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.5
+                  },
+                  {
+                    "color": "red",
+                    "value": 2
+                  }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 18,
+            "y": 24
+          },
+          "id": 17,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:request_queue_time_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "legendFormat": "Queue time p95",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "Queue time p95",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Running and waiting concurrency over time.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "min": 0,
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 29
+          },
+          "id": 18,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, sum by (namespace, service) (vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}))",
+              "legendFormat": "{{namespace}} / {{service}} / running",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, sum by (namespace, service) (vllm:num_requests_waiting{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}))",
+              "legendFormat": "{{namespace}} / {{service}} / waiting",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Concurrent requests by service",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Median and tail scheduler queue latency.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 3,
+              "min": 0,
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 29
+          },
+          "id": 19,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, histogram_quantile(0.50, sum by (namespace, service, le) (rate(vllm:request_queue_time_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))))",
+              "legendFormat": "{{namespace}} / {{service}} / p50",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:request_queue_time_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))))",
+              "legendFormat": "{{namespace}} / {{service}} / p95",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Queue latency by service",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 37
+          },
+          "id": 103,
+          "panels": [],
+          "title": "Long context and KV-cache efficiency",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Current GPU KV-cache occupancy. High occupancy is useful until waiting or preemptions appear.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 1,
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.75
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.93
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 38
+          },
+          "id": 20,
+          "options": {
+            "minVizHeight": 100,
+            "minVizWidth": 100,
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "sizing": "auto"
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "max(vllm:kv_cache_usage_perc{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})",
+              "legendFormat": "GPU KV cache fill",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "GPU KV cache fill",
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Fraction of prefix-cache queries served from GPU cache. Zero during idle periods is not an error.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 1,
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "blue",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.2
+                  },
+                  {
+                    "color": "green",
+                    "value": 0.5
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 6,
+            "y": 38
+          },
+          "id": 21,
+          "options": {
+            "minVizHeight": 100,
+            "minVizWidth": 100,
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "sizing": "auto"
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum(rate(vllm:prefix_cache_hits_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum(rate(vllm:prefix_cache_queries_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "legendFormat": "Prefix cache hit",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "Prefix cache hit",
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Попадания во внешний KV-кэш относительно запросов к нему. Метрика не доказывает выделение RAM. Без внешнего кэша или запросов значение отсутствует.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 1,
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "blue",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.2
+                  },
+                  {
+                    "color": "green",
+                    "value": 0.5
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 12,
+            "y": 38
+          },
+          "id": 22,
+          "options": {
+            "minVizHeight": 100,
+            "minVizWidth": 100,
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "sizing": "auto"
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum(rate(vllm:external_prefix_cache_hits_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum(rate(vllm:external_prefix_cache_queries_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "legendFormat": "External KV hit",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "External KV hit",
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "95th percentile prompt length in tokens. No value while there is no traffic.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed",
+                "fixedColor": "blue"
+              },
+              "decimals": 1,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 32768
+                  },
+                  {
+                    "color": "orange",
+                    "value": 57344
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 18,
+            "y": 38
+          },
+          "id": 23,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:request_prompt_tokens_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "legendFormat": "Prompt length p95",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "Prompt length p95",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "GPU KV-cache occupancy split by inference service.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 2,
+              "min": 0,
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 44
+          },
+          "id": 24,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, max by (namespace, service) (vllm:kv_cache_usage_perc{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}))",
+              "legendFormat": "{{namespace}} / {{service}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "KV-cache fill by service",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "GPU prefix reuse and external KV reuse over time.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 2,
+              "min": 0,
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 44
+          },
+          "id": 25,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit,sum by(namespace, service)(rate(vllm:prefix_cache_hits_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:prefix_cache_queries_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0))",
+              "legendFormat": "{{namespace}} / {{service}} / prefix",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit,sum by(namespace, service)(rate(vllm:external_prefix_cache_hits_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:external_prefix_cache_queries_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0))",
+              "legendFormat": "{{namespace}} / {{service}} / external KV",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Cache reuse by service",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Prompt-length distribution. This panel proves actual long-context traffic rather than configured limits.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "min": 0,
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 44
+          },
+          "id": 26,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, histogram_quantile(0.50, sum by (namespace, service, le) (rate(vllm:request_prompt_tokens_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))))",
+              "legendFormat": "{{namespace}} / {{service}} / p50",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:request_prompt_tokens_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))))",
+              "legendFormat": "{{namespace}} / {{service}} / p95",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Prompt length by service",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 52
+          },
+          "id": 104,
+          "panels": [],
+          "title": "GPU выбранных узлов (не атрибуция сервису)",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 1,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "blue",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 50
+                  },
+                  {
+                    "color": "orange",
+                    "value": 90
+                  }
+                ]
+              },
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 0,
+            "y": 53
+          },
+          "id": 27,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "max(((DCGM_FI_DEV_GPU_UTIL{Hostname=~\"$node\"} <= 100) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
+              "legendFormat": "GPU utilization",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "GPU utilization",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 1,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "blue",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "watt"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 6,
+            "y": 53
+          },
+          "id": 28,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "max(((DCGM_FI_DEV_POWER_USAGE{Hostname=~\"$node\"} < 1000000000) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
+              "legendFormat": "Peak GPU power",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "Peak GPU power",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 1,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 80
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 12,
+            "y": 53
+          },
+          "id": 29,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "max(((DCGM_FI_DEV_GPU_TEMP{Hostname=~\"$node\"} < 1000000000) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
+              "legendFormat": "Peak GPU temperature",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "Peak GPU temperature",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed",
+                "fixedColor": "purple"
+              },
+              "decimals": 1,
+              "noValue": "No traffic",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 18,
+            "y": 53
+          },
+          "id": 30,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum(((DCGM_FI_DEV_FB_USED{Hostname=~\"$node\"} < 1000000000) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}))))) * 1024 * 1024",
+              "legendFormat": "GPU framebuffer used",
+              "range": false,
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "title": "GPU framebuffer used",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "min": 0,
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 58
+          },
+          "id": 31,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "max by (Hostname, device) (((DCGM_FI_DEV_GPU_UTIL{Hostname=~\"$node\"} <= 100) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
+              "legendFormat": "{{Hostname}} / {{device}} / engine",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "100 * max by (Hostname, device) (((DCGM_FI_PROF_PIPE_TENSOR_ACTIVE{Hostname=~\"$node\"} <= 1) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
+              "legendFormat": "{{Hostname}} / {{device}} / tensor",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "GPU engines",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "min": 0,
+              "unit": "watt"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "A"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "watt"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "orange"
+                    }
+                  },
+                  {
+                    "id": "custom.axisPlacement",
+                    "value": "left"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "celsius"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "red"
+                    }
+                  },
+                  {
+                    "id": "custom.axisPlacement",
+                    "value": "right"
+                  },
+                  {
+                    "id": "min",
+                    "value": 40
+                  },
+                  {
+                    "id": "max",
+                    "value": 100
+                  },
+                  {
+                    "id": "custom.thresholdsStyle",
+                    "value": {
+                      "mode": "line+area"
+                    }
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "green",
+                          "value": null
+                        },
+                        {
+                          "color": "yellow",
+                          "value": 80
+                        },
+                        {
+                          "color": "red",
+                          "value": 90
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 58
+          },
+          "id": 32,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "max by (Hostname, device) (((DCGM_FI_DEV_POWER_USAGE{Hostname=~\"$node\"} < 1000000000) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
+              "legendFormat": "{{Hostname}} / {{device}} / power",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "max by (Hostname, device) (((DCGM_FI_DEV_GPU_TEMP{Hostname=~\"$node\"} < 1000000000) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
+              "legendFormat": "{{Hostname}} / {{device}} / temperature",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Power and temperature",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "min": 0,
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 58
+          },
+          "id": 33,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "max by (Hostname, device) (((DCGM_FI_DEV_FB_USED{Hostname=~\"$node\"} < 1000000000) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}))))) * 1024 * 1024",
+              "legendFormat": "{{Hostname}} / {{device}} / GPU",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, sum by (namespace,pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))",
+              "legendFormat": "{{pod}} / RAM",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Memory footprint",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 66
+          },
+          "id": 105,
+          "panels": [],
+          "title": "Runtime workload resources",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "CPU usage by inference runtime pod. KV offload and tokenization can consume host CPU.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "min": 0,
+              "unit": "cores"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 67
+          },
+          "id": 34,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, sum by (namespace,pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}[$__rate_interval])) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))",
+              "legendFormat": "{{pod}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "CPU by runtime pod",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Working-set memory by inference runtime pod.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "min": 0,
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 67
+          },
+          "id": 35,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, sum by (namespace,pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))",
+              "legendFormat": "{{pod}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Memory by runtime pod",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Container restarts in the visible time range. Any increase requires investigation.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "min": 0,
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 67
+          },
+          "id": 36,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "topk($series_limit, sum by (namespace,pod) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\",pod=~\"$pod\"}[$__range])) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))",
+              "legendFormat": "{{pod}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Container restarts",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 75
+          },
+          "id": 106,
+          "panels": [],
+          "title": "Runtime inventory and configuration",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Фактические labels cache_config_info движка. cpu_offload_gb относится к весам, а не к KV. Отсутствующая label не означает нулевое значение.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": true,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "service"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Platform service"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 150
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "model_name"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Model"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 220
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "pod"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Runtime pod"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 235
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cache_dtype"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "KV dtype"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cpu_offload_gb"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Model CPU offload GiB"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "gpu_memory_utilization"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "GPU memory target"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "enable_prefix_caching"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Prefix cache"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "kv_offloading_backend"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "KV backend"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "kv_offloading_size"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "KV offload GiB"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "num_gpu_blocks"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "GPU KV blocks"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 76
+          },
+          "id": 37,
+          "options": {
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [],
+            "enablePagination": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "max by (namespace, service, pod, cache_dtype, cpu_offload_gb, enable_prefix_caching, gpu_memory_utilization, kv_offloading_backend, kv_offloading_size, num_gpu_blocks) (vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})",
+              "legendFormat": "Runtime configuration",
+              "range": false,
+              "refId": "A",
+              "instant": true,
+              "format": "table"
+            },
+            {
+              "editorMode": "code",
+              "expr": "max by (namespace, service, pod, model_name) (vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})",
+              "legendFormat": "Model identity",
+              "range": false,
+              "refId": "B",
+              "instant": true,
+              "format": "table"
+            }
+          ],
+          "title": "Effective inference runtime configuration",
+          "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "byVariable": false,
+                "include": {
+                  "names": [
+                    "namespace",
+                    "service",
+                    "model_name",
+                    "pod",
+                    "cache_dtype",
+                    "cpu_offload_gb",
+                    "gpu_memory_utilization",
+                    "enable_prefix_caching",
+                    "kv_offloading_backend",
+                    "kv_offloading_size",
+                    "num_gpu_blocks"
+                  ]
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "id": 200,
+          "title": "Очередь, prefill и decode — разные этапы запроса",
+          "type": "row",
+          "collapsed": false,
+          "gridPos": {
+            "x": 0,
+            "y": 86,
+            "w": 24,
+            "h": 1
+          },
+          "panels": []
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Средние: rate(sum)/rate(count), не p95. Длинный prefill отличается от ожидания допуска в scheduler. У этапов могут быть разные моменты наблюдения, не складывайте их как точную декомпозицию TTFT.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 87,
+            "w": 12,
+            "h": 8
+          },
+          "id": 201,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum by(namespace, service)(rate(vllm:request_queue_time_seconds_sum{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:request_queue_time_seconds_count{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "legendFormat": "{{namespace}} / {{service}} / queue",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "sum by(namespace, service)(rate(vllm:request_prefill_time_seconds_sum{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:request_prefill_time_seconds_count{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "legendFormat": "{{namespace}} / {{service}} / prefill",
+              "range": true,
+              "refId": "B"
+            },
+            {
+              "editorMode": "code",
+              "expr": "sum by(namespace, service)(rate(vllm:request_decode_time_seconds_sum{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:request_decode_time_seconds_count{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "legendFormat": "{{namespace}} / {{service}} / decode",
+              "range": true,
+              "refId": "C"
+            }
+          ],
+          "title": "Среднее время этапов на завершённый запрос",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "TTFT включает очередь; prefill — только соответствующий этап движка. Разность двух p95 не является p95 оставшегося этапа.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 87,
+            "w": 12,
+            "h": 8
+          },
+          "id": 202,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.95,sum by(namespace, service,le)(rate(vllm:time_to_first_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "legendFormat": "{{namespace}} / {{service}} / TTFT p95",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.95,sum by(namespace, service,le)(rate(vllm:request_prefill_time_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "legendFormat": "{{namespace}} / {{service}} / prefill p95",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Первый токен и prefill, p95",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Распределение времени на выходной токен в запросе после первого токена. Не TTFT и не суммарная пропускная способность сервиса.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 95,
+            "w": 12,
+            "h": 8
+          },
+          "id": 203,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.5,sum by(namespace, service,le)(rate(vllm:request_time_per_output_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "legendFormat": "{{namespace}} / {{service}} / p50",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.95,sum by(namespace, service,le)(rate(vllm:request_time_per_output_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "legendFormat": "{{namespace}} / {{service}} / p95",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "TPOT после первого токена",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Обратное среднее ITL по наблюдениям движка. Это не общий throughput всех сессий; общий output tokens/s показан выше.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "unit": "suffix:tok/s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 95,
+            "w": 12,
+            "h": 8
+          },
+          "id": 204,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum by(namespace, service)(rate(vllm:inter_token_latency_seconds_count{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:inter_token_latency_seconds_sum{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "legendFormat": "{{namespace}} / {{service}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Темп decode по межтокенным интервалам",
+          "type": "timeseries"
+        },
+        {
+          "id": 210,
+          "title": "KV-offload в RAM (при включённом backend)",
+          "type": "row",
+          "collapsed": false,
+          "gridPos": {
+            "x": 0,
+            "y": 103,
+            "w": 24,
+            "h": 1
+          },
+          "panels": []
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "vLLM 0.30: доля CPU KV, закреплённая активными передачами. 0 означает нет активных передач, а не пустой кэш. Не общая заполненность RAM и не выгрузка весов. No data — метрики нет.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 104,
+            "w": 8,
+            "h": 8
+          },
+          "id": 211,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "max by(namespace, service)(vllm:kv_offload_cpu_cache_usage_perc{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})",
+              "legendFormat": "{{namespace}} / {{service}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "CPU KV: доля памяти, занятая передачами",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Фактические байты записи KV; отсутствует при выключенном или другом backend.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "unit": "Bps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "x": 8,
+            "y": 104,
+            "w": 8,
+            "h": 8
+          },
+          "id": 212,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum by(namespace, service)(rate(vllm:kv_offload_store_bytes_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))",
+              "legendFormat": "{{namespace}} / {{service}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "KV: запись из GPU в RAM",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Фактические байты чтения KV; внешний cache hit сам по себе не доказывает передачу данных.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "unit": "Bps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "x": 16,
+            "y": 104,
+            "w": 8,
+            "h": 8
+          },
+          "id": 213,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum by(namespace, service)(rate(vllm:kv_offload_load_bytes_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))",
+              "legendFormat": "{{namespace}} / {{service}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "KV: чтение из RAM в GPU",
+          "type": "timeseries"
+        },
+        {
+          "id": 220,
+          "title": "Bifrost: отдельные метрики шлюза",
+          "type": "row",
+          "collapsed": false,
+          "gridPos": {
+            "x": 0,
+            "y": 112,
+            "w": 24,
+            "h": 1
+          },
+          "panels": []
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Отдельные фильтры Bifrost namespace / model. Нет объединения с vLLM по model_name: разные сервисы могут обслуживать одинаковые веса. Если gateway не экспортирует selected_key_name, различить A/B здесь нельзя.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 113,
+            "w": 8,
+            "h": 8
+          },
+          "id": 221,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum by(namespace,provider,model,selected_key_name,method,virtual_key_name)(rate(bifrost_success_requests_total{namespace=~\"$gateway_namespace\",model=~\"$gateway_model\"}[$__rate_interval]))",
+              "legendFormat": "{{namespace}} / {{provider}} / {{model}} / {{selected_key_name}} / {{method}} / {{virtual_key_name}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Gateway: успешные запросы/s",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Отдельные фильтры Bifrost namespace / model. Нет объединения с vLLM по model_name: разные сервисы могут обслуживать одинаковые веса. Если gateway не экспортирует selected_key_name, различить A/B здесь нельзя.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "x": 8,
+            "y": 113,
+            "w": 8,
+            "h": 8
+          },
+          "id": 222,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum by(namespace,provider,model,selected_key_name,method,virtual_key_name)(rate(bifrost_error_requests_total{namespace=~\"$gateway_namespace\",model=~\"$gateway_model\"}[$__rate_interval]))",
+              "legendFormat": "{{namespace}} / {{provider}} / {{model}} / {{selected_key_name}} / {{method}} / {{virtual_key_name}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Gateway: ошибки/s",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Отдельные фильтры Bifrost namespace / model. Нет объединения с vLLM по model_name: разные сервисы могут обслуживать одинаковые веса. Если gateway не экспортирует selected_key_name, различить A/B здесь нельзя.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "unit": "suffix:tok/s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "x": 16,
+            "y": 113,
+            "w": 8,
+            "h": 8
+          },
+          "id": 223,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum by(namespace,provider,model,selected_key_name,method,virtual_key_name)(rate(bifrost_output_tokens_total{namespace=~\"$gateway_namespace\",model=~\"$gateway_model\"}[$__rate_interval]))",
+              "legendFormat": "{{namespace}} / {{provider}} / {{model}} / {{selected_key_name}} / {{method}} / {{virtual_key_name}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Gateway: выходные токены/s",
+          "type": "timeseries"
+        }
+      ]
+    }
