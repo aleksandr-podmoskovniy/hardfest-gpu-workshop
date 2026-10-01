@@ -1,0 +1,11 @@
+{
+  "budget_usd": 500,
+  "budget_reset": "24h",
+  "input_usd_per_million_tokens": 10,
+  "output_usd_per_million_tokens": 20,
+  "requests_per_minute": 10,
+  "tokens_per_minute": 200000,
+  "max_concurrent_per_user": 1,
+  "max_concurrent_total": 8,
+  "demonstration_pricing": true
+}
