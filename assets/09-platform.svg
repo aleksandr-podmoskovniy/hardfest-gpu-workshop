@@ -1,14 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660" role="img" aria-labelledby="title desc">
-<title id="title">Платформа воспроизводит проверенную конфигурацию</title><desc id="desc">Схема управления: от модели и рецепта до ответа API. Не подтверждение готовности конкретного модуля.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+<title id="title">AI Inference: запуск по рецепту</title><desc id="desc">Рецепт задаёт настройки модели, платформа формирует план и запускает сервис.</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
-<rect x="1" y="1" width="1198" height="658" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="1" y="1" width="1198" height="698" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
 <rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
 <text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="64" dy="0">Платформа воспроизводит проверенную конфигурацию</tspan>
+<tspan x="64" dy="0">AI Inference: запуск по рецепту</tspan>
 </text>
 <text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
-<tspan x="64" dy="0">Схема управления: от модели и рецепта до ответа API. Не подтверждение готовности конкретного модуля.</tspan>
+<tspan x="64" dy="0">Рецепт задаёт настройки модели, платформа формирует план и запускает сервис.</tspan>
 </text>
 <rect x="48" y="150" width="322" height="122" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
 <text x="70" y="189" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
@@ -59,14 +59,15 @@
 <text x="922" y="432" font-size="20" fill="#252528" text-anchor="start">
 <tspan x="922" dy="0">Проверка ответа</tspan>
 </text>
-<rect x="48" y="506" width="1104" height="94" rx="14" fill="#fff2da" stroke="#a15b0b" stroke-width="2"/>
-<text x="72" y="545" font-size="29" fill="#a15b0b" text-anchor="start" font-weight="700">
-<tspan x="72" dy="0">Throughput — не переключатель всех оптимизаций.</tspan>
+<rect x="48" y="506" width="1104" height="128" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
+<text x="72" y="545" font-size="29" fill="#177c83" text-anchor="start" font-weight="700">
+<tspan x="72" dy="0">Все настройки эксперимента — в рецепте</tspan>
 </text>
 <text x="72" y="581" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="72" dy="0">KV-offload и MTP должны поддерживаться рецептом и реально появиться в аргументах движка.</tspan>
+<tspan x="72" dy="0">FP8 KV, prefix cache, chunked prefill и CUDA graphs.</tspan>
+<tspan x="72" dy="29.700000000000003">Расширенные рецепты: KV-кэш в RAM, Gemma assistant, Qwen TP2 + MTP.</tspan>
 </text>
-<text x="48" y="632" font-size="20" fill="#5e6572" text-anchor="start">
-<tspan x="48" dy="0">Не патчим Deployment контроллера вручную. Проверяем цепочку до API и подключаем её к тому же Bifrost.</tspan>
+<text x="48" y="672" font-size="20" fill="#5e6572" text-anchor="start">
+<tspan x="48" dy="0">Параметры задаём в рецепте; размещением и запуском управляет AI Inference.</tspan>
 </text>
 </svg>

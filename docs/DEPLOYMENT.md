@@ -29,8 +29,9 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-b --t
 
 A/B 64K → остановка A → платформенная Gemma 64K рядом с B →
 остановка платформенной Gemma → B 128K без RAM → B 128K с RAM.
-При неподготовленном рецепте платформенный шаг пропускается.
-Assistant и Qwen выполняются отдельно после проверки предпосылок в [STATUS](STATUS.md).
+Для каждого этапа используется соответствующий [рецепт AI Inference](../labs/04-deckhouse.md#рецепты-мастер-класса).
+Assistant и Qwen — отдельные эксперименты; результаты подготовки и проверок
+фиксируются в [STATUS](STATUS.md).
 MIG/MPS использует собственные Application с правильным destination для A30.
 
 ## Откат

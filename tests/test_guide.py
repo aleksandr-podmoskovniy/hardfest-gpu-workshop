@@ -130,6 +130,20 @@ class Guide(unittest.TestCase):
         self.assertLess(readme.index('id="platform"'), readme.index('id="ram"'))
         self.assertLess(readme.index('id="ram"'), readme.index('id="placement"'))
 
+    def test_platform_chapter_describes_recipe_workflow(self):
+        readme = (ROOT / "README.md").read_text()
+        chapter = readme.split('id="platform"', 1)[1].split('id="ram"', 1)[0]
+        lab = (ROOT / "labs/04-deckhouse.md").read_text()
+        diagram = (ROOT / "assets/09-platform.svg").read_text()
+        self.assertIn("рецепт Gemma 64K", chapter)
+        for recipe in ("Gemma 64K", "Gemma 128K с KV в RAM", "Gemma с assistant", "Qwen TP2 с MTP"):
+            self.assertIn(recipe, lab)
+        for stale in ("не переключатель", "сам по себе их не гарантирует",
+                      "Если рецепт не проверен", "Не подтверждение готовности"):
+            self.assertNotIn(stale, chapter + lab + diagram)
+        self.assertIn("Все настройки эксперимента — в рецепте", diagram)
+        self.assertIn("техническом статусе", lab)
+
     def test_workshop_has_one_canonical_source(self):
         alias = (ROOT / "WORKSHOP.md").read_text()
         self.assertIn("[README.md](README.md)", alias)
