@@ -56,27 +56,28 @@ class Diagram:
 
 
 def topology():
-    d = Diagram('01-topology', 'Один чат, разные способы запуска модели',
-                'Схема подключения сервисов. Проверенные этапы перечислены в STATUS.md.', 710)
-    d.card(48, 160, 250, 130, 'Open WebUI', ['Чаты и базы знаний', 'Пароль или OIDC'])
-    d.card(378, 160, 254, 130, 'HA Bifrost', ['Маршруты к моделям', 'Учёт и контроль API'])
-    d.path('M 298 222 H 376', arrow=True)
-    d.text(337, 204, 'API', 20, MUTED, anchor='middle')
-    d.card(728, 146, 424, 114, 'H100 №1 — Gemma A', ['Ручной vLLM → сервис платформы'])
-    d.card(728, 294, 424, 114, 'H100 №2 — Gemma B', ['Та же модель, другие настройки'])
-    d.path('M 632 205 H 726', arrow=True)
-    d.path('M 674 205 V 351 H 726', arrow=True)
-    d.card(728, 442, 424, 126, 'A30 — сервисы поиска', ['Эмбеддер и реранкер', 'Динамический MIG + MPS'], MINT, TEAL)
-    d.path('M 674 351 V 502 H 726', TEAL, True)
-    d.card(48, 380, 250, 144, 'База знаний', ['Документы и индекс', 'сохраняются при', 'смене сервера LLM'], GRAY, MUTED)
-    d.path('M 174 290 V 378', MUTED, True)
-    d.rect(378, 442, 254, 126, LILAC, PURPLE)
-    d.text(400, 479, 'OIDC / MCP', 26, PURPLE, True)
-    d.text(400, 516, ['Персональные права', 'на инструменты'], 21)
-    d.path('M 505 290 V 440', PURPLE, True, True)
-    d.rect(48, 606, 1104, 50, GRAY, LINE)
-    d.text(70, 638, 'Бонус после A/B: обе H100 освобождаются под один Qwen TP2.', 24)
-    d.footer('Внешний пользователь не подключается к vLLM напрямую. Стрелки показывают обращения к сервисам.')
+    d = Diagram('01-topology', 'Схема стенда: два кластера',
+                'Пользовательские запросы проходят через шлюз; модели можно менять за ним.', 830)
+    d.rect(48, 145, 298, 610, GRAY, LINE)
+    d.rect(408, 145, 744, 610, "#ffffff", BLUE)
+    d.text(72, 181, 'КЛАСТЕР WEBUI', 21, MUTED, True)
+    d.text(440, 181, 'GPU-КЛАСТЕР / DECKHOUSE', 21, BLUE, True)
+    d.card(70, 220, 254, 126, 'Open WebUI', ['Чат и голосовой ввод', 'Пароль / OIDC'])
+    d.card(70, 433, 254, 148, 'Базы знаний', ['Документы и индекс', 'не зависят от', 'выбранной LLM'], '#ffffff', MUTED)
+    d.path('M 194 348 V 431', MUTED, True)
+    d.card(440, 220, 680, 126, 'HA Bifrost', ['Маршруты к моделям, ключи, лимиты и учёт запросов'])
+    d.path('M 326 280 H 438', BLUE, True)
+    d.text(381, 261, 'HTTPS', 18, MUTED, anchor='middle')
+    d.card(440, 425, 322, 128, 'Gemma A — Base', ['H100 №1', 'Затем AI Inference'])
+    d.card(798, 425, 322, 128, 'Gemma B — Tune', ['H100 №2', '64K → 128K + RAM'])
+    d.path('M 780 348 V 385 H 601 V 423', BLUE, True)
+    d.path('M 780 385 H 959 V 423', BLUE, True)
+    d.card(440, 600, 322, 123, 'A30 / MIG + MPS', ['Сервисы поиска', 'Эмбеддеры, реранкер'], MINT, TEAL)
+    d.card(798, 600, 322, 123, 'Kubernetes MCP', ['Отдельная авторизация', 'Права администратора'], LILAC, PURPLE)
+    d.path('M 451 348 H 422 V 660 H 438', TEAL, True)
+    d.path('M 1108 348 H 1137 V 660 H 1122', PURPLE, True, True)
+    d.text(72, 644, ['Участникам — модели', 'и базы знаний.', 'MCP — отдельное право.'], 21, MUTED)
+    d.footer('Схема подключения. Готовность отдельных интеграций и моделей — в docs/STATUS.md.')
     d.save()
 
 
@@ -102,25 +103,65 @@ def latency():
 
 
 def memory():
-    d = Diagram('03-memory', 'Карта занята памятью, даже когда вычисления простаивают',
-                'Учебный расчёт из презентации: 96 GiB, бюджет движка 90%. Не профиль Gemma.', 630)
-    x = 48
-    for gib, fill, color in [(64, PALE, BLUE), (6, LILAC, PURPLE), (16.4, MINT, TEAL), (9.6, GRAY, MUTED)]:
-        w = 1104*gib/96
-        d.rect(x, 158, w, 75, fill, color, 0)
-        x += w
-    for x, title, sub, color in [(48, '64 GiB', 'Веса', BLUE), (366, '6 GiB', 'Буферы', PURPLE),
-                                  (646, '16,4 GiB', 'KV-пул', TEAL), (958, '9,6 GiB', 'Вне бюджета', MUTED)]:
-        d.text(x, 279, title, 30, color, True)
-        d.text(x, 312, sub, 23, MUTED)
-    d.text(48, 370, '96 × 0,90 − 64 − 6 = 16,4 GiB для историй запросов', 29, INK, True)
-    for i in range(4):
-        x = 48+i*280
-        d.rect(x, 405, 264, 112, MINT if i < 3 else SAND, TEAL if i < 3 else AMBER, dash=i == 3)
-        d.text(x+22, 447, f'История {i+1}', 26, TEAL if i < 3 else AMBER, True)
-        d.text(x+22, 482, '≈ 4,50 GiB' if i < 3 else 'Не помещается', 25)
-    d.text(48, 563, 'Три истории ≈ 13,51 GiB. Четыре ≈ 18,02 GiB — больше пула.', 25)
-    d.footer('4,5044 GiB — полезные KV-данные GPT-OSS-120B при 128K в BF16. Округления учитываются отдельно.')
+    d = Diagram('03-memory', 'Во что обходится длинный контекст',
+                'Gemma 4 31B. Полезные KV-данные одной истории; округления пула не включены.', 820)
+    d.rect(48, 141, 1104, 143, PALE, BLUE)
+    d.text(600, 197, 'HBM × бюджет − веса − runtime = KV-пул', 38, BLUE, True, 'middle')
+    d.text(600, 251, 'В нашем запуске веса заняли 57,91 GiB — и у A, и у B.', 26, INK, False, 'middle')
+    d.text(76, 348, 'ИСТОРИЯ', 22, MUTED, True)
+    d.text(510, 348, 'BF16 / 2 байта', 22, MUTED, True, 'middle')
+    d.text(946, 348, 'FP8 / 1 байт', 22, BLUE, True, 'middle')
+    for y, context, bf16, fp8 in [(385, '64K', '5,78 GiB', '2,89 GiB'),
+                                   (509, '128K', '10,78 GiB', '5,39 GiB'),
+                                   (633, '256K', '20,78 GiB', '10,39 GiB')]:
+        d.rect(48, y, 1104, 99, '#ffffff', LINE)
+        d.rect(754, y, 398, 99, PALE, BLUE)
+        d.text(78, y+64, context, 42, INK, True)
+        d.text(510, y+64, bf16, 44, INK, True, 'middle')
+        d.text(946, y+64, fp8, 44, BLUE, True, 'middle')
+    d.footer('Длина истории = вход + генерация. 256K здесь — расчёт, не подтверждённый запуск.')
+    d.save()
+
+
+def gemma_formula():
+    d = Diagram('11-gemma-kv', 'KV-кэш Gemma: формула памяти',
+                'Архитектура Gemma: 10 полных слоёв внимания и 50 локальных с окном 1024.', 860)
+    d.rect(48, 148, 1104, 130, PALE, BLUE)
+    d.text(600, 229, 'KV(S) = 2 × b × [ G(S) + L(S) ]', 49, BLUE, True, 'middle')
+    d.rect(48, 320, 532, 239, '#ffffff', BLUE)
+    d.rect(620, 320, 532, 239, '#ffffff', TEAL)
+    d.text(80, 363, 'G(S) — ПОЛНОЕ ВНИМАНИЕ', 23, BLUE, True)
+    d.text(652, 363, 'L(S) — ЛОКАЛЬНОЕ ВНИМАНИЕ', 22, TEAL, True)
+    d.text(314, 437, '10 × 4 × 512 × S', 39, INK, True, 'middle')
+    d.text(886, 431, '50 × 16 × 256', 39, INK, True, 'middle')
+    d.text(886, 480, '× min(S, 1024)', 37, INK, True, 'middle')
+    d.text(80, 507, ['10 слоёв, 4 KV-головы,', '512 элементов в голове'], 23, MUTED)
+    d.text(652, 530, '50 слоёв, 16 KV-голов, размер 256', 23, MUTED)
+    d.rect(48, 601, 1104, 184, GRAY, LINE)
+    for x, title, lines in [(80, '2', ['Два массива:', 'ключи K и значения V']),
+                             (437, 'b', ['Байт на элемент:', 'BF16 — 2, FP8 — 1']),
+                             (795, 'S', ['Длина истории:', 'вход и генерация'])]:
+        d.text(x, 651, title, 38, BLUE, True)
+        d.text(x, 701, lines, 25, INK)
+    d.footer('Результат — в байтах. Для GiB делим на 2³⁰. Параметры и ограничения расчёта — в MEMORY_BUDGET.md.')
+    d.save()
+
+
+def gitops():
+    d = Diagram('12-gitops', 'Доставка манифестов через Argo CD',
+                'Обычные YAML; управление и GPU-нагрузка находятся в разных кластерах.', 670)
+    d.card(48, 151, 322, 150, 'GitHub', ['Общие примеры', 'Документация и схемы', 'Без секретов'], GRAY, MUTED)
+    d.card(440, 151, 712, 150, 'GitLab / k8s-config', ['Пять YAML на сервис + Application', 'Имена нод, PVC и классов вашей площадки', 'diff → подписанный commit → push'])
+    d.path('M 372 225 H 438', BLUE, True)
+    d.text(405, 207, 'копия', 18, MUTED, anchor='middle')
+    d.card(48, 382, 485, 181, 'Управляющий кластер', ['Argo CD / Application', 'source: GitLab + каталог + ревизия', 'destination: GPU-кластер'], PALE, BLUE)
+    d.card(642, 382, 510, 181, 'GPU-кластер', ['ConfigMap + Deployment', 'ResourceClaimTemplate + Service', 'NetworkPolicy'], MINT, TEAL)
+    d.path('M 796 303 V 339 H 290 V 380', BLUE, True)
+    d.text(519, 330, 'выбранный коммит', 20, MUTED, anchor='middle')
+    d.path('M 535 472 H 640', TEAL, True)
+    d.text(587, 453, 'sync', 20, TEAL, anchor='middle')
+    d.text(48, 611, 'Новая конфигурация vLLM → новый checksum Pod → перезапуск Recreate', 25, INK, True)
+    d.footer('Примеры выключены: replicas = 0, без autosync. Секреты передаются отдельно от Git.')
     d.save()
 
 
@@ -129,8 +170,8 @@ def ab():
                 'Одна версия vLLM, одинаковые BF16-веса, разные H100.', 660)
     d.rect(48, 142, 1104, 68, GRAY, LINE)
     d.text(600, 185, 'Окно 65 536      Вход 32 768      Выход 2 048', 30, INK, True, 'middle')
-    d.card(48, 244, 532, 282, 'A — a-chunked', [], GRAY, MUTED)
-    d.card(620, 244, 532, 282, 'B — b-tuned', [], PALE, BLUE)
+    d.card(48, 244, 532, 282, 'Gemma A — Base', [], GRAY, MUTED)
+    d.card(620, 244, 532, 282, 'Gemma B — Tune', [], PALE, BLUE)
     for x, lines in [(72, ['KV: BF16', 'Prefix cache: выключен', 'CUDA graphs / compile: выключены', 'Attention: FlashAttention 4']),
                       (644, ['KV: FP8', 'Prefix cache: включён', 'CUDA graphs / compile: включены', 'Attention: Triton'])]:
         for i, line in enumerate(lines):
@@ -138,6 +179,89 @@ def ab():
     d.rect(48, 550, 1104, 58, MINT, TEAL)
     d.text(600, 588, 'У обоих: prefill по 4096, до 32 последовательностей, веса только в GPU', 24, TEAL, True, 'middle')
     d.footer('Чанкирование оставлено у A для вместимости. KV в RAM здесь выключен; его проверяем отдельно.')
+    d.save()
+
+
+def attention():
+    d = Diagram('13-attention', 'Зачем сохранять ключи и значения',
+                'Упрощённый шаг attention: запрос текущего токена обращается к истории.', 740)
+    d.card(48, 162, 280, 143, 'Текущий токен', ['Q — запрос', 'Нужен сейчас'], PALE, BLUE)
+    d.card(410, 162, 332, 143, 'Прошлые токены', ['K — ключи', 'V — значения'], MINT, TEAL)
+    d.card(826, 162, 326, 143, 'KV-кэш', ['Сохраняет K и V', 'для следующих шагов'], MINT, TEAL)
+    d.path('M 744 232 H 824', TEAL, True)
+    d.rect(48, 365, 1104, 234, PALE, BLUE)
+    d.text(600, 422, 'Attention(Q, K, V) =', 36, BLUE, True, 'middle')
+    d.text(600, 506, 'softmax( QKᵀ / √d ) V', 57, INK, True, 'middle')
+    d.text(600, 565, 'Сравнить Q с ключами → получить веса → смешать значения', 26, MUTED, False, 'middle')
+    d.path('M 188 307 V 363', BLUE, True)
+    d.path('M 576 307 V 363', TEAL, True)
+    d.text(48, 657, 'Кэш хранит промежуточные тензоры, не готовые ответы.', 29, INK, True)
+    d.footer('d — размерность головы. Маски и детали конкретной архитектуры здесь опущены.')
+    d.save()
+
+
+def prefixes():
+    d = Diagram('14-prefix', 'Общий смысл не означает общий префикс',
+                'Для переиспользования KV нужны совпадающие токены с начала запроса.', 640)
+    for y, name, changed, question in [(172, 'Запрос 1', False, 'Вопрос 1'),
+                                      (300, 'Запрос 2', False, 'Вопрос 2'),
+                                      (428, 'Запрос 3', True, 'Вопрос 3')]:
+        d.text(48, y+45, name, 25, INK, True)
+        for x, width, text, fill, color in [(230, 295, 'Другая дата' if changed else 'Общий system', SAND if changed else MINT, AMBER if changed else TEAL),
+                                          (545, 325, 'Документ X', GRAY if changed else MINT, MUTED if changed else TEAL),
+                                          (890, 262, question, PALE, BLUE)]:
+            d.rect(x, y, width, 75, fill, color)
+            d.text(x+width/2, y+46, text, 25, color, True, 'middle')
+    d.path('M 230 262 V 271 H 870 V 262', TEAL)
+    d.text(550, 571, 'Новое начало разрывает совпадение длинного префикса.', 28, INK, True, 'middle')
+    d.footer('Порядок сообщений, шаблон чата, даты и пробелы влияют на последовательность токенов.')
+    d.save()
+
+
+def gptoss_formula():
+    d = Diagram('15-gptoss-kv', 'GPT-OSS-120B: расчёт из презентации',
+                'Отдельный учебный пример. Эти числа не подставляются в профиль Gemma.', 870)
+    d.rect(48, 150, 1104, 130, PALE, BLUE)
+    d.text(600, 202, 'Один токен одного слоя: K/V × головы × размер × байты', 25, MUTED, False, 'middle')
+    d.text(600, 253, '2 × 8 × 64 × 2 = 2048 байт = 2 KiB', 40, BLUE, True, 'middle')
+    d.rect(48, 315, 1104, 179, '#ffffff', BLUE)
+    d.text(600, 371, '18 полных слоёв + 18 локальных с окном 128', 27, MUTED, False, 'middle')
+    d.text(600, 441, 'KV(S) = 2 KiB × [18S + 18 min(S, 128)]', 40, INK, True, 'middle')
+    for x, title, value in [(48, 'Одна история 128K', '4,5044 GiB'), (424, 'Четыре истории', '18,02 GiB'), (800, 'Восемь историй', '36,04 GiB')]:
+        d.rect(x, 536, 352, 145, MINT, TEAL)
+        d.text(x+176, 580, title, 25, TEAL, True, 'middle')
+        d.text(x+176, 642, value, 38, INK, True, 'middle')
+    d.text(600, 742, 'Условный KV-пул: 96 × 0,90 − 64 − 6 = 16,4 GiB', 29, INK, True, 'middle')
+    d.text(600, 789, 'Три полные истории помещаются, четыре — уже нет.', 28, TEAL, True, 'middle')
+    d.footer('96 GiB — условие задачи, не замер GPU стенда. Учтены полезные KV без выравнивания и рабочих буферов.')
+    d.save()
+
+
+def rag():
+    d = Diagram('16-rag', 'Поиск документов и генерация — разные сервисы',
+                'Индексирование выполняется при загрузке документов; поиск — при вопросе пользователя.', 740)
+    for x, title, body in [(48, 'Документы', ['Разбивка на фрагменты']),
+                           (424, 'Эмбеддер', ['Фрагменты → векторы']),
+                           (800, 'Индекс', ['Векторы и источники'])]:
+        d.card(x, 164, 352, 123, title, body, MINT, TEAL)
+        if x < 800:
+            d.path(f'M {x+354} 228 H {x+374}', TEAL, True)
+    for x, title, body in [(48, 'Вопрос', ['Эмбеддер вопроса']),
+                           (334, 'Поиск', ['Кандидаты из индекса']),
+                           (620, 'Реранкер', ['Лучшие фрагменты']),
+                           (906, 'LLM', ['Вопрос + фрагменты'])]:
+        d.rect(x, 421, 246, 135, PALE, BLUE)
+        d.text(x+18, 465, title, 27, BLUE, True)
+        d.text(x+18, 510, body, 20)
+        if x < 906:
+            d.path(f'M {x+248} 490 H {x+284}', BLUE, True)
+    d.path('M 976 289 V 356 H 457 V 419', TEAL, True)
+    d.text(695, 344, 'поиск похожих векторов', 22, TEAL, False, 'middle')
+    d.path('M 1029 558 V 609', BLUE, True)
+    d.text(1029, 650, 'Ответ + источники', 23, BLUE, True, 'middle')
+    d.text(48, 617, ['Замена LLM не требует пересоздания индекса.',
+                     'При смене эмбеддера совместимость индекса проверяется заново.'], 24, INK)
+    d.footer('Схема RAG. У каждого API проверяются доступ, формат ответа и работа по отдельности.')
     d.save()
 
 
@@ -194,7 +318,7 @@ def scheduler():
 
 def speculation():
     d = Diagram('07-speculation', 'Черновик предлагает, основная модель проверяет',
-                'Условный цикл speculative decoding. Три принятых токена — пример, не измеренная доля.', 620)
+                'Условный цикл speculative decoding. Три принятых токена — пример, не измеренная доля.', 850)
     d.text(48, 178, 'Черновик', 26, PURPLE, True)
     for i, token in enumerate(['A', 'B', 'C', 'D', 'E']):
         x = 288+i*168
@@ -212,6 +336,11 @@ def speculation():
     d.text(72, 455, 'В ответ: A, B, C + замена от основной модели', 29, BLUE, True)
     d.text(72, 490, 'Следующий цикл начинается с исправленного продолжения.', 23)
     d.text(48, 564, 'Измеряем вместе: принятие, стоимость черновика и итоговую скорость.', 26)
+    d.rect(48, 610, 1104, 160, LILAC, PURPLE)
+    d.text(80, 696, 'Время на токен ≈', 31, PURPLE, True)
+    d.text(782, 663, 'черновик + проверка + накладные расходы', 26, INK, False, 'middle')
+    d.path('M 460 685 H 1105', PURPLE, width=2)
+    d.text(782, 729, 'число выданных токенов', 29, INK, True, 'middle')
     d.footer('Высокий acceptance не гарантирует ускорение. Gemma assistant проверяется отдельно от CPU KV-offload.')
     d.save()
 
@@ -280,6 +409,6 @@ def tp2():
 
 
 if __name__ == '__main__':
-    for build in (topology, latency, memory, ab, offload, scheduler, speculation, mig, platform, tp2):
+    for build in (topology, latency, memory, ab, offload, scheduler, speculation, mig, platform, tp2, gemma_formula, gitops, attention, prefixes, gptoss_formula, rag):
         build()
-    print('Built 10 workshop SVGs in assets/. No external images, fonts or services.')
+    print('Built 16 workshop SVGs in assets/. No external images, fonts or services.')

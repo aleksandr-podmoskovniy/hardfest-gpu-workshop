@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="860" viewBox="0 0 1200 860" role="img" aria-labelledby="title desc">
+<title id="title">KV-кэш Gemma: формула памяти</title><desc id="desc">Архитектура Gemma: 10 полных слоёв внимания и 50 локальных с окном 1024.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
+<rect x="1" y="1" width="1198" height="858" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
+<text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="64" dy="0">KV-кэш Gemma: формула памяти</tspan>
+</text>
+<text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
+<tspan x="64" dy="0">Архитектура Gemma: 10 полных слоёв внимания и 50 локальных с окном 1024.</tspan>
+</text>
+<rect x="48" y="148" width="1104" height="130" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="600" y="229" font-size="49" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="600" dy="0">KV(S) = 2 × b × [ G(S) + L(S) ]</tspan>
+</text>
+<rect x="48" y="320" width="532" height="239" rx="14" fill="#ffffff" stroke="#0750f5" stroke-width="2"/>
+<rect x="620" y="320" width="532" height="239" rx="14" fill="#ffffff" stroke="#177c83" stroke-width="2"/>
+<text x="80" y="363" font-size="23" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="80" dy="0">G(S) — ПОЛНОЕ ВНИМАНИЕ</tspan>
+</text>
+<text x="652" y="363" font-size="22" fill="#177c83" text-anchor="start" font-weight="700">
+<tspan x="652" dy="0">L(S) — ЛОКАЛЬНОЕ ВНИМАНИЕ</tspan>
+</text>
+<text x="314" y="437" font-size="39" fill="#252528" text-anchor="middle" font-weight="700">
+<tspan x="314" dy="0">10 × 4 × 512 × S</tspan>
+</text>
+<text x="886" y="431" font-size="39" fill="#252528" text-anchor="middle" font-weight="700">
+<tspan x="886" dy="0">50 × 16 × 256</tspan>
+</text>
+<text x="886" y="480" font-size="37" fill="#252528" text-anchor="middle" font-weight="700">
+<tspan x="886" dy="0">× min(S, 1024)</tspan>
+</text>
+<text x="80" y="507" font-size="23" fill="#5e6572" text-anchor="start">
+<tspan x="80" dy="0">10 слоёв, 4 KV-головы,</tspan>
+<tspan x="80" dy="31.05">512 элементов в голове</tspan>
+</text>
+<text x="652" y="530" font-size="23" fill="#5e6572" text-anchor="start">
+<tspan x="652" dy="0">50 слоёв, 16 KV-голов, размер 256</tspan>
+</text>
+<rect x="48" y="601" width="1104" height="184" rx="14" fill="#f1f4f8" stroke="#cbd5e1" stroke-width="2"/>
+<text x="80" y="651" font-size="38" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="80" dy="0">2</tspan>
+</text>
+<text x="80" y="701" font-size="25" fill="#252528" text-anchor="start">
+<tspan x="80" dy="0">Два массива:</tspan>
+<tspan x="80" dy="33.75">ключи K и значения V</tspan>
+</text>
+<text x="437" y="651" font-size="38" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="437" dy="0">b</tspan>
+</text>
+<text x="437" y="701" font-size="25" fill="#252528" text-anchor="start">
+<tspan x="437" dy="0">Байт на элемент:</tspan>
+<tspan x="437" dy="33.75">BF16 — 2, FP8 — 1</tspan>
+</text>
+<text x="795" y="651" font-size="38" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="795" dy="0">S</tspan>
+</text>
+<text x="795" y="701" font-size="25" fill="#252528" text-anchor="start">
+<tspan x="795" dy="0">Длина истории:</tspan>
+<tspan x="795" dy="33.75">вход и генерация</tspan>
+</text>
+<text x="48" y="832" font-size="20" fill="#5e6572" text-anchor="start">
+<tspan x="48" dy="0">Результат — в байтах. Для GiB делим на 2³⁰. Параметры и ограничения расчёта — в MEMORY_BUDGET.md.</tspan>
+</text>
+</svg>

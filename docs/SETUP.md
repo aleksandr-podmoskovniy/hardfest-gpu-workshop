@@ -1,7 +1,6 @@
 # Подготовка стенда
 
-Основной способ развёртывания — [GitOps](GITOPS.md). Исходники — обычные YAML и
-Kustomize, команды управления — Git и kubectl. Python на ноутбуке не нужен.
+Основной способ развёртывания — [GitOps](GITOPS.md). Исходники — обычные Kubernetes YAML, команды управления — Git и kubectl. Python на ноутбуке не нужен.
 
 ## 1. Предпосылки
 
@@ -55,8 +54,8 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pvc,resourceclaims,pods
 ## 4. Контроль перед sync
 
 ```bash
-kubectl kustomize "$DEMO_DIR/gemma-a"
-kubectl --context "$GPU_CONTEXT" apply --dry-run=server -k "$DEMO_DIR/gemma-a"
+yq '.data."profile.yaml"' "$DEMO_DIR/gemma-a/configmap.yaml"
+kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f "$DEMO_DIR/gemma-a"
 git diff -- "$DEMO_DIR"
 ```
 

@@ -1,0 +1,23 @@
+apiVersion: "networking.k8s.io/v1"
+kind: "NetworkPolicy"
+metadata:
+  name: "hf-embed-mps"
+  namespace: "hardfest-demo"
+  labels:
+    app.kubernetes.io/part-of: "hardfest-gpu-workshop"
+    app.kubernetes.io/name: "hf-embed-mps"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: "hf-embed-mps"
+  policyTypes:
+    - "Ingress"
+  ingress:
+    -
+      from:
+        -
+          podSelector: {}
+      ports:
+        -
+          port: 8000
+          protocol: "TCP"

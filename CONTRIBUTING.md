@@ -3,6 +3,8 @@
 Одна правка — одна понятная цель. Теорию отделять от измерений и от версии площадки. Любое число производительности сопровождается проверяемым отчётом.
 
 ```bash
+python3 -m pip install -r requirements-dev.txt
+python3 scripts/check_manifests.py
 python3 -m unittest discover -s tests -v
 python3 scripts/check_public.py
 git diff --check

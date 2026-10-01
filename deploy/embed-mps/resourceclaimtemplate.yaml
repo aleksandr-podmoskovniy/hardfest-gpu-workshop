@@ -1,0 +1,35 @@
+apiVersion: "resource.k8s.io/v1"
+kind: "ResourceClaimTemplate"
+metadata:
+  name: "hf-embed-mps-e801e51a5a"
+  namespace: "hardfest-demo"
+  labels:
+    app.kubernetes.io/part-of: "hardfest-gpu-workshop"
+    app.kubernetes.io/name: "hf-embed-mps"
+spec:
+  spec:
+    devices:
+      requests:
+        -
+          name: "gpu"
+          exactly:
+            deviceClassName: "REPLACE_GENERATED_MIG_MPS_DEVICECLASS"
+            allocationMode: "ExactCount"
+            count: 1
+            capacity:
+              requests:
+                sharePercent: "25"
+      config:
+        -
+          requests:
+            - "gpu"
+          opaque:
+            driver: "gpu.deckhouse.io"
+            parameters:
+              apiVersion: "resource.gpu.deckhouse.io/v1alpha1"
+              kind: "MigDeviceConfig"
+              sharing:
+                strategy: "MPS"
+                mpsConfig:
+                  defaultActiveThreadPercentage: 25
+                  defaultPinnedDeviceMemoryLimit: "4Gi"

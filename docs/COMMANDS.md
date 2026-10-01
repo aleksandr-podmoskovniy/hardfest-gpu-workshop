@@ -6,9 +6,9 @@
 ## Посмотреть профиль и итоговый YAML
 
 ```bash
-diff -u "$DEMO_DIR/gemma-a/profile.yaml" "$DEMO_DIR/gemma-b/profile.yaml"
-kubectl kustomize "$DEMO_DIR/gemma-b"
-kubectl --context "$GPU_CONTEXT" diff -k "$DEMO_DIR/gemma-b"
+diff -u "$DEMO_DIR/gemma-a/configmap.yaml" "$DEMO_DIR/gemma-b/configmap.yaml"
+yq '.data."profile.yaml"' "$DEMO_DIR/gemma-b/configmap.yaml"
+kubectl --context "$GPU_CONTEXT" diff -f "$DEMO_DIR/gemma-b"
 ```
 
 У diff код 1 означает различия. Проверяйте конкретные ресурсы, а не весь большой
@@ -17,7 +17,7 @@ GitOps-репозиторий.
 ## Проверить и отправить изменение
 
 ```bash
-kubectl --context "$GPU_CONTEXT" apply --dry-run=server -k "$DEMO_DIR/gemma-b"
+kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f "$DEMO_DIR/gemma-b"
 git diff -- "$DEMO_DIR/gemma-b"
 git add -- "$DEMO_DIR/gemma-b"
 git diff --cached --check

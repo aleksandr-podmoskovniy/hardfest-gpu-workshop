@@ -24,6 +24,7 @@ def load(name):
 bench = load("bench")
 report = load("report")
 maths = load("kv_math")
+manifests = load("check_manifests")
 
 
 class Guide(unittest.TestCase):
@@ -38,8 +39,8 @@ class Guide(unittest.TestCase):
         self.assertIn('<p align="center">', top)
         self.assertIn('width="250" height="250"', top)
         self.assertIn(f'href="{url}"', top)
-        for section in ("## Содержание", "## Подготовка окружения", "## Схема стенда",
-                        "## 1. Из чего складывается время ответа", "## 10. Остановка"):
+        for section in ("## Содержание", "## Подготовка окружения", "## Стенд и подключение",
+                        "## 1. Где теряется время", "## Остановка"):
             self.assertIn(section, readme)
         svg = ET.parse(ROOT / "assets/workshop-qr.svg").getroot()
         self.assertEqual(svg.find("{http://www.w3.org/2000/svg}desc").text, url)
@@ -49,7 +50,7 @@ class Guide(unittest.TestCase):
     def test_illustrations_are_local_accessible_and_self_contained(self):
         readme = (ROOT / "README.md").read_text()
         images = re.findall(r"!\[([^]]+)\]\((assets/\d[^)]+\.svg)\)", readme)
-        self.assertEqual(len(images), 10)
+        self.assertEqual(len(images), 12)
         for alt, filename in images:
             with self.subTest(filename=filename):
                 self.assertGreater(len(alt), 20)
@@ -64,42 +65,43 @@ class Guide(unittest.TestCase):
 
     def test_expanded_context_is_separate_from_ab(self):
         readme = (ROOT / "README.md").read_text()
-        ram = readme.split('id="ram"', 1)[1].split('id="compute"', 1)[0]
+        ram = readme.split('id="ram"', 1)[1].split('id="placement"', 1)[0]
         self.assertIn("max-model-len: 131072", ram)
         self.assertIn("cpu_bytes_to_use: 34359738368", ram)
-        self.assertIn('"count": 0', ram)
-        self.assertIn("deploy/gemma-b-128k/profile.yaml", ram)
-        self.assertIn("deploy/gemma-b-ram/profile.yaml", ram)
-        self.assertIn("то же Application B", ram)
+        self.assertIn("остановите A через Git", ram)
+        self.assertIn("deploy/gemma-b-128k/configmap.yaml", ram)
+        self.assertIn("deploy/gemma-b-ram/configmap.yaml", ram)
+        self.assertIn("того же Application B", ram)
 
     def test_primary_workshop_uses_gitops_not_private_python_wrappers(self):
         readme = (ROOT / "README.md").read_text()
-        for old in ("python3", "scripts/hf.py", ".local"):
+        for old in ("python3", "scripts/hf.py", ".local/"):
             self.assertNotIn(old, readme)
-        for command in ("kubectl kustomize", "git commit -S -s", "git push"):
+        for command in ("apply --dry-run=server -f", "git commit -S -s", "git push"):
             self.assertIn(command, readme)
+        self.assertNotIn("kustomize", readme.lower())
+        self.assertNotIn("```text", readme)
         gitops = (ROOT / "docs/GITOPS.md").read_text()
         for term in ("ARGO_CONTEXT", "GPU_CONTEXT", "operation:{sync", "revision:$rev", "prune:false"):
             self.assertIn(term, gitops)
 
     def test_native_manifests_are_safe_and_complete(self):
-        profiles = list((ROOT / "deploy").glob("*/kustomization.yaml"))
+        profiles = list((ROOT / "deploy").glob("*/configmap.yaml"))
         self.assertEqual(len(profiles), 8)
+        self.assertEqual(manifests.check(), [])
         for path in profiles:
             with self.subTest(profile=path.parent.name):
-                kustomization = path.read_text()
-                resources = (path.parent / "resources.yaml").read_text()
-                self.assertIn("configMapGenerator:", kustomization)
-                self.assertNotIn("disableNameSuffixHash", kustomization)
+                resources = (path.parent / "deployment.yaml").read_text()
+                self.assertFalse((path.parent / "kustomization.yaml").exists())
+                self.assertIn("checksum/vllm-config", resources)
                 self.assertIn("replicas: 0", resources)
                 self.assertIn('type: "Recreate"', resources)
-                self.assertIn('kind: "ResourceClaimTemplate"', resources)
-                self.assertNotIn('kind: "DeviceClass"', resources)
-                self.assertNotIn('kind: "Secret"', resources)
-                self.assertNotIn("cpu-offload-gb", (path.parent / "profile.yaml").read_text())
+                claim = (path.parent / "resourceclaimtemplate.yaml").read_text()
+                self.assertIn('kind: "ResourceClaimTemplate"', claim)
+                self.assertNotIn("cpu-offload-gb", path.read_text())
                 self.assertRegex(resources, r"@sha256:[0-9a-f]{64}")
         for name in ("gemma-a", "gemma-b"):
-            self.assertIn("max-model-len: 65536", (ROOT / "deploy" / name / "profile.yaml").read_text())
+            self.assertIn("max-model-len: 65536", (ROOT / "deploy" / name / "configmap.yaml").read_text())
         for path in (ROOT / "argocd").glob("*.yaml"):
             self.assertNotIn("automated:", path.read_text())
             self.assertNotIn("finalizers:", path.read_text())
@@ -125,7 +127,8 @@ class Guide(unittest.TestCase):
         targets = re.findall(r"\]\(#([^)]+)\)", readme)
         self.assertGreaterEqual(len(targets), 10)
         self.assertTrue(set(targets).issubset(anchors))
-        self.assertLess(readme.index('id="placement"'), readme.index('id="platform"'))
+        self.assertLess(readme.index('id="platform"'), readme.index('id="ram"'))
+        self.assertLess(readme.index('id="ram"'), readme.index('id="placement"'))
 
     def test_workshop_has_one_canonical_source(self):
         alias = (ROOT / "WORKSHOP.md").read_text()
@@ -136,8 +139,10 @@ class Guide(unittest.TestCase):
     def test_chat_path_is_present_from_manual_to_platform_stages(self):
         readme = (ROOT / "README.md").read_text()
         self.assertLess(readme.index('id="chat"'), readme.index('id="setup"'))
-        self.assertIn("Open WebUI → HA Bifrost", readme)
-        self.assertIn("Qwen TP2 через AI Inference", readme)
+        self.assertIn("Gemma A — Base", readme)
+        self.assertIn("Gemma B — Tune", readme)
+        self.assertIn("отдельным маршрутом Bifrost", readme)
+        self.assertIn("сервис через AI Inference", readme)
         self.assertIn("docs/CHAT_AND_ACCESS.md", readme)
         guide = (ROOT / "docs/CHAT_AND_ACCESS.md").read_text()
         for term in ("pending", "Virtual Key", "OIDC", "MCP", "ACL", "отзыв"):
@@ -181,6 +186,24 @@ class Guide(unittest.TestCase):
         self.assertEqual(maths.calculate_gemma(tokens=512)["sliding_attention_gib"], .390625)
         self.assertEqual(maths.calculate_gemma(tokens=262144)["sliding_attention_gib"], .78125)
         self.assertEqual(maths.calculate_gemma(tokens=133120, sessions=8, element_bytes=1)["all_sessions_gib"], 43.75)
+
+    def test_illustrated_memory_values_match_calculator(self):
+        svg = (ROOT / "assets/03-memory.svg").read_text()
+        for tokens in (65536, 131072, 262144):
+            for element_bytes in (1, 2):
+                value = maths.calculate_gemma(tokens=tokens, element_bytes=element_bytes)["one_session_gib"]
+                self.assertIn(f"{value:.2f}".replace(".", ",") + " GiB", svg)
+
+    def test_all_theory_diagrams_are_local_svg_without_external_content(self):
+        diagrams = list((ROOT / "assets").glob("[0-9][0-9]-*.svg"))
+        self.assertEqual(len(diagrams), 16)
+        for path in diagrams:
+            svg = ET.parse(path).getroot()
+            self.assertEqual(svg.attrib["viewBox"].split()[2], "1200")
+            for node in svg.iter():
+                self.assertNotIn(node.tag.rsplit("}", 1)[-1], ("script", "foreignObject", "image"))
+        for path in (ROOT / "docs/chapters").glob("*.md"):
+            self.assertNotIn("```text", path.read_text())
 
     def test_public_output_rejected(self):
         with self.assertRaises(ValueError):

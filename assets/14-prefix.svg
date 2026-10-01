@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="640" viewBox="0 0 1200 640" role="img" aria-labelledby="title desc">
+<title id="title">Общий смысл не означает общий префикс</title><desc id="desc">Для переиспользования KV нужны совпадающие токены с начала запроса.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
+<rect x="1" y="1" width="1198" height="638" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
+<text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="64" dy="0">Общий смысл не означает общий префикс</tspan>
+</text>
+<text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
+<tspan x="64" dy="0">Для переиспользования KV нужны совпадающие токены с начала запроса.</tspan>
+</text>
+<text x="48" y="217" font-size="25" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">Запрос 1</tspan>
+</text>
+<rect x="230" y="172" width="295" height="75" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
+<text x="377.5" y="218" font-size="25" fill="#177c83" text-anchor="middle" font-weight="700">
+<tspan x="377.5" dy="0">Общий system</tspan>
+</text>
+<rect x="545" y="172" width="325" height="75" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
+<text x="707.5" y="218" font-size="25" fill="#177c83" text-anchor="middle" font-weight="700">
+<tspan x="707.5" dy="0">Документ X</tspan>
+</text>
+<rect x="890" y="172" width="262" height="75" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="1021.0" y="218" font-size="25" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="1021.0" dy="0">Вопрос 1</tspan>
+</text>
+<text x="48" y="345" font-size="25" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">Запрос 2</tspan>
+</text>
+<rect x="230" y="300" width="295" height="75" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
+<text x="377.5" y="346" font-size="25" fill="#177c83" text-anchor="middle" font-weight="700">
+<tspan x="377.5" dy="0">Общий system</tspan>
+</text>
+<rect x="545" y="300" width="325" height="75" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
+<text x="707.5" y="346" font-size="25" fill="#177c83" text-anchor="middle" font-weight="700">
+<tspan x="707.5" dy="0">Документ X</tspan>
+</text>
+<rect x="890" y="300" width="262" height="75" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="1021.0" y="346" font-size="25" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="1021.0" dy="0">Вопрос 2</tspan>
+</text>
+<text x="48" y="473" font-size="25" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">Запрос 3</tspan>
+</text>
+<rect x="230" y="428" width="295" height="75" rx="14" fill="#fff2da" stroke="#a15b0b" stroke-width="2"/>
+<text x="377.5" y="474" font-size="25" fill="#a15b0b" text-anchor="middle" font-weight="700">
+<tspan x="377.5" dy="0">Другая дата</tspan>
+</text>
+<rect x="545" y="428" width="325" height="75" rx="14" fill="#f1f4f8" stroke="#5e6572" stroke-width="2"/>
+<text x="707.5" y="474" font-size="25" fill="#5e6572" text-anchor="middle" font-weight="700">
+<tspan x="707.5" dy="0">Документ X</tspan>
+</text>
+<rect x="890" y="428" width="262" height="75" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="1021.0" y="474" font-size="25" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="1021.0" dy="0">Вопрос 3</tspan>
+</text>
+<path d="M 230 262 V 271 H 870 V 262" fill="none" stroke="#177c83" stroke-width="3" stroke-linejoin="round"/>
+<text x="550" y="571" font-size="28" fill="#252528" text-anchor="middle" font-weight="700">
+<tspan x="550" dy="0">Новое начало разрывает совпадение длинного префикса.</tspan>
+</text>
+<text x="48" y="612" font-size="20" fill="#5e6572" text-anchor="start">
+<tspan x="48" dy="0">Порядок сообщений, шаблон чата, даты и пробелы влияют на последовательность токенов.</tspan>
+</text>
+</svg>

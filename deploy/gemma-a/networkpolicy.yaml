@@ -1,0 +1,23 @@
+apiVersion: "networking.k8s.io/v1"
+kind: "NetworkPolicy"
+metadata:
+  name: "hf-gemma-a"
+  namespace: "hardfest-demo"
+  labels:
+    app.kubernetes.io/part-of: "hardfest-gpu-workshop"
+    app.kubernetes.io/name: "hf-gemma-a"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: "hf-gemma-a"
+  policyTypes:
+    - "Ingress"
+  ingress:
+    -
+      from:
+        -
+          podSelector: {}
+      ports:
+        -
+          port: 8000
+          protocol: "TCP"

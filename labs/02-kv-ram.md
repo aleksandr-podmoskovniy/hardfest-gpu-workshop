@@ -3,9 +3,9 @@
 В этом опыте B имеет окно 131 072, вход 65 536 и выход 128.
 Это отдельный опыт, не продолжение A/B 64K + 2048.
 
-Две конфигурации: [без RAM](../deploy/gemma-b-128k/profile.yaml) и
-[с 32 GiB CPU KV](../deploy/gemma-b-ram/profile.yaml).
-[Deployment с согласованными лимитами](../deploy/gemma-b-ram/resources.yaml):
+Две конфигурации: [без RAM](../deploy/gemma-b-128k/configmap.yaml) и
+[с 32 GiB CPU KV](../deploy/gemma-b-ram/configmap.yaml).
+[Deployment с согласованными лимитами](../deploy/gemma-b-ram/deployment.yaml):
 request 56 GiB, limit 80 GiB, shm 40 GiB. На VM 128 GiB A остановлена.
 Веса в RAM не выгружаются; увеличенный активный контекст должен помещаться на GPU.
 

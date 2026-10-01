@@ -46,8 +46,10 @@ class Observability(unittest.TestCase):
             self.assertNotIn("$inference_service", target["expr"])
 
     def test_named_service_ports_and_scoped_scrape_policy(self):
-        for path in (ROOT / "deploy").glob("*/resources.yaml"):
-            service = path.read_text().split('kind: "Service"', 1)[1].split("---", 1)[0]
+        paths = list((ROOT / "deploy").glob("*/service.yaml"))
+        self.assertEqual(len(paths), 8)
+        for path in paths:
+            service = path.read_text()
             self.assertIn('name: "http"', service)
         monitor = (ROOT / "observability/monitoring.yaml").read_text()
         self.assertIn("port: http", monitor)

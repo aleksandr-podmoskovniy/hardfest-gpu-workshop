@@ -4,8 +4,8 @@
 MIG Manager config. GPUClass/GPUPool создаёт DeviceClass; DRA выдаёт заявки
 и формирует MIG-разделы по потребности.
 
-Подготовленные исходники: [MIG](../deploy/embed-mig/resources.yaml) и
-[MPS поверх MIG](../deploy/embed-mps/resources.yaml). Эти workload по умолчанию выключены.
+Подготовленные исходники: [MIG](../deploy/embed-mig/deployment.yaml) и
+[MPS поверх MIG](../deploy/embed-mps/deployment.yaml). Эти workload по умолчанию выключены.
 Их Application должен указывать на кластер с A30, не автоматически на кластер H100.
 
 ## Согласовать класс и квоту
@@ -27,7 +27,7 @@ MPS-пример запрашивает sharePercent 25 и задаёт 4 GiB pi
 ## Запуск через GitOps
 
 Перенесите каталоги в свою GitLab-репу и создайте отдельные Application.
-Порядок такой же, как для Gemma: render → dry-run → commit/push → sync.
+Порядок такой же, как для Gemma: diff → dry-run → commit/push → sync.
 После запуска:
 
 ```bash

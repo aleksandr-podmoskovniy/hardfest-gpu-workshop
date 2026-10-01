@@ -1,16 +1,6 @@
 # Два кластера и GitOps
 
-Рабочий путь:
-
-```text
-GitLab: k8s-config
-        ↓ commit / push
-Argo CD в управляющем кластере
-        ↓ Application.spec.destination
-GPU-кластер: DRA → Pod vLLM → Service
-        ↑
-Open WebUI → Bifrost
-```
+![GitLab, Argo CD управляющего кластера и обычные YAML в GPU-кластере](../assets/12-gitops.svg)
 
 Application хранится в управляющем кластере, модель работает в целевом.
 `kubectl apply -f argocd/` регистрирует приложения, а не разворачивает vLLM локальным скриптом.
@@ -40,6 +30,14 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pvc
 
 ## 2. Перенести исходники в k8s-config
 
+Если здесь уже лежит прежняя версия примеров, не смешивайте форматы:
+в каталоге сервиса должны остаться пять файлов из новой структуры вместо
+`resources.yaml`, отдельного `profile.yaml` и файла сборки. Сначала проверьте
+diff и сохраните привязки ноды, PVC, DeviceClass и NetworkPolicy.
+В Application задайте `source.directory.recurse: false`, как в новых примерах.
+Проверяйте старые ConfigMap с хешем в имени отдельно: при `prune: false` Argo
+их не удалит. Не включайте общий prune ради этой миграции.
+
 Сначала получите публичные исходники и свою GitOps-репу.
 Команды копирования выполняются **из k8s-config**, предполагая, что оба репозитория
 находятся рядом. Не копируйте поверх существующего каталога без просмотра diff.
@@ -53,7 +51,8 @@ cp ../hardfest-gpu-workshop/argocd/gemma-a.yaml "$DEMO_DIR/argo-app/"
 cp ../hardfest-gpu-workshop/argocd/gemma-b.yaml "$DEMO_DIR/argo-app/"
 ```
 
-В `resources.yaml` задайте ноду, DeviceClass, PVC и путь весов вместо `REPLACE_...`.
+В `deployment.yaml` задайте ноду, PVC и путь весов вместо `REPLACE_...`;
+в `resourceclaimtemplate.yaml` — DeviceClass.
 В `argo-app/*.yaml` задайте свой repoURL, ветку, path и destination.
 Для H100 A/B используются **один и тот же класс физических GPU** и одна нода;
 две DRA-заявки выделяют разные карты. Не указывайте PCI-адрес вручную.
@@ -62,10 +61,8 @@ cp ../hardfest-gpu-workshop/argocd/gemma-b.yaml "$DEMO_DIR/argo-app/"
 
 ```bash
 git diff -- "$DEMO_DIR"
-kubectl kustomize "$DEMO_DIR/gemma-a"
-kubectl kustomize "$DEMO_DIR/gemma-b"
-kubectl --context "$GPU_CONTEXT" apply --dry-run=server -k "$DEMO_DIR/gemma-a"
-kubectl --context "$GPU_CONTEXT" apply --dry-run=server -k "$DEMO_DIR/gemma-b"
+kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f "$DEMO_DIR/gemma-a"
+kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f "$DEMO_DIR/gemma-b"
 git add -- "$DEMO_DIR"
 git diff --cached --check
 git diff --cached --stat
@@ -100,14 +97,13 @@ kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get applications hardfest
 
 ## 4. Включить A и B через Git
 
-Используется `yq` Mike Farah v4. Изменение replicas хранится в Kustomization,
-а не выполняется командой scale мимо Git:
+Используется `yq` Mike Farah v4. Число реплик меняется в самом Deployment:
 
 ```bash
-yq -i '.replicas = [{"name": "hf-gemma-a", "count": 1}]' "$DEMO_DIR/gemma-a/kustomization.yaml"
-yq -i '.replicas = [{"name": "hf-gemma-b", "count": 1}]' "$DEMO_DIR/gemma-b/kustomization.yaml"
+yq -i '.spec.replicas = 1' "$DEMO_DIR/gemma-a/deployment.yaml"
+yq -i '.spec.replicas = 1' "$DEMO_DIR/gemma-b/deployment.yaml"
 git diff -- "$DEMO_DIR"
-git add -- "$DEMO_DIR/gemma-a/kustomization.yaml" "$DEMO_DIR/gemma-b/kustomization.yaml"
+git add -- "$DEMO_DIR/gemma-a/deployment.yaml" "$DEMO_DIR/gemma-b/deployment.yaml"
 git commit -S -s -m "Start both Gemma replicas"
 git push
 ```
@@ -126,10 +122,31 @@ Timeout — повод посмотреть Pod events и логи, не уда�
 
 ## 5. Изменение профиля и откат
 
-Правьте `profile.yaml`, проверяйте `kubectl kustomize`, commit/push и sync того же
-Application. Kustomize генерирует новое имя ConfigMap; ссылка в Deployment меняется,
-поэтому Pod перезапускается с новым профилем. Стратегия Recreate освобождает его GPU
-перед запуском замены. Само редактирование Git ещё не означает успешный старт.
+Параметры находятся в `configmap.yaml`, внутри `data.profile.yaml`.
+У ConfigMap постоянное имя; изменение данных само по себе не перезапускает vLLM.
+В том же коммите обновляйте checksum в шаблоне Pod:
+
+```bash
+export CONFIG_SHA=$(yq -o=json '.' "$DEMO_DIR/gemma-b/configmap.yaml" | jq -j '.data["profile.yaml"]' | shasum -a 256 | awk '{print $1}')
+yq -i '.spec.template.metadata.annotations."checksum/vllm-config" = strenv(CONFIG_SHA)' \
+  "$DEMO_DIR/gemma-b/deployment.yaml"
+
+kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f "$DEMO_DIR/gemma-b"
+git diff -- "$DEMO_DIR/gemma-b"
+git add -- "$DEMO_DIR/gemma-b/configmap.yaml" "$DEMO_DIR/gemma-b/deployment.yaml"
+git diff --cached --check
+git commit -S -s -m "Update Gemma B configuration"
+git push
+```
+
+После sync нового коммита Recreate останавливает прежний Pod и освобождает GPU
+перед запуском замены. Сначала проверьте завершение операции Argo на нужной
+ревизии, затем rollout и API. Прежний Ready Pod не подтверждает новый rollout.
+
+Каталоги B 128K, B RAM и B speculative — альтернативы **того же** сервиса.
+Переносите только нужные параметры и RAM/shm-настройки в существующий каталог B,
+сохраняя привязки площадки. Не создавайте конкурирующие Application.
+
 
 Откат — новый коммит, отменяющий **ваш конкретный** коммит конфигурации:
 

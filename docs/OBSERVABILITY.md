@@ -24,9 +24,8 @@ kubectl --context "$GPU_CONTEXT" get crd clusterobservabilitydashboards.observab
 
 ```bash
 cp -R ../hardfest-gpu-workshop/observability "$DEMO_DIR/observability"
-kubectl kustomize "$DEMO_DIR/observability"
 kubectl --context "$GPU_CONTEXT" apply --server-side --dry-run=server \
-  -k "$DEMO_DIR/observability"
+  -f "$DEMO_DIR/observability"
 git add "$DEMO_DIR/observability"
 git diff --cached --check
 git diff --cached

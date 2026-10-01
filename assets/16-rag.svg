@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="740" viewBox="0 0 1200 740" role="img" aria-labelledby="title desc">
+<title id="title">Поиск документов и генерация — разные сервисы</title><desc id="desc">Индексирование выполняется при загрузке документов; поиск — при вопросе пользователя.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
+<rect x="1" y="1" width="1198" height="738" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
+<text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
+<tspan x="64" dy="0">Поиск документов и генерация — разные сервисы</tspan>
+</text>
+<text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
+<tspan x="64" dy="0">Индексирование выполняется при загрузке документов; поиск — при вопросе пользователя.</tspan>
+</text>
+<rect x="48" y="164" width="352" height="123" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
+<text x="70" y="203" font-size="27" fill="#177c83" text-anchor="start" font-weight="700">
+<tspan x="70" dy="0">Документы</tspan>
+</text>
+<text x="70" y="240" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="70" dy="0">Разбивка на фрагменты</tspan>
+</text>
+<path d="M 402 228 H 422" fill="none" stroke="#177c83" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="424" y="164" width="352" height="123" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
+<text x="446" y="203" font-size="27" fill="#177c83" text-anchor="start" font-weight="700">
+<tspan x="446" dy="0">Эмбеддер</tspan>
+</text>
+<text x="446" y="240" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="446" dy="0">Фрагменты → векторы</tspan>
+</text>
+<path d="M 778 228 H 798" fill="none" stroke="#177c83" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="800" y="164" width="352" height="123" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
+<text x="822" y="203" font-size="27" fill="#177c83" text-anchor="start" font-weight="700">
+<tspan x="822" dy="0">Индекс</tspan>
+</text>
+<text x="822" y="240" font-size="22" fill="#252528" text-anchor="start">
+<tspan x="822" dy="0">Векторы и источники</tspan>
+</text>
+<rect x="48" y="421" width="246" height="135" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="66" y="465" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="66" dy="0">Вопрос</tspan>
+</text>
+<text x="66" y="510" font-size="20" fill="#252528" text-anchor="start">
+<tspan x="66" dy="0">Эмбеддер вопроса</tspan>
+</text>
+<path d="M 296 490 H 332" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="334" y="421" width="246" height="135" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="352" y="465" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="352" dy="0">Поиск</tspan>
+</text>
+<text x="352" y="510" font-size="20" fill="#252528" text-anchor="start">
+<tspan x="352" dy="0">Кандидаты из индекса</tspan>
+</text>
+<path d="M 582 490 H 618" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="620" y="421" width="246" height="135" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="638" y="465" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="638" dy="0">Реранкер</tspan>
+</text>
+<text x="638" y="510" font-size="20" fill="#252528" text-anchor="start">
+<tspan x="638" dy="0">Лучшие фрагменты</tspan>
+</text>
+<path d="M 868 490 H 904" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="906" y="421" width="246" height="135" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
+<text x="924" y="465" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
+<tspan x="924" dy="0">LLM</tspan>
+</text>
+<text x="924" y="510" font-size="20" fill="#252528" text-anchor="start">
+<tspan x="924" dy="0">Вопрос + фрагменты</tspan>
+</text>
+<path d="M 976 289 V 356 H 457 V 419" fill="none" stroke="#177c83" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="695" y="344" font-size="22" fill="#177c83" text-anchor="middle">
+<tspan x="695" dy="0">поиск похожих векторов</tspan>
+</text>
+<path d="M 1029 558 V 609" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1029" y="650" font-size="23" fill="#0750f5" text-anchor="middle" font-weight="700">
+<tspan x="1029" dy="0">Ответ + источники</tspan>
+</text>
+<text x="48" y="617" font-size="24" fill="#252528" text-anchor="start">
+<tspan x="48" dy="0">Замена LLM не требует пересоздания индекса.</tspan>
+<tspan x="48" dy="32.400000000000006">При смене эмбеддера совместимость индекса проверяется заново.</tspan>
+</text>
+<text x="48" y="712" font-size="20" fill="#5e6572" text-anchor="start">
+<tspan x="48" dy="0">Схема RAG. У каждого API проверяются доступ, формат ответа и работа по отдельности.</tspan>
+</text>
+</svg>

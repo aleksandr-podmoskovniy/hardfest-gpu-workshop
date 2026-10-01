@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hf-qwen-tp2
+  namespace: hardfest-demo
+  labels:
+    app.kubernetes.io/part-of: hardfest-gpu-workshop
+data:
+  profile.yaml: |
+    model: "/models/qwen"
+    served-model-name: "qwen3.8-flash-next"
+    host: "0.0.0.0"
+    port: 8000
+    dtype: "bfloat16"
+    tensor-parallel-size: 2
+    max-model-len: 262144
+    max-num-seqs: 16
+    gpu-memory-utilization: 0.9
+    language-model-only: true
+    reasoning-parser: "qwen3"
+    generation-config: "vllm"
+    enable-prefix-caching: true
+    enable-chunked-prefill: true
+    max-num-batched-tokens: 4096
+    enforce-eager: false
+    max-cudagraph-capture-size: 32
+    quantization: "modelopt"
+    moe-backend: "marlin"
+    engram-config:
+      cpu_offload: false
+    distributed-executor-backend: "mp"
+    mamba-cache-mode: "align"

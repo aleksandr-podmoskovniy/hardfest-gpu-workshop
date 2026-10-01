@@ -8,7 +8,7 @@
 | --- | --- |
 | [01-topology.svg](01-topology.svg) | Общий чат и шлюз, две H100 и отдельная A30 |
 | [02-latency.svg](02-latency.svg) | Очередь, prefill, первый токен и первый текст ответа |
-| [03-memory.svg](03-memory.svg) | Учебный бюджет памяти и вместимость KV |
+| [03-memory.svg](03-memory.svg) | Расчёт полезных KV Gemma при 64K, 128K и 256K |
 | [04-ab.svg](04-ab.svg) | Настройки сравнения при одинаковом окне 64K |
 | [05-kv-ram.svg](05-kv-ram.svg) | Запись, вытеснение и возврат KV из RAM |
 | [06-scheduler.svg](06-scheduler.svg) | Чанкирование и три ограничения планировщика |
@@ -16,6 +16,12 @@
 | [08-mig-mps.svg](08-mig-mps.svg) | Динамическая геометрия A30 и MPS внутри MIG |
 | [09-platform.svg](09-platform.svg) | Модель, рецепт, план, GPU-заявка и API |
 | [10-tp2.svg](10-tp2.svg) | Один экземпляр модели на двух связанных GPU |
+| [11-gemma-kv.svg](11-gemma-kv.svg) | Крупная формула полного и локального attention |
+| [12-gitops.svg](12-gitops.svg) | GitLab, Argo CD и обычные YAML двух кластеров |
+| [13-attention.svg](13-attention.svg) | Q, K, V и формула attention |
+| [14-prefix.svg](14-prefix.svg) | Совпадение префикса на уровне токенов |
+| [15-gptoss-kv.svg](15-gptoss-kv.svg) | Отдельная математическая задача GPT-OSS из презентации |
+| [16-rag.svg](16-rag.svg) | Индексирование, поиск, реранкер и LLM |
 
 Пересобрать схемы после редактирования исходника:
 

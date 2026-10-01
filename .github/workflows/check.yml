@@ -10,14 +10,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - uses: azure/setup-kubectl@v4
-        with:
-          version: 'v1.34.1'
-      - name: Render every native Kustomize profile
+      - run: pip install -r requirements-dev.txt
+      - name: Validate plain YAML and profile checksums
+        run: python3 scripts/check_manifests.py
+      - name: Verify committed illustrations match their source
         run: |
-          for profile in deploy/*/kustomization.yaml; do
-            kubectl kustomize "$(dirname "$profile")" > /dev/null
-          done
+          python3 scripts/build_diagrams.py
+          git diff --exit-code -- assets/
       - run: python3 -m unittest discover -s tests -v
       - run: python3 scripts/check_public.py
       - run: python3 scripts/check_docs.py

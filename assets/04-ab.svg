@@ -16,11 +16,11 @@
 </text>
 <rect x="48" y="244" width="532" height="282" rx="14" fill="#f1f4f8" stroke="#5e6572" stroke-width="2"/>
 <text x="70" y="283" font-size="27" fill="#5e6572" text-anchor="start" font-weight="700">
-<tspan x="70" dy="0">A — a-chunked</tspan>
+<tspan x="70" dy="0">Gemma A — Base</tspan>
 </text>
 <rect x="620" y="244" width="532" height="282" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
 <text x="642" y="283" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="642" dy="0">B — b-tuned</tspan>
+<tspan x="642" dy="0">Gemma B — Tune</tspan>
 </text>
 <text x="72" y="339" font-size="25" fill="#252528" text-anchor="start">
 <tspan x="72" dy="0">KV: BF16</tspan>

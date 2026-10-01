@@ -2,9 +2,11 @@
 
 Это исходники Kubernetes, не вывод закрытого генератора. В каждом каталоге:
 
-- `profile.yaml` — параметры vLLM, которые обсуждаются в мастер-классе.
-- `resources.yaml` — Deployment, Service, DRA ResourceClaimTemplate и NetworkPolicy.
-- `kustomization.yaml` — сборка ресурсов и ConfigMap. Изменение профиля меняет имя ConfigMap и шаблон Pod, поэтому Argo запускает новый Pod.
+- `configmap.yaml` — единственный источник параметров vLLM, в `data.profile.yaml`.
+- `deployment.yaml` — Pod, ресурсы, подключение весов и checksum конфигурации.
+- `resourceclaimtemplate.yaml` — запрос GPU через DRA.
+- `service.yaml` — адрес API.
+- `networkpolicy.yaml` — доступ к API.
 
 | Каталог | Назначение |
 | --- | --- |
@@ -24,16 +26,17 @@
 
 Замените `REPLACE_...` в копии для своего стенда: ноду, **созданный контроллером** DeviceClass, PVC и каталог весов. Данные и GPUClass здесь не создаются. Namespace также должен существовать. Если на ноде есть taint, добавьте точный toleration, не универсальное разрешение всех taint.
 
-Рендер не требует Python, Helm или доступа к GPU:
+Ничего собирать не требуется: Argo CD читает каталог с обычными YAML.
+Проверка схемы после подстановки параметров площадки:
 
 ```bash
-kubectl kustomize deploy/gemma-a
-kubectl kustomize deploy/gemma-b
+kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f "$DEMO_DIR/gemma-a"
 ```
 
 Профили B — **альтернативы одного Deployment**, а не четыре одновременно работающих сервиса.
-Для следующего этапа переносите его `profile.yaml` и нужные RAM/shm-настройки
-в существующий каталог B в GitOps-репозитории. Application B остаётся прежним.
+Для следующего этапа переносите его параметры из ConfigMap и нужные RAM/shm-настройки
+в существующий каталог B в GitOps-репозитории. Обновите checksum конфигурации в шаблоне Pod в том же коммите —
+[точная команда](../docs/GITOPS.md#5-изменение-профиля-и-откат). Application B остаётся прежним.
 Не запускайте разные Application, которые владеют одним Deployment.
 
 При изменении неизменяемой спецификации ResourceClaimTemplate задайте новое имя

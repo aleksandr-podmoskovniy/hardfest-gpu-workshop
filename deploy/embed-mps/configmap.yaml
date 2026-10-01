@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hf-embed-mps
+  namespace: hardfest-demo
+  labels:
+    app.kubernetes.io/part-of: hardfest-gpu-workshop
+data:
+  profile.yaml: |
+    model: "/models/embedding"
+    served-model-name: "embedding"
+    host: "0.0.0.0"
+    port: 8000
+    runner: "pooling"
+    dtype: "bfloat16"
+    max-model-len: 8192
+    max-num-seqs: 8
+    gpu-memory-utilization: 0.25

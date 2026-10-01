@@ -9,6 +9,8 @@ spec:
     repoURL: https://gitlab.example.com/team/k8s-config.git
     targetRevision: hardfest-demo
     path: argo-projects/gpu-cluster/hardfest-demo/gemma-b
+    directory:
+      recurse: false
   destination:
     name: gpu-cluster
     namespace: hardfest-demo

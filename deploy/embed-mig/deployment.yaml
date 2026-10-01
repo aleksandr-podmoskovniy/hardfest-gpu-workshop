@@ -1,0 +1,123 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "hf-embed-mig"
+  namespace: "hardfest-demo"
+  labels:
+    app.kubernetes.io/part-of: "hardfest-gpu-workshop"
+    app.kubernetes.io/name: "hf-embed-mig"
+spec:
+  replicas: 0
+  strategy:
+    type: "Recreate"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "hf-embed-mig"
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: "hardfest-gpu-workshop"
+        app.kubernetes.io/name: "hf-embed-mig"
+      annotations:
+        workshop/profile: "embed-mig"
+        checksum/vllm-config: "9916ef085eac48e3f7f735007e2444f19bd1c829ce16f41b6b4c105057f1f459"
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 120
+      nodeSelector:
+        kubernetes.io/hostname: "REPLACE_MIG_NODE"
+      tolerations: []
+      resourceClaims:
+        -
+          name: "gpu"
+          resourceClaimTemplateName: "hf-embed-mig-f8a8c39baa"
+      containers:
+        -
+          name: "vllm"
+          image: "vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40"
+          imagePullPolicy: "IfNotPresent"
+          command:
+            - "vllm"
+            - "serve"
+            - "--config"
+            - "/etc/vllm/profile.yaml"
+          ports:
+            -
+              name: "http"
+              containerPort: 8000
+          env:
+            -
+              name: "HF_HUB_OFFLINE"
+              value: "1"
+            -
+              name: "TRANSFORMERS_OFFLINE"
+              value: "1"
+            -
+              name: "HF_HOME"
+              value: "/runtime/huggingface"
+            -
+              name: "VLLM_CACHE_ROOT"
+              value: "/runtime/vllm"
+            -
+              name: "XDG_CACHE_HOME"
+              value: "/runtime/cache"
+            -
+              name: "TOKENIZERS_PARALLELISM"
+              value: "false"
+          resources:
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+              ephemeral-storage: "4Gi"
+            limits:
+              memory: "12Gi"
+              ephemeral-storage: "24Gi"
+            claims:
+              -
+                name: "gpu"
+          volumeMounts:
+            -
+              name: "profile"
+              mountPath: "/etc/vllm"
+              readOnly: true
+            -
+              name: "runtime"
+              mountPath: "/runtime"
+            -
+              name: "shm"
+              mountPath: "/dev/shm"
+            -
+              name: "embedding"
+              mountPath: "/models/embedding"
+              subPath: "REPLACE_EMBEDDING_MODEL_SUBPATH"
+              readOnly: true
+          startupProbe:
+            httpGet:
+              path: "/health"
+              port: 8000
+            periodSeconds: 10
+            failureThreshold: 180
+          readinessProbe:
+            httpGet:
+              path: "/health"
+              port: 8000
+            periodSeconds: 5
+      volumes:
+        -
+          name: "profile"
+          configMap:
+            name: "hf-embed-mig"
+        -
+          name: "runtime"
+          emptyDir:
+            sizeLimit: "20Gi"
+        -
+          name: "shm"
+          emptyDir:
+            medium: "Memory"
+            sizeLimit: "8Gi"
+        -
+          name: "embedding"
+          persistentVolumeClaim:
+            claimName: "REPLACE_EMBEDDING_PVC"
+            readOnly: true

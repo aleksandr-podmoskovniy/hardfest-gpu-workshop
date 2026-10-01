@@ -17,9 +17,7 @@ GitHub содержит самостоятельный воркшоп, схем�
 В публичном репозитории:
 
 ```bash
-for PROFILE in deploy/*/kustomization.yaml; do
-  kubectl kustomize "$(dirname "$PROFILE")" > /dev/null
-done
+git status --short
 git diff --check
 git diff --stat
 ```
@@ -28,6 +26,8 @@ git diff --stat
 управления кластером:
 
 ```bash
+python3 -m pip install -r requirements-dev.txt
+python3 scripts/check_manifests.py
 python3 -m unittest discover -s tests -v
 python3 scripts/check_public.py
 python3 scripts/check_docs.py

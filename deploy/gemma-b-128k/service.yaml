@@ -1,0 +1,17 @@
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "hf-gemma-b"
+  namespace: "hardfest-demo"
+  labels:
+    app.kubernetes.io/part-of: "hardfest-gpu-workshop"
+    app.kubernetes.io/name: "hf-gemma-b"
+spec:
+  selector:
+    app.kubernetes.io/name: "hf-gemma-b"
+  ports:
+    -
+      name: "http"
+      port: 8000
+      targetPort: 8000
+  type: "ClusterIP"
