@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
 <title id="title">Qwen MTP: предложить и проверить</title><desc id="desc">Черновой блок входит в checkpoint. Условный пример с четырьмя предложениями.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker></defs>
+<defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
@@ -14,46 +14,46 @@
 <text x="48" y="226" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700">
 <tspan x="48" dy="0">MTP</tspan>
 </text>
-<rect x="352" y="183" width="174" height="70" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="352" y="183" width="174" height="70" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="439" y="228" font-size="25" fill="#7041b8" text-anchor="middle" font-weight="700">
 <tspan x="439" dy="0">t₁</tspan>
 </text>
-<path d="M439 255 V304" fill="none" stroke="#536278" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="554" y="183" width="174" height="70" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5"/>
+<path d="M439.0 259 L439.0 302" fill="none" stroke="#536278" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-536278)" data-connector="true"/>
+<rect x="554" y="183" width="174" height="70" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="641" y="228" font-size="25" fill="#7041b8" text-anchor="middle" font-weight="700">
 <tspan x="641" dy="0">t₂</tspan>
 </text>
-<path d="M641 255 V304" fill="none" stroke="#536278" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="756" y="183" width="174" height="70" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5"/>
+<path d="M641.0 259 L641.0 302" fill="none" stroke="#536278" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-536278)" data-connector="true"/>
+<rect x="756" y="183" width="174" height="70" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="843" y="228" font-size="25" fill="#7041b8" text-anchor="middle" font-weight="700">
 <tspan x="843" dy="0">t₃</tspan>
 </text>
-<path d="M843 255 V304" fill="none" stroke="#536278" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="958" y="183" width="174" height="70" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5"/>
+<path d="M843.0 259 L843.0 302" fill="none" stroke="#536278" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-536278)" data-connector="true"/>
+<rect x="958" y="183" width="174" height="70" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="1045" y="228" font-size="25" fill="#7041b8" text-anchor="middle" font-weight="700">
 <tspan x="1045" dy="0">t₄</tspan>
 </text>
-<path d="M1045 255 V304" fill="none" stroke="#536278" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
+<path d="M1045.0 259 L1045.0 302" fill="none" stroke="#536278" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-536278)" data-connector="true"/>
 <text x="48" y="351" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700">
 <tspan x="48" dy="0">Проверка</tspan>
 </text>
-<rect x="352" y="308" width="174" height="70" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="352" y="308" width="174" height="70" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="439" y="353" font-size="25" fill="#087d78" text-anchor="middle" font-weight="700">
 <tspan x="439" dy="0">Принят</tspan>
 </text>
-<rect x="554" y="308" width="174" height="70" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="554" y="308" width="174" height="70" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="641" y="353" font-size="25" fill="#087d78" text-anchor="middle" font-weight="700">
 <tspan x="641" dy="0">Принят</tspan>
 </text>
-<rect x="756" y="308" width="174" height="70" rx="12" fill="#fff5e4" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="756" y="308" width="174" height="70" rx="12" fill="#fff5e4" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="843" y="353" font-size="25" fill="#946017" text-anchor="middle" font-weight="700">
 <tspan x="843" dy="0">Отказ</tspan>
 </text>
-<rect x="958" y="308" width="174" height="70" rx="12" fill="#fff5e4" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="958" y="308" width="174" height="70" rx="12" fill="#fff5e4" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="1045" y="353" font-size="25" fill="#946017" text-anchor="middle" font-weight="700">
 <tspan x="1045" dy="0">Отбросить</tspan>
 </text>
-<rect x="48" y="423" width="1104" height="100" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="423" width="1104" height="100" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="72" y="465" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="1056">
 <tspan x="72" dy="0">В ответ: t₁ + t₂ + исправление основной модели</tspan>
 </text>

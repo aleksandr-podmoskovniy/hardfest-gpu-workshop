@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
 <title id="title">Поиск и генерация — разные сервисы</title><desc id="desc">Индексирование выполняется при загрузке документов; поиск — при вопросе пользователя.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker></defs>
+<defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
@@ -11,65 +11,65 @@
 <tspan x="48" dy="0">Индексирование выполняется при загрузке документов; поиск — при вопросе пользователя.</tspan>
 </text>
 <path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="48" y="170" width="352" height="118" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="72" y="212" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="304">
+<rect x="48" y="170" width="336" height="118" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="212" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="288">
 <tspan x="72" dy="0">Документы</tspan>
 </text>
-<text x="72" y="252" font-size="22" fill="#17243b" text-anchor="start" data-max-width="304">
+<text x="72" y="252" font-size="22" fill="#17243b" text-anchor="start" data-max-width="288">
 <tspan x="72" dy="0">Разбивка на фрагменты</tspan>
 </text>
-<path d="M404 232 H420" fill="none" stroke="#087d78" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="424" y="170" width="352" height="118" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="448" y="212" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="304">
-<tspan x="448" dy="0">Эмбеддер</tspan>
+<path d="M390 229.0 L426 229.0" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
+<rect x="432" y="170" width="336" height="118" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="456" y="212" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="288">
+<tspan x="456" dy="0">Эмбеддер</tspan>
 </text>
-<text x="448" y="252" font-size="22" fill="#17243b" text-anchor="start" data-max-width="304">
-<tspan x="448" dy="0">Фрагменты → векторы</tspan>
+<text x="456" y="252" font-size="22" fill="#17243b" text-anchor="start" data-max-width="288">
+<tspan x="456" dy="0">Фрагменты → векторы</tspan>
 </text>
-<path d="M780 232 H796" fill="none" stroke="#087d78" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="800" y="170" width="352" height="118" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="824" y="212" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="304">
-<tspan x="824" dy="0">Индекс</tspan>
+<path d="M774 229.0 L810 229.0" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
+<rect x="816" y="170" width="336" height="118" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="840" y="212" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="288">
+<tspan x="840" dy="0">Индекс</tspan>
 </text>
-<text x="824" y="252" font-size="22" fill="#17243b" text-anchor="start" data-max-width="304">
-<tspan x="824" dy="0">Векторы и источники</tspan>
+<text x="840" y="252" font-size="22" fill="#17243b" text-anchor="start" data-max-width="288">
+<tspan x="840" dy="0">Векторы и источники</tspan>
 </text>
-<rect x="48" y="394" width="246" height="126" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="394" width="240" height="126" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="68" y="438" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700">
 <tspan x="68" dy="0">Вопрос</tspan>
 </text>
 <text x="68" y="484" font-size="21" fill="#17243b" text-anchor="start">
 <tspan x="68" dy="0">Эмбеддер вопроса</tspan>
 </text>
-<path d="M298 456 H330" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="334" y="394" width="246" height="126" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="354" y="438" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700">
-<tspan x="354" dy="0">Поиск</tspan>
+<path d="M294 457.0 L330 457.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="336" y="394" width="240" height="126" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="356" y="438" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="356" dy="0">Поиск</tspan>
 </text>
-<text x="354" y="484" font-size="21" fill="#17243b" text-anchor="start">
-<tspan x="354" dy="0">Кандидаты</tspan>
+<text x="356" y="484" font-size="21" fill="#17243b" text-anchor="start">
+<tspan x="356" dy="0">Кандидаты</tspan>
 </text>
-<path d="M584 456 H616" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="620" y="394" width="246" height="126" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="640" y="438" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700">
-<tspan x="640" dy="0">Реранкер</tspan>
+<path d="M582 457.0 L618 457.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="624" y="394" width="240" height="126" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="644" y="438" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="644" dy="0">Реранкер</tspan>
 </text>
-<text x="640" y="484" font-size="21" fill="#17243b" text-anchor="start">
-<tspan x="640" dy="0">Отбор фрагментов</tspan>
+<text x="644" y="484" font-size="21" fill="#17243b" text-anchor="start">
+<tspan x="644" dy="0">Отбор фрагментов</tspan>
 </text>
-<path d="M870 456 H902" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="906" y="394" width="246" height="126" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="926" y="438" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700">
-<tspan x="926" dy="0">LLM</tspan>
+<path d="M870 457.0 L906 457.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="912" y="394" width="240" height="126" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="932" y="438" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="932" dy="0">LLM</tspan>
 </text>
-<text x="926" y="484" font-size="21" fill="#17243b" text-anchor="start">
-<tspan x="926" dy="0">Вопрос + контекст</tspan>
+<text x="932" y="484" font-size="21" fill="#17243b" text-anchor="start">
+<tspan x="932" dy="0">Вопрос + контекст</tspan>
 </text>
-<path d="M976 290 V336 H457 V390" fill="none" stroke="#087d78" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
+<path d="M984.0 294 L984.0 328.0 Q984 336 976.0 336.0 L464.0 336.0 Q456 336 456.0 344.0 L456.0 388" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
 <text x="694" y="363" font-size="21" fill="#087d78" text-anchor="middle">
 <tspan x="694" dy="0">Поиск похожих векторов</tspan>
 </text>
-<rect x="48" y="566" width="1104" height="100" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="566" width="1104" height="100" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="72" y="608" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="1056">
 <tspan x="72" dy="0">LLM можно заменить без пересоздания индекса</tspan>
 </text>

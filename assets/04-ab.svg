@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
 <title id="title">Gemma A — Base / Gemma B — Tune</title><desc id="desc">Одинаковые веса, версия движка и нагрузка. Меняется конфигурация.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker></defs>
+<defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
@@ -12,10 +12,16 @@
 </text>
 <path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <rect x="48" y="160" width="1104" height="76" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="600" y="208" font-size="29" fill="#17243b" text-anchor="middle" font-weight="700">
-<tspan x="600" dy="0">Контекст 65 536     Вход 32 768     Выход 2 048</tspan>
+<text x="232" y="208" font-size="27" fill="#17243b" text-anchor="middle" font-weight="700">
+<tspan x="232" dy="0">Контекст 65 536</tspan>
 </text>
-<rect x="48" y="270" width="532" height="278" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="600" y="208" font-size="27" fill="#17243b" text-anchor="middle" font-weight="700">
+<tspan x="600" dy="0">Вход 32 768</tspan>
+</text>
+<text x="968" y="208" font-size="27" fill="#17243b" text-anchor="middle" font-weight="700">
+<tspan x="968" dy="0">Выход 2 048</tspan>
+</text>
+<rect x="48" y="270" width="532" height="278" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="72" y="312" font-size="25" fill="#536278" text-anchor="start" font-weight="700" data-max-width="484">
 <tspan x="72" dy="0">A / Base</tspan>
 </text>
@@ -31,7 +37,7 @@
 <text x="72" y="503" font-size="26" fill="#17243b" text-anchor="start">
 <tspan x="72" dy="0">Attention: FlashAttention 4</tspan>
 </text>
-<rect x="620" y="270" width="532" height="278" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="620" y="270" width="532" height="278" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="644" y="312" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="484">
 <tspan x="644" dy="0">B / Tune</tspan>
 </text>
@@ -47,7 +53,7 @@
 <text x="644" y="503" font-size="26" fill="#17243b" text-anchor="start">
 <tspan x="644" dy="0">Attention: Triton</tspan>
 </text>
-<rect x="48" y="579" width="1104" height="100" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="579" width="1104" height="100" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="72" y="621" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="1056">
 <tspan x="72" dy="0">У обоих: prefill по 4096 и до 32 последовательностей</tspan>
 </text>

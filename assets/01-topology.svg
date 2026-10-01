@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
 <title id="title">Один чат — несколько моделей</title><desc id="desc">Open WebUI и GPU-сервисы могут работать в разных кластерах.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker></defs>
+<defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
@@ -11,71 +11,73 @@
 <tspan x="48" dy="0">Open WebUI и GPU-сервисы могут работать в разных кластерах.</tspan>
 </text>
 <path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="48" y="160" width="310" height="486" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
-<rect x="410" y="160" width="742" height="486" rx="12" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="160" width="320" height="518" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="404" y="160" width="748" height="518" rx="12" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <text x="72" y="194" font-size="18" fill="#536278" text-anchor="start" font-weight="700">
 <tspan x="72" dy="0">КЛАСТЕР WEBUI</tspan>
 </text>
-<text x="434" y="194" font-size="18" fill="#536278" text-anchor="start" font-weight="700">
-<tspan x="434" dy="0">GPU-КЛАСТЕР</tspan>
+<text x="428" y="194" font-size="18" fill="#536278" text-anchor="start" font-weight="700">
+<tspan x="428" dy="0">GPU-КЛАСТЕР</tspan>
 </text>
-<rect x="68" y="220" width="270" height="138" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="92" y="262" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="222">
-<tspan x="92" dy="0">Open WebUI</tspan>
+<rect x="72" y="328" width="272" height="156" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="96" y="370" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="224">
+<tspan x="96" dy="0">Open WebUI</tspan>
 </text>
-<text x="92" y="302" font-size="22" fill="#17243b" text-anchor="start" data-max-width="222">
-<tspan x="92" dy="0">Чат и голос</tspan>
-<tspan x="92" dy="30.799999999999997">Пароль / OIDC</tspan>
+<text x="96" y="410" font-size="22" fill="#17243b" text-anchor="start" data-max-width="224">
+<tspan x="96" dy="0">Чат и голос</tspan>
+<tspan x="96" dy="30.799999999999997">Пароль / OIDC</tspan>
 </text>
-<rect x="68" y="422" width="270" height="138" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="92" y="464" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="222">
-<tspan x="92" dy="0">Базы знаний</tspan>
+<rect x="72" y="542" width="272" height="112" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="96" y="584" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="224">
+<tspan x="96" dy="0">Базы знаний</tspan>
 </text>
-<text x="92" y="504" font-size="22" fill="#17243b" text-anchor="start" data-max-width="222">
-<tspan x="92" dy="0">Документы</tspan>
-<tspan x="92" dy="30.799999999999997">Индекс и источники</tspan>
+<text x="96" y="624" font-size="22" fill="#17243b" text-anchor="start" data-max-width="224">
+<tspan x="96" dy="0">Документы и индекс</tspan>
 </text>
-<path d="M203 360 V420" fill="none" stroke="#087d78" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="434" y="220" width="694" height="112" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="458" y="262" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="646">
-<tspan x="458" dy="0">HA Bifrost</tspan>
+<rect x="428" y="328" width="280" height="156" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="452" y="370" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="232">
+<tspan x="452" dy="0">HA Bifrost</tspan>
 </text>
-<text x="458" y="302" font-size="22" fill="#17243b" text-anchor="start" data-max-width="646">
-<tspan x="458" dy="0">Маршруты, личные ключи, лимиты и учёт</tspan>
+<text x="452" y="410" font-size="22" fill="#17243b" text-anchor="start" data-max-width="232">
+<tspan x="452" dy="0">Ключи, квоты и учёт</tspan>
+<tspan x="452" dy="30.799999999999997">Маршруты моделей</tspan>
 </text>
-<path d="M340 278 H432" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="434" y="387" width="334" height="112" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="458" y="429" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="286">
-<tspan x="458" dy="0">Gemma A — Base</tspan>
+<path d="M208.0 490 L208.0 536" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
+<path d="M350 406.0 L422 406.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="800" y="214" width="328" height="92" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="824" y="250" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="280">
+<tspan x="824" dy="0">Gemma A — Base</tspan>
 </text>
-<text x="458" y="469" font-size="22" fill="#17243b" text-anchor="start" data-max-width="286">
-<tspan x="458" dy="0">H100 №1</tspan>
+<text x="824" y="284" font-size="20" fill="#17243b" text-anchor="start" data-max-width="280">
+<tspan x="824" dy="0">H100 №1</tspan>
 </text>
-<rect x="794" y="387" width="334" height="112" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="818" y="429" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="286">
-<tspan x="818" dy="0">Gemma B — Tune</tspan>
+<rect x="800" y="330" width="328" height="92" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="824" y="366" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="280">
+<tspan x="824" dy="0">Gemma B — Tune</tspan>
 </text>
-<text x="818" y="469" font-size="22" fill="#17243b" text-anchor="start" data-max-width="286">
-<tspan x="818" dy="0">H100 №2</tspan>
+<text x="824" y="400" font-size="20" fill="#17243b" text-anchor="start" data-max-width="280">
+<tspan x="824" dy="0">H100 №2</tspan>
 </text>
-<path d="M780 334 V358 H601 V385" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<path d="M780 358 H961 V385" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="434" y="526" width="334" height="96" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="458" y="568" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="286">
-<tspan x="458" dy="0">A30 / MIG + MPS</tspan>
+<rect x="800" y="446" width="328" height="92" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="824" y="482" font-size="24" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="280">
+<tspan x="824" dy="0">A30 / MIG + MPS</tspan>
 </text>
-<text x="458" y="608" font-size="22" fill="#17243b" text-anchor="start" data-max-width="286">
-<tspan x="458" dy="0">Эмбеддеры и реранкер</tspan>
+<text x="824" y="516" font-size="20" fill="#17243b" text-anchor="start" data-max-width="280">
+<tspan x="824" dy="0">Эмбеддер и реранкер</tspan>
 </text>
-<rect x="794" y="526" width="334" height="96" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="818" y="568" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="286">
-<tspan x="818" dy="0">Kubernetes MCP</tspan>
+<rect x="800" y="562" width="328" height="92" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="824" y="598" font-size="24" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="280">
+<tspan x="824" dy="0">Kubernetes MCP</tspan>
 </text>
-<text x="818" y="608" font-size="22" fill="#17243b" text-anchor="start" data-max-width="286">
-<tspan x="818" dy="0">Доступ администратора</tspan>
+<text x="824" y="632" font-size="20" fill="#17243b" text-anchor="start" data-max-width="280">
+<tspan x="824" dy="0">Только администратор</tspan>
 </text>
-<path d="M446 334 H422 V574 H432" fill="none" stroke="#087d78" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<path d="M1116 334 H1140 V574 H1130" fill="none" stroke="#7041b8" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)" stroke-dasharray="6 5"/>
+<path d="M714 406.0 L752 406" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" data-connector="true"/>
+<path d="M752 260 L752 608" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" data-connector="true"/>
+<path d="M752 260.0 L794 260.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M752 376.0 L794 376.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M752 492.0 L794 492.0" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
+<path d="M752 608.0 L794 608.0" fill="none" stroke="#7041b8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-7041b8)" stroke-dasharray="6 5" data-connector="true"/>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="48" y="731" font-size="18" fill="#536278" text-anchor="start" data-max-width="1104">
 <tspan x="48" dy="0">При переходе к Qwen меняется модель за шлюзом; чат, пользователи и базы знаний сохраняются.</tspan>

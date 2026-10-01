@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
 <title id="title">MIG делит карту, MPS делит её раздел</title><desc id="desc">A30: режим MIG включён заранее; геометрию создаёт DRA-драйвер по заявкам.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker></defs>
+<defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
@@ -11,41 +11,41 @@
 <tspan x="48" dy="0">A30: режим MIG включён заранее; геометрию создаёт DRA-драйвер по заявкам.</tspan>
 </text>
 <path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="48" y="160" width="246" height="110" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="64" y="203" font-size="21" fill="#1554dc" text-anchor="start" font-weight="700">
+<rect x="48" y="160" width="240" height="110" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="64" y="203" font-size="20" fill="#1554dc" text-anchor="start" font-weight="700">
 <tspan x="64" dy="0">GPUClass / GPUPool</tspan>
 </text>
 <text x="64" y="242" font-size="21" fill="#17243b" text-anchor="start">
 <tspan x="64" dy="0">Выбор GPU</tspan>
 </text>
-<path d="M298 216 H330" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="334" y="160" width="246" height="110" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="350" y="203" font-size="21" fill="#1554dc" text-anchor="start" font-weight="700">
-<tspan x="350" dy="0">DeviceClass</tspan>
+<path d="M294 215.0 L330 215.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="336" y="160" width="240" height="110" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="352" y="203" font-size="20" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="352" dy="0">DeviceClass</tspan>
 </text>
-<text x="350" y="242" font-size="21" fill="#17243b" text-anchor="start">
-<tspan x="350" dy="0">Профили</tspan>
+<text x="352" y="242" font-size="21" fill="#17243b" text-anchor="start">
+<tspan x="352" dy="0">Профили</tspan>
 </text>
-<path d="M584 216 H616" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="620" y="160" width="246" height="110" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="636" y="203" font-size="21" fill="#1554dc" text-anchor="start" font-weight="700">
-<tspan x="636" dy="0">ResourceClaim</tspan>
+<path d="M582 215.0 L618 215.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="624" y="160" width="240" height="110" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="640" y="203" font-size="20" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="640" dy="0">ResourceClaim</tspan>
 </text>
-<text x="636" y="242" font-size="21" fill="#17243b" text-anchor="start">
-<tspan x="636" dy="0">Запрос ресурсов</tspan>
+<text x="640" y="242" font-size="21" fill="#17243b" text-anchor="start">
+<tspan x="640" dy="0">Запрос ресурсов</tspan>
 </text>
-<path d="M870 216 H902" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="906" y="160" width="246" height="110" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="922" y="203" font-size="21" fill="#1554dc" text-anchor="start" font-weight="700">
-<tspan x="922" dy="0">DRA-драйвер</tspan>
+<path d="M870 215.0 L906 215.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="912" y="160" width="240" height="110" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="928" y="203" font-size="20" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="928" dy="0">DRA-драйвер</tspan>
 </text>
-<text x="922" y="242" font-size="21" fill="#17243b" text-anchor="start">
-<tspan x="922" dy="0">Создание раздела</tspan>
+<text x="928" y="242" font-size="21" fill="#17243b" text-anchor="start">
+<tspan x="928" dy="0">Создание раздела</tspan>
 </text>
 <text x="48" y="324" font-size="26" fill="#17243b" text-anchor="start" font-weight="700">
 <tspan x="48" dy="0">A30 / 24 GB</tspan>
 </text>
-<rect x="48" y="352" width="264" height="230" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="352" width="264" height="230" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="72" y="394" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="216">
 <tspan x="72" dy="0">1g.6gb</tspan>
 </text>
@@ -53,18 +53,18 @@
 <tspan x="72" dy="0">Эмбеддер</tspan>
 <tspan x="72" dy="30.799999999999997">Отдельный MIG</tspan>
 </text>
-<rect x="332" y="352" width="536" height="230" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="332" y="352" width="536" height="230" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="356" y="394" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="488">
 <tspan x="356" dy="0">2g.12gb + MPS</tspan>
 </text>
-<rect x="352" y="429" width="238" height="100" rx="12" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="352" y="429" width="238" height="100" rx="12" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="376" y="471" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="190">
 <tspan x="376" dy="0">Клиент 1</tspan>
 </text>
 <text x="376" y="511" font-size="22" fill="#17243b" text-anchor="start" data-max-width="190">
 <tspan x="376" dy="0">Эмбеддер</tspan>
 </text>
-<rect x="610" y="429" width="238" height="100" rx="12" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="610" y="429" width="238" height="100" rx="12" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="634" y="471" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="190">
 <tspan x="634" dy="0">Клиент 2</tspan>
 </text>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
 <title id="title">AI Inference: запуск по рецепту</title><desc id="desc">Параметры модели и ресурсы описаны один раз; размещением управляет платформа.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker></defs>
+<defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
@@ -11,7 +11,7 @@
 <tspan x="48" dy="0">Параметры модели и ресурсы описаны один раз; размещением управляет платформа.</tspan>
 </text>
 <path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="48" y="160" width="322" height="142" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="160" width="322" height="142" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="72" y="202" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="274">
 <tspan x="72" dy="0">AI Models</tspan>
 </text>
@@ -19,7 +19,7 @@
 <tspan x="72" dy="0">Модель и ревизия</tspan>
 <tspan x="72" dy="30.799999999999997">Проверенные файлы</tspan>
 </text>
-<rect x="418" y="160" width="734" height="142" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="418" y="160" width="734" height="142" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="442" y="202" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="686">
 <tspan x="442" dy="0">Рецепт + оборудование + стратегия</tspan>
 </text>
@@ -27,40 +27,40 @@
 <tspan x="442" dy="0">Runtime, параметры движка и бюджет памяти</tspan>
 <tspan x="442" dy="30.799999999999997">Latency / Throughput</tspan>
 </text>
-<path d="M210 304 V338 H171 V370" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<path d="M786 304 V338 H210" fill="none" stroke="#087d78" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="48" y="374" width="246" height="120" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<path d="M209.0 308 L209.0 330.0 Q209 338 201.0 338.0 L176.0 338.0 Q168 338 168.0 346.0 L168.0 368" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M785.0 308 L785.0 330.0 Q785 338 777.0 338.0 L464.0 338.0 Q456 338 456.0 346.0 L456.0 368" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
+<rect x="48" y="374" width="240" height="120" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="64" y="418" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700">
 <tspan x="64" dy="0">InferenceService</tspan>
 </text>
 <text x="64" y="460" font-size="21" fill="#17243b" text-anchor="start">
 <tspan x="64" dy="0">Заказ сервиса</tspan>
 </text>
-<path d="M298 433 H330" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="334" y="374" width="246" height="120" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="350" y="418" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700">
-<tspan x="350" dy="0">План</tspan>
+<path d="M294 434.0 L330 434.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="336" y="374" width="240" height="120" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="352" y="418" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="352" dy="0">План</tspan>
 </text>
-<text x="350" y="460" font-size="21" fill="#17243b" text-anchor="start">
-<tspan x="350" dy="0">Параметры и GPU</tspan>
+<text x="352" y="460" font-size="21" fill="#17243b" text-anchor="start">
+<tspan x="352" dy="0">Параметры и GPU</tspan>
 </text>
-<path d="M584 433 H616" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="620" y="374" width="246" height="120" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="636" y="418" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700">
-<tspan x="636" dy="0">Claim + Pod</tspan>
+<path d="M582 434.0 L618 434.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="624" y="374" width="240" height="120" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="640" y="418" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="640" dy="0">Claim + Pod</tspan>
 </text>
-<text x="636" y="460" font-size="21" fill="#17243b" text-anchor="start">
-<tspan x="636" dy="0">DRA и движок</tspan>
+<text x="640" y="460" font-size="21" fill="#17243b" text-anchor="start">
+<tspan x="640" dy="0">DRA и движок</tspan>
 </text>
-<path d="M870 433 H902" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="906" y="374" width="246" height="120" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="922" y="418" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700">
-<tspan x="922" dy="0">API</tspan>
+<path d="M870 434.0 L906 434.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="912" y="374" width="240" height="120" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="928" y="418" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="928" dy="0">API</tspan>
 </text>
-<text x="922" y="460" font-size="21" fill="#17243b" text-anchor="start">
-<tspan x="922" dy="0">Ответ модели</tspan>
+<text x="928" y="460" font-size="21" fill="#17243b" text-anchor="start">
+<tspan x="928" dy="0">Ответ модели</tspan>
 </text>
-<rect x="48" y="550" width="1104" height="100" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="550" width="1104" height="100" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="72" y="592" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="1056">
 <tspan x="72" dy="0">Все настройки эксперимента — в рецепте</tspan>
 </text>

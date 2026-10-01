@@ -2,6 +2,7 @@
 """Build self-contained workshop SVGs using a shared layout and colour system."""
 from html import escape
 from pathlib import Path
+from typing import NamedTuple
 
 ROOT = Path(__file__).resolve().parents[1]
 INK, MUTED, LINE = "#17243b", "#536278", "#d9e2ee"
@@ -12,6 +13,22 @@ AMBER, SAND = "#946017", "#fff5e4"
 GRAY = "#f5f7fa"
 
 
+class Box(NamedTuple):
+    x: float
+    y: float
+    w: float
+    h: float
+
+    def port(self, side, fraction=0.5):
+        """Keep each connector six pixels clear of the card outline."""
+        return {
+            'left': (self.x-6, self.y+self.h*fraction),
+            'right': (self.x+self.w+6, self.y+self.h*fraction),
+            'top': (self.x+self.w*fraction, self.y-6),
+            'bottom': (self.x+self.w*fraction, self.y+self.h+6),
+        }[side]
+
+
 class Diagram:
     def __init__(self, name, title, subtitle):
         self.name = name
@@ -19,9 +36,11 @@ class Diagram:
             '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" '
             'viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">',
             f'<title id="title">{escape(title)}</title><desc id="desc">{escape(subtitle)}</desc>',
-            '<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
-            'markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" '
-            'fill="context-stroke"/></marker></defs>',
+            '<defs>' + ''.join(
+                f'<marker id="arrow-{color[1:]}" viewBox="0 0 10 10" refX="10" refY="5" '
+                f'markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto">'
+                f'<path d="M0 0 L10 5 L0 10 Z" fill="{color}"/></marker>'
+                for color in (BLUE, TEAL, PURPLE, MUTED)) + '</defs>',
             '<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>',
         ]
         self.rect(1, 1, 1198, 758, "#ffffff", LINE, 20)
@@ -30,10 +49,12 @@ class Diagram:
         self.text(48, 104, subtitle, 20, MUTED, width=1104)
         self.path("M48 128 H1152", LINE, width=1)
 
-    def rect(self, x, y, w, h, fill=GRAY, stroke=LINE, radius=12, dash=False):
+    def rect(self, x, y, w, h, fill=GRAY, stroke=LINE, radius=12, dash=False, node=False):
         dash = ' stroke-dasharray="7 5"' if dash else ''
+        node = ' data-node="true"' if node else ''
         self.parts.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{radius}" '
-                          f'fill="{fill}" stroke="{stroke}" stroke-width="1.5"{dash}/>')
+                          f'fill="{fill}" stroke="{stroke}" stroke-width="1.5"{dash}{node}/>')
+        return Box(x, y, w, h)
 
     def text(self, x, y, lines, size=24, color=INK, bold=False, anchor="start", width=None):
         lines = [lines] if isinstance(lines, str) else lines
@@ -45,17 +66,43 @@ class Diagram:
             self.parts.append(f'<tspan x="{x}" dy="{0 if i == 0 else size * 1.4}">{escape(line)}</tspan>')
         self.parts.append('</text>')
 
-    def path(self, path, color=BLUE, arrow=False, dash=False, width=2.5):
-        end = ' marker-end="url(#arrow)"' if arrow else ''
+    def path(self, path, color=BLUE, arrow=False, dash=False, width=2, connector=False):
+        end = f' marker-end="url(#arrow-{color[1:]})"' if arrow else ''
         dashed = ' stroke-dasharray="6 5"' if dash else ''
+        tag = ' data-connector="true"' if connector else ''
         self.parts.append(f'<path d="{path}" fill="none" stroke="{color}" stroke-width="{width}" '
-                          f'stroke-linejoin="round" stroke-linecap="round"{end}{dashed}/>')
+                          f'stroke-linejoin="round" stroke-linecap="round"{end}{dashed}{tag}/>')
 
-    def card(self, x, y, w, h, title, body=(), fill=PALE, color=BLUE):
-        self.rect(x, y, w, h, fill)
-        self.text(x+24, y+42, title, 25, color, True, width=w-48)
+    def connector(self, points, color=BLUE, dash=False, arrow=True):
+        """Orthogonal routing with small rounded elbows and a visible arrow shaft."""
+        if len(points) < 2:
+            raise ValueError('A connector needs at least two points')
+        for (ax, ay), (bx, by) in zip(points, points[1:]):
+            if (ax == bx) == (ay == by):
+                raise ValueError('Connector segments must be nonzero and orthogonal')
+        if arrow and sum(abs(a-b) for a, b in zip(points[-2], points[-1])) < 20:
+            raise ValueError('Leave at least 20 pixels before an arrow tip')
+        route = f'M{points[0][0]} {points[0][1]}'
+        for previous, point, following in zip(points, points[1:], points[2:]):
+            before = sum(abs(a-b) for a, b in zip(previous, point))
+            after = sum(abs(a-b) for a, b in zip(following, point))
+            radius = min(8, before/3, after/3)
+            start = tuple(p+(a-p)*radius/before for p, a in zip(point, previous))
+            end = tuple(p+(a-p)*radius/after for p, a in zip(point, following))
+            route += f' L{start[0]} {start[1]} Q{point[0]} {point[1]} {end[0]} {end[1]}'
+        route += f' L{points[-1][0]} {points[-1][1]}'
+        self.path(route, color, arrow, dash, connector=True)
+
+    def connect(self, source, target, sides=('right', 'left'), via=(), color=BLUE, dash=False):
+        self.connector([source.port(sides[0]), *via, target.port(sides[1])], color, dash)
+
+    def card(self, x, y, w, h, title, body=(), fill=PALE, color=BLUE, compact=False):
+        box = self.rect(x, y, w, h, fill, node=True)
+        self.text(x+24, y+(36 if compact else 42), title, 24 if compact else 25,
+                  color, True, width=w-48)
         if body:
-            self.text(x+24, y+82, body, 22, width=w-48)
+            self.text(x+24, y+(70 if compact else 82), body, 20 if compact else 22, width=w-48)
+        return box
 
     def band(self, y, title, body, fill=PALE, color=BLUE):
         self.card(48, y, 1104, 100, title, [body], fill, color)
@@ -71,23 +118,26 @@ class Diagram:
 def topology():
     d = Diagram('01-topology', 'Один чат — несколько моделей',
                 'Open WebUI и GPU-сервисы могут работать в разных кластерах.')
-    d.rect(48, 160, 310, 486)
-    d.rect(410, 160, 742, 486, '#ffffff')
+    d.rect(48, 160, 320, 518)
+    d.rect(404, 160, 748, 518, '#ffffff')
     d.text(72, 194, 'КЛАСТЕР WEBUI', 18, MUTED, True)
-    d.text(434, 194, 'GPU-КЛАСТЕР', 18, MUTED, True)
-    d.card(68, 220, 270, 138, 'Open WebUI', ['Чат и голос', 'Пароль / OIDC'])
-    d.card(68, 422, 270, 138, 'Базы знаний', ['Документы', 'Индекс и источники'], MINT, TEAL)
-    d.path('M203 360 V420', TEAL, True)
-    d.card(434, 220, 694, 112, 'HA Bifrost', ['Маршруты, личные ключи, лимиты и учёт'])
-    d.path('M340 278 H432', BLUE, True)
-    d.card(434, 387, 334, 112, 'Gemma A — Base', ['H100 №1'])
-    d.card(794, 387, 334, 112, 'Gemma B — Tune', ['H100 №2'])
-    d.path('M780 334 V358 H601 V385', BLUE, True)
-    d.path('M780 358 H961 V385', BLUE, True)
-    d.card(434, 526, 334, 96, 'A30 / MIG + MPS', ['Эмбеддеры и реранкер'], MINT, TEAL)
-    d.card(794, 526, 334, 96, 'Kubernetes MCP', ['Доступ администратора'], LILAC, PURPLE)
-    d.path('M446 334 H422 V574 H432', TEAL, True)
-    d.path('M1116 334 H1140 V574 H1130', PURPLE, True, True)
+    d.text(428, 194, 'GPU-КЛАСТЕР', 18, MUTED, True)
+    webui = d.card(72, 328, 272, 156, 'Open WebUI', ['Чат и голос', 'Пароль / OIDC'])
+    knowledge = d.card(72, 542, 272, 112, 'Базы знаний', ['Документы и индекс'], MINT, TEAL)
+    gateway = d.card(428, 328, 280, 156, 'HA Bifrost', ['Ключи, квоты и учёт', 'Маршруты моделей'])
+    d.connect(webui, knowledge, ('bottom', 'top'), color=TEAL)
+    d.connect(webui, gateway)
+    services = [
+        d.card(800, 214, 328, 92, 'Gemma A — Base', ['H100 №1'], compact=True),
+        d.card(800, 330, 328, 92, 'Gemma B — Tune', ['H100 №2'], compact=True),
+        d.card(800, 446, 328, 92, 'A30 / MIG + MPS', ['Эмбеддер и реранкер'], MINT, TEAL, compact=True),
+        d.card(800, 562, 328, 92, 'Kubernetes MCP', ['Только администратор'], LILAC, PURPLE, compact=True),
+    ]
+    d.connector([gateway.port('right'), (752, 406)], arrow=False)
+    d.connector([(752, 260), (752, 608)], arrow=False)
+    for service, color, dashed in zip(services, (BLUE, BLUE, TEAL, PURPLE), (False, False, False, True)):
+        y = service.port('left')[1]
+        d.connector([(752, y), service.port('left')], color, dashed)
     d.footer('При переходе к Qwen меняется модель за шлюзом; чат, пользователи и базы знаний сохраняются.')
     d.save()
 
@@ -135,7 +185,8 @@ def ab():
     d = Diagram('04-ab', 'Gemma A — Base / Gemma B — Tune',
                 'Одинаковые веса, версия движка и нагрузка. Меняется конфигурация.')
     d.rect(48, 160, 1104, 76)
-    d.text(600, 208, 'Контекст 65 536     Вход 32 768     Выход 2 048', 29, bold=True, anchor='middle')
+    for x, label in [(232, 'Контекст 65 536'), (600, 'Вход 32 768'), (968, 'Выход 2 048')]:
+        d.text(x, 208, label, 27, bold=True, anchor='middle')
     for x, title, fill, color, lines in [
             (48, 'A / Base', GRAY, MUTED, ['KV: BF16', 'Prefix cache: выключен', 'CUDA graphs: выключены', 'Attention: FlashAttention 4']),
             (620, 'B / Tune', PALE, BLUE, ['KV: FP8', 'Prefix cache: включён', 'CUDA graphs: включены', 'Attention: Triton'])]:
@@ -153,16 +204,17 @@ def offload():
                 'Повтор документа после вытеснения: X → другие документы → X.')
     d.text(260, 180, 'GPU', 22, BLUE, True, 'middle')
     d.text(920, 180, 'RAM', 22, TEAL, True, 'middle')
+    pairs = []
     for y, title, gpu, ram in [(216, '1. Обработать X', 'KV документа X', 'Копия KV документа X'),
             (360, '2. Вытеснить X', 'KV документов Y, Z', 'Копия X остаётся'),
             (504, '3. Повторить X', 'KV X снова на GPU', 'Найденные блоки X')]:
         d.text(48, y-14, title, 19, MUTED)
-        d.card(48, y, 432, 96, gpu)
-        d.card(720, y, 432, 96, ram, fill=MINT, color=TEAL)
-    d.path('M484 264 H716', TEAL, True)
+        pairs.append((d.card(48, y, 432, 96, gpu),
+                      d.card(720, y, 432, 96, ram, fill=MINT, color=TEAL)))
+    d.connect(*pairs[0], color=TEAL)
     d.text(600, 245, 'Запись', 22, TEAL, anchor='middle')
     d.text(600, 415, 'Другие запросы', 21, MUTED, anchor='middle')
-    d.path('M716 552 H484', BLUE, True)
+    d.connect(pairs[2][1], pairs[2][0], ('left', 'right'))
     d.text(600, 533, 'Чтение', 22, BLUE, anchor='middle')
     d.text(48, 660, 'Проверяем CPU → GPU байты и отсутствие локального cache hit.', 26, bold=True)
     d.footer('RAM хранит блоки между обращениями. Во время вычисления рабочий KV должен находиться на GPU.')
@@ -203,10 +255,10 @@ def speculation():
         for i, token in enumerate(['A', 'B', 'C', 'D', 'E']):
             x = 312+i*170
             fill, color = (LILAC, PURPLE) if y == 215 else ((MINT, TEAL) if i < 3 else (SAND, AMBER))
-            d.rect(x, y, 150, 66, fill)
+            d.rect(x, y, 150, 66, fill, node=True)
             d.text(x+75, y+43, token if y == 215 or i < 3 else '×', 30, color, True, 'middle')
             if y == 215:
-                d.path(f'M{x+75} 283 V336', MUTED, True)
+                d.connect(Box(x, y, 150, 66), Box(x, 340, 150, 66), ('bottom', 'top'), color=MUTED)
     d.band(448, 'В ответ: A, B, C + исправление основной модели',
            'Следующий цикл начинается с принятого и исправленного продолжения.')
     d.rect(48, 580, 1104, 94, LILAC)
@@ -221,13 +273,13 @@ def speculation():
 def mig():
     d = Diagram('08-mig-mps', 'MIG делит карту, MPS делит её раздел',
                 'A30: режим MIG включён заранее; геометрию создаёт DRA-драйвер по заявкам.')
-    for x, title, body in [(48, 'GPUClass / GPUPool', 'Выбор GPU'), (334, 'DeviceClass', 'Профили'),
-            (620, 'ResourceClaim', 'Запрос ресурсов'), (906, 'DRA-драйвер', 'Создание раздела')]:
-        d.rect(x, 160, 246, 110)
-        d.text(x+16, 203, title, 21, BLUE, True)
+    for x, title, body in [(48, 'GPUClass / GPUPool', 'Выбор GPU'), (336, 'DeviceClass', 'Профили'),
+            (624, 'ResourceClaim', 'Запрос ресурсов'), (912, 'DRA-драйвер', 'Создание раздела')]:
+        node = d.rect(x, 160, 240, 110, node=True)
+        d.text(x+16, 203, title, 20, BLUE, True)
         d.text(x+16, 242, body, 21)
-        if x < 906:
-            d.path(f'M{x+250} 216 H{x+282}', arrow=True)
+        if x < 912:
+            d.connect(node, Box(x+288, 160, 240, 110))
     d.text(48, 324, 'A30 / 24 GB', 26, bold=True)
     d.card(48, 352, 264, 230, '1g.6gb', ['Эмбеддер', 'Отдельный MIG'])
     d.card(332, 352, 536, 230, '2g.12gb + MPS', (), LILAC, PURPLE)
@@ -245,18 +297,19 @@ def mig():
 def platform():
     d = Diagram('09-platform', 'AI Inference: запуск по рецепту',
                 'Параметры модели и ресурсы описаны один раз; размещением управляет платформа.')
-    d.card(48, 160, 322, 142, 'AI Models', ['Модель и ревизия', 'Проверенные файлы'])
-    d.card(418, 160, 734, 142, 'Рецепт + оборудование + стратегия',
+    models = d.card(48, 160, 322, 142, 'AI Models', ['Модель и ревизия', 'Проверенные файлы'])
+    recipe = d.card(418, 160, 734, 142, 'Рецепт + оборудование + стратегия',
            ['Runtime, параметры движка и бюджет памяти', 'Latency / Throughput'], MINT, TEAL)
-    d.path('M210 304 V338 H171 V370', arrow=True)
-    d.path('M786 304 V338 H210', TEAL)
-    for x, title, body in [(48, 'InferenceService', 'Заказ сервиса'), (334, 'План', 'Параметры и GPU'),
-            (620, 'Claim + Pod', 'DRA и движок'), (906, 'API', 'Ответ модели')]:
-        d.rect(x, 374, 246, 120, PALE)
+    d.connect(models, Box(48, 374, 240, 120), ('bottom', 'top'), via=((209, 338), (168, 338)))
+    d.connect(recipe, Box(336, 374, 240, 120), ('bottom', 'top'),
+              via=((785, 338), (456, 338)), color=TEAL)
+    for x, title, body in [(48, 'InferenceService', 'Заказ сервиса'), (336, 'План', 'Параметры и GPU'),
+            (624, 'Claim + Pod', 'DRA и движок'), (912, 'API', 'Ответ модели')]:
+        node = d.rect(x, 374, 240, 120, PALE, node=True)
         d.text(x+16, 418, title, 24, BLUE, True)
         d.text(x+16, 460, body, 21)
-        if x < 906:
-            d.path(f'M{x+250} 433 H{x+282}', arrow=True)
+        if x < 912:
+            d.connect(node, Box(x+288, 374, 240, 120))
     d.band(550, 'Все настройки эксперимента — в рецепте',
            'FP8 KV, prefix cache, chunked prefill, CUDA graphs, CPU KV, assistant, TP2 и MTP.', MINT, TEAL)
     d.footer('Проверяем цепочку: рецепт → план → выделенные устройства → параметры движка → ответ API.')
@@ -268,11 +321,11 @@ def tp2():
                 'Два процесса совместно вычисляют один ответ и обмениваются промежуточными результатами.')
     d.rect(48, 170, 1104, 350, '#ffffff', BLUE)
     d.text(72, 212, 'ОДНА НОДА / ОДИН POD / ОДИН API', 20, BLUE, True)
-    d.card(72, 254, 384, 208, 'H100 / rank 0', ['Часть весов', 'Локальные состояния', 'Вычисления'])
-    d.card(744, 254, 384, 208, 'H100 / rank 1', ['Часть весов', 'Локальные состояния', 'Вычисления'])
+    first = d.card(72, 254, 384, 208, 'H100 / rank 0', ['Часть весов', 'Локальные состояния', 'Вычисления'])
+    second = d.card(744, 254, 384, 208, 'H100 / rank 1', ['Часть весов', 'Локальные состояния', 'Вычисления'])
     d.text(600, 315, 'NVLink / NCCL', 24, BLUE, True, 'middle')
-    d.path('M460 353 H740', BLUE, True)
-    d.path('M740 405 H460', BLUE, True)
+    d.connector([first.port('right', .5), second.port('left', .5)])
+    d.connector([second.port('left', .75), first.port('right', .75)])
     d.text(600, 491, 'DRA выделяет два устройства; vLLM распределяет модель.', 23, anchor='middle')
     d.band(565, 'TP2 не равно двум репликам',
            'Обе GPU участвуют в одном запросе. HBM не становится прозрачным общим пулом.', MINT, TEAL)
@@ -301,15 +354,15 @@ def gemma_formula():
 def gitops():
     d = Diagram('12-gitops', 'Helm в Git, доставка через Argo CD',
                 'Один чарт, отдельные профили и привязки площадки. Без прямого изменения Deployment.')
-    d.card(48, 160, 330, 158, 'GitHub', ['Чарт и примеры', 'Профили экспериментов', 'Без секретов'], GRAY, MUTED)
-    d.card(446, 160, 706, 158, 'GitLab / k8s-config',
+    github = d.card(48, 160, 330, 158, 'GitHub', ['Чарт и примеры', 'Профили экспериментов', 'Без секретов'], GRAY, MUTED)
+    gitlab = d.card(446, 160, 706, 158, 'GitLab / k8s-config',
            ['Чарт + values + site-values', 'Проверка diff → подписанный commit → push', 'Application указывает на этот репозиторий'])
-    d.path('M382 236 H442', BLUE, True)
-    d.card(48, 411, 504, 163, 'Управляющий кластер', ['Argo CD', 'Helm render → sync выбранного SHA'])
-    d.card(648, 411, 504, 163, 'GPU-кластер',
+    argo = d.card(48, 411, 504, 163, 'Управляющий кластер', ['Argo CD', 'Helm render → sync выбранного SHA'])
+    gpu = d.card(648, 411, 504, 163, 'GPU-кластер',
            ['ConfigMap, Deployment, Service', 'ResourceClaimTemplate, NetworkPolicy'], MINT, TEAL)
-    d.path('M798 320 V365 H300 V407', BLUE, True)
-    d.path('M556 490 H644', TEAL, True)
+    d.connect(github, gitlab)
+    d.connect(gitlab, argo, ('bottom', 'top'), via=((799, 365), (300, 365)))
+    d.connect(argo, gpu, color=TEAL)
     d.text(48, 645, 'Изменение values → новый checksum Pod → перезапуск Recreate', 27, bold=True)
     d.footer('Примеры выключены: replicaCount = 0, autosync отсутствует. Секреты передаются отдельно от Git.')
     d.save()
@@ -318,16 +371,16 @@ def gitops():
 def attention():
     d = Diagram('13-attention', 'Зачем сохранять K и V',
                 'Запрос текущего токена обращается к ключам и значениям истории.')
-    d.card(48, 170, 330, 134, 'Текущий токен', ['Q — запрос'])
-    d.card(426, 170, 330, 134, 'История', ['K — ключи, V — значения'], MINT, TEAL)
-    d.card(804, 170, 348, 134, 'KV-кэш', ['Сохраняет K и V'], MINT, TEAL)
-    d.path('M760 237 H800', TEAL, True)
-    d.rect(48, 364, 1104, 232, PALE)
+    query = d.card(48, 170, 336, 134, 'Текущий токен', ['Q — запрос'])
+    history = d.card(432, 170, 336, 134, 'История', ['K — ключи, V — значения'], MINT, TEAL)
+    cache = d.card(816, 170, 336, 134, 'KV-кэш', ['Сохраняет K и V'], MINT, TEAL)
+    d.connect(history, cache, color=TEAL)
+    d.rect(48, 364, 1104, 232, PALE, node=True)
     d.text(600, 424, 'Attention(Q, K, V) =', 34, BLUE, True, 'middle')
     d.text(600, 502, 'softmax(QKᵀ / √d) V', 52, bold=True, anchor='middle')
     d.text(600, 553, 'Сравнить Q с ключами → получить веса → смешать значения', 25, anchor='middle')
-    d.path('M213 306 V360', BLUE, True)
-    d.path('M591 306 V360', TEAL, True)
+    d.connector([query.port('bottom'), (216, 358)])
+    d.connector([history.port('bottom'), (600, 358)], TEAL)
     d.text(48, 653, 'Кэш хранит тензоры, а не готовые ответы.', 29, bold=True)
     d.footer('d — размерность головы. Маски опущены; при GQA память KV считают по KV-головам, не по Q-головам.')
     d.save()
@@ -356,18 +409,19 @@ def rag():
     d = Diagram('16-rag', 'Поиск и генерация — разные сервисы',
                 'Индексирование выполняется при загрузке документов; поиск — при вопросе пользователя.')
     for x, title, body in [(48, 'Документы', 'Разбивка на фрагменты'),
-            (424, 'Эмбеддер', 'Фрагменты → векторы'), (800, 'Индекс', 'Векторы и источники')]:
-        d.card(x, 170, 352, 118, title, [body], MINT, TEAL)
-        if x < 800:
-            d.path(f'M{x+356} 232 H{x+372}', TEAL, True)
-    for x, title, body in [(48, 'Вопрос', 'Эмбеддер вопроса'), (334, 'Поиск', 'Кандидаты'),
-            (620, 'Реранкер', 'Отбор фрагментов'), (906, 'LLM', 'Вопрос + контекст')]:
-        d.rect(x, 394, 246, 126, PALE)
+            (432, 'Эмбеддер', 'Фрагменты → векторы'), (816, 'Индекс', 'Векторы и источники')]:
+        node = d.card(x, 170, 336, 118, title, [body], MINT, TEAL)
+        if x < 816:
+            d.connect(node, Box(x+384, 170, 336, 118), color=TEAL)
+    for x, title, body in [(48, 'Вопрос', 'Эмбеддер вопроса'), (336, 'Поиск', 'Кандидаты'),
+            (624, 'Реранкер', 'Отбор фрагментов'), (912, 'LLM', 'Вопрос + контекст')]:
+        node = d.rect(x, 394, 240, 126, PALE, node=True)
         d.text(x+20, 438, title, 25, BLUE, True)
         d.text(x+20, 484, body, 21)
-        if x < 906:
-            d.path(f'M{x+250} 456 H{x+282}', BLUE, True)
-    d.path('M976 290 V336 H457 V390', TEAL, True)
+        if x < 912:
+            d.connect(node, Box(x+288, 394, 240, 126))
+    d.connect(Box(816, 170, 336, 118), Box(336, 394, 240, 126), ('bottom', 'top'),
+              via=((984, 336), (456, 336)), color=TEAL)
     d.text(694, 363, 'Поиск похожих векторов', 21, TEAL, anchor='middle')
     d.band(566, 'LLM можно заменить без пересоздания индекса',
            'При смене эмбеддера документы нужно переиндексировать.', MINT, TEAL)
@@ -384,11 +438,11 @@ def qwen_transition():
     d.text(48, 355, 'Платформенную Gemma, если запущена, тоже остановить.', 22, MUTED)
     d.text(48, 419, '2 / СОЗДАТЬ СЕРВИС ЧЕРЕЗ AI INFERENCE', 19, BLUE, True)
     for x, title, body in [(48, 'Рецепт Qwen', ['Throughput', 'TP2 + MTP + CPU KV']),
-            (424, 'DRA-заявка', ['count: 2', 'Полные H100 одной ноды']),
-            (800, 'Qwen API', ['Один Pod', 'Ответ через прежний чат'])]:
-        d.card(x, 447, 352, 143, title, body)
-        if x < 800:
-            d.path(f'M{x+356} 519 H{x+372}', BLUE, True)
+            (432, 'DRA-заявка', ['count: 2', 'Полные H100 одной ноды']),
+            (816, 'Qwen API', ['Один Pod', 'Ответ через прежний чат'])]:
+        node = d.card(x, 447, 336, 143, title, body)
+        if x < 816:
+            d.connect(node, Box(x+384, 447, 336, 143))
     d.text(48, 656, 'Перед запуском: прежние Pod завершены, обе GPU свободны.', 27, bold=True)
     d.footer('PVC, веса, GPUClass/GPUPool и поисковые сервисы на A30 при переключении не удаляются.')
     d.save()
@@ -403,10 +457,10 @@ def qwen_mtp():
             x = 352+i*202
             fill, color = (LILAC, PURPLE) if y == 183 else ((MINT, TEAL) if i < 2 else (SAND, AMBER))
             label = ['t₁', 't₂', 't₃', 't₄'][i] if y == 183 else ['Принят', 'Принят', 'Отказ', 'Отбросить'][i]
-            d.rect(x, y, 174, 70, fill)
+            d.rect(x, y, 174, 70, fill, node=True)
             d.text(x+87, y+45, label, 25, color, True, 'middle')
             if y == 183:
-                d.path(f'M{x+87} 255 V304', MUTED, True)
+                d.connect(Box(x, y, 174, 70), Box(x, 308, 174, 70), ('bottom', 'top'), color=MUTED)
     d.band(423, 'В ответ: t₁ + t₂ + исправление основной модели',
            'Первый отказ отменяет остаток; следующий цикл продолжает принятый текст.')
     for x, w, title, top, bottom, color, fill in [
@@ -427,10 +481,10 @@ def qwen_capacity():
     d.text(48, 180, 'ОДНОВРЕМЕННЫЕ ЗАПРОСЫ', 19, MUTED, True)
     for i, count in enumerate([1, 2, 4, 8, 16, 32, 50]):
         x = 48+i*162
-        d.rect(x, 207, 132, 78, PALE)
-        d.text(x+66, 260, str(count), 39, BLUE, True, 'middle')
+        node = d.rect(x, 207, 124, 78, PALE, node=True)
+        d.text(x+62, 260, str(count), 39, BLUE, True, 'middle')
         if i < 6:
-            d.path(f'M{x+136} 246 H{x+158}', BLUE, True)
+            d.connect(node, Box(x+162, 207, 124, 78))
     for x, title, body, fill, color in [
             (48, 'Очередь', ['Стабильна', 'или растёт?'], SAND, AMBER),
             (330, 'TTFT', ['До первого токена', 'p50 / p95 / p99'], PALE, BLUE),

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
 <title id="title">Зачем сохранять K и V</title><desc id="desc">Запрос текущего токена обращается к ключам и значениям истории.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker></defs>
+<defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
@@ -11,29 +11,29 @@
 <tspan x="48" dy="0">Запрос текущего токена обращается к ключам и значениям истории.</tspan>
 </text>
 <path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="48" y="170" width="330" height="134" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="72" y="212" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="282">
+<rect x="48" y="170" width="336" height="134" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="212" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="288">
 <tspan x="72" dy="0">Текущий токен</tspan>
 </text>
-<text x="72" y="252" font-size="22" fill="#17243b" text-anchor="start" data-max-width="282">
+<text x="72" y="252" font-size="22" fill="#17243b" text-anchor="start" data-max-width="288">
 <tspan x="72" dy="0">Q — запрос</tspan>
 </text>
-<rect x="426" y="170" width="330" height="134" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="450" y="212" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="282">
-<tspan x="450" dy="0">История</tspan>
+<rect x="432" y="170" width="336" height="134" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="456" y="212" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="288">
+<tspan x="456" dy="0">История</tspan>
 </text>
-<text x="450" y="252" font-size="22" fill="#17243b" text-anchor="start" data-max-width="282">
-<tspan x="450" dy="0">K — ключи, V — значения</tspan>
+<text x="456" y="252" font-size="22" fill="#17243b" text-anchor="start" data-max-width="288">
+<tspan x="456" dy="0">K — ключи, V — значения</tspan>
 </text>
-<rect x="804" y="170" width="348" height="134" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="828" y="212" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="300">
-<tspan x="828" dy="0">KV-кэш</tspan>
+<rect x="816" y="170" width="336" height="134" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="840" y="212" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="288">
+<tspan x="840" dy="0">KV-кэш</tspan>
 </text>
-<text x="828" y="252" font-size="22" fill="#17243b" text-anchor="start" data-max-width="300">
-<tspan x="828" dy="0">Сохраняет K и V</tspan>
+<text x="840" y="252" font-size="22" fill="#17243b" text-anchor="start" data-max-width="288">
+<tspan x="840" dy="0">Сохраняет K и V</tspan>
 </text>
-<path d="M760 237 H800" fill="none" stroke="#087d78" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<rect x="48" y="364" width="1104" height="232" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<path d="M774 237.0 L810 237.0" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
+<rect x="48" y="364" width="1104" height="232" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="600" y="424" font-size="34" fill="#1554dc" text-anchor="middle" font-weight="700">
 <tspan x="600" dy="0">Attention(Q, K, V) =</tspan>
 </text>
@@ -43,8 +43,8 @@
 <text x="600" y="553" font-size="25" fill="#17243b" text-anchor="middle">
 <tspan x="600" dy="0">Сравнить Q с ключами → получить веса → смешать значения</tspan>
 </text>
-<path d="M213 306 V360" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
-<path d="M591 306 V360" fill="none" stroke="#087d78" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
+<path d="M216.0 310 L216 358" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M600.0 310 L600 358" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
 <text x="48" y="653" font-size="29" fill="#17243b" text-anchor="start" font-weight="700">
 <tspan x="48" dy="0">Кэш хранит тензоры, а не готовые ответы.</tspan>
 </text>
