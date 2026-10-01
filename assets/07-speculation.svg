@@ -1,95 +1,87 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="850" viewBox="0 0 1200 850" role="img" aria-labelledby="title desc">
-<title id="title">Черновик предлагает, основная модель проверяет</title><desc id="desc">Условный цикл speculative decoding. Три принятых токена — пример, не измеренная доля.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
-<style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
-<rect x="1" y="1" width="1198" height="848" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-<rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
-<text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="64" dy="0">Черновик предлагает, основная модель проверяет</tspan>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
+<title id="title">Черновик предлагает — модель проверяет</title><desc id="desc">Принимается непрерывный префикс; после первого отказа хвост отбрасывается.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
+<rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
+<text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
+<tspan x="70" dy="0">Черновик предлагает — модель проверяет</tspan>
 </text>
-<text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
-<tspan x="64" dy="0">Условный цикл speculative decoding. Три принятых токена — пример, не измеренная доля.</tspan>
+<text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Принимается непрерывный префикс; после первого отказа хвост отбрасывается.</tspan>
 </text>
-<text x="48" y="178" font-size="26" fill="#6844bc" text-anchor="start" font-weight="700">
+<path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="256" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700">
 <tspan x="48" dy="0">Черновик</tspan>
 </text>
-<rect x="288" y="141" width="142" height="66" rx="14" fill="#efe9fc" stroke="#6844bc" stroke-width="2"/>
-<text x="359" y="184" font-size="30" fill="#6844bc" text-anchor="middle" font-weight="700">
-<tspan x="359" dy="0">A</tspan>
+<rect x="312" y="215" width="150" height="66" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="387" y="258" font-size="30" fill="#7041b8" text-anchor="middle" font-weight="700">
+<tspan x="387" dy="0">A</tspan>
 </text>
-<path d="M 359 209 V 260" fill="none" stroke="#5e6572" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<rect x="456" y="141" width="142" height="66" rx="14" fill="#efe9fc" stroke="#6844bc" stroke-width="2"/>
-<text x="527" y="184" font-size="30" fill="#6844bc" text-anchor="middle" font-weight="700">
-<tspan x="527" dy="0">B</tspan>
+<path d="M387 283 V336" fill="none" stroke="#536278" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="482" y="215" width="150" height="66" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="557" y="258" font-size="30" fill="#7041b8" text-anchor="middle" font-weight="700">
+<tspan x="557" dy="0">B</tspan>
 </text>
-<path d="M 527 209 V 260" fill="none" stroke="#5e6572" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<rect x="624" y="141" width="142" height="66" rx="14" fill="#efe9fc" stroke="#6844bc" stroke-width="2"/>
-<text x="695" y="184" font-size="30" fill="#6844bc" text-anchor="middle" font-weight="700">
-<tspan x="695" dy="0">C</tspan>
+<path d="M557 283 V336" fill="none" stroke="#536278" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="652" y="215" width="150" height="66" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="727" y="258" font-size="30" fill="#7041b8" text-anchor="middle" font-weight="700">
+<tspan x="727" dy="0">C</tspan>
 </text>
-<path d="M 695 209 V 260" fill="none" stroke="#5e6572" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<rect x="792" y="141" width="142" height="66" rx="14" fill="#efe9fc" stroke="#6844bc" stroke-width="2"/>
-<text x="863" y="184" font-size="30" fill="#6844bc" text-anchor="middle" font-weight="700">
-<tspan x="863" dy="0">D</tspan>
+<path d="M727 283 V336" fill="none" stroke="#536278" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="822" y="215" width="150" height="66" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="897" y="258" font-size="30" fill="#7041b8" text-anchor="middle" font-weight="700">
+<tspan x="897" dy="0">D</tspan>
 </text>
-<path d="M 863 209 V 260" fill="none" stroke="#5e6572" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<rect x="960" y="141" width="142" height="66" rx="14" fill="#efe9fc" stroke="#6844bc" stroke-width="2"/>
-<text x="1031" y="184" font-size="30" fill="#6844bc" text-anchor="middle" font-weight="700">
-<tspan x="1031" dy="0">E</tspan>
+<path d="M897 283 V336" fill="none" stroke="#536278" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="992" y="215" width="150" height="66" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="1067" y="258" font-size="30" fill="#7041b8" text-anchor="middle" font-weight="700">
+<tspan x="1067" dy="0">E</tspan>
 </text>
-<path d="M 1031 209 V 260" fill="none" stroke="#5e6572" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<text x="48" y="308" font-size="24" fill="#0750f5" text-anchor="start" font-weight="700">
+<path d="M1067 283 V336" fill="none" stroke="#536278" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
+<text x="48" y="381" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700">
 <tspan x="48" dy="0">Проверка</tspan>
-<tspan x="48" dy="32.400000000000006">основной моделью</tspan>
 </text>
-<rect x="288" y="272" width="142" height="66" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
-<text x="359" y="315" font-size="30" fill="#177c83" text-anchor="middle" font-weight="700">
-<tspan x="359" dy="0">A</tspan>
+<rect x="312" y="340" width="150" height="66" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="387" y="383" font-size="30" fill="#087d78" text-anchor="middle" font-weight="700">
+<tspan x="387" dy="0">A</tspan>
 </text>
-<rect x="456" y="272" width="142" height="66" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
-<text x="527" y="315" font-size="30" fill="#177c83" text-anchor="middle" font-weight="700">
-<tspan x="527" dy="0">B</tspan>
+<rect x="482" y="340" width="150" height="66" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="557" y="383" font-size="30" fill="#087d78" text-anchor="middle" font-weight="700">
+<tspan x="557" dy="0">B</tspan>
 </text>
-<rect x="624" y="272" width="142" height="66" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
-<text x="695" y="315" font-size="30" fill="#177c83" text-anchor="middle" font-weight="700">
-<tspan x="695" dy="0">C</tspan>
+<rect x="652" y="340" width="150" height="66" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="727" y="383" font-size="30" fill="#087d78" text-anchor="middle" font-weight="700">
+<tspan x="727" dy="0">C</tspan>
 </text>
-<rect x="792" y="272" width="142" height="66" rx="14" fill="#fff2da" stroke="#a15b0b" stroke-width="2"/>
-<text x="863" y="315" font-size="30" fill="#a15b0b" text-anchor="middle" font-weight="700">
-<tspan x="863" dy="0">×</tspan>
+<rect x="822" y="340" width="150" height="66" rx="12" fill="#fff5e4" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="897" y="383" font-size="30" fill="#946017" text-anchor="middle" font-weight="700">
+<tspan x="897" dy="0">×</tspan>
 </text>
-<rect x="960" y="272" width="142" height="66" rx="14" fill="#fff2da" stroke="#a15b0b" stroke-width="2"/>
-<text x="1031" y="315" font-size="30" fill="#a15b0b" text-anchor="middle" font-weight="700">
-<tspan x="1031" dy="0">×</tspan>
+<rect x="992" y="340" width="150" height="66" rx="12" fill="#fff5e4" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="1067" y="383" font-size="30" fill="#946017" text-anchor="middle" font-weight="700">
+<tspan x="1067" dy="0">×</tspan>
 </text>
-<text x="504" y="377" font-size="23" fill="#177c83" text-anchor="middle" font-weight="700">
-<tspan x="504" dy="0">Приняты</tspan>
+<rect x="48" y="448" width="1104" height="100" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="72" y="490" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="1056">
+<tspan x="72" dy="0">В ответ: A, B, C + исправление основной модели</tspan>
 </text>
-<text x="961" y="377" font-size="22" fill="#a15b0b" text-anchor="middle" font-weight="700">
-<tspan x="961" dy="0">D и хвост отклонены</tspan>
+<text x="72" y="530" font-size="22" fill="#17243b" text-anchor="start" data-max-width="1056">
+<tspan x="72" dy="0">Следующий цикл начинается с принятого и исправленного продолжения.</tspan>
 </text>
-<rect x="48" y="414" width="1104" height="100" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
-<text x="72" y="455" font-size="29" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="72" dy="0">В ответ: A, B, C + замена от основной модели</tspan>
+<rect x="48" y="580" width="1104" height="94" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="72" y="635" font-size="29" fill="#7041b8" text-anchor="start" font-weight="700">
+<tspan x="72" dy="0">Время на токен ≈</tspan>
 </text>
-<text x="72" y="490" font-size="23" fill="#252528" text-anchor="start">
-<tspan x="72" dy="0">Следующий цикл начинается с исправленного продолжения.</tspan>
+<text x="798" y="613" font-size="24" fill="#17243b" text-anchor="middle">
+<tspan x="798" dy="0">черновик + проверка + накладные расходы</tspan>
 </text>
-<text x="48" y="564" font-size="26" fill="#252528" text-anchor="start">
-<tspan x="48" dy="0">Измеряем вместе: принятие, стоимость черновика и итоговую скорость.</tspan>
+<path d="M456 628 H1128" fill="none" stroke="#7041b8" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="798" y="660" font-size="25" fill="#17243b" text-anchor="middle" font-weight="700">
+<tspan x="798" dy="0">число выданных токенов</tspan>
 </text>
-<rect x="48" y="610" width="1104" height="160" rx="14" fill="#efe9fc" stroke="#6844bc" stroke-width="2"/>
-<text x="80" y="696" font-size="31" fill="#6844bc" text-anchor="start" font-weight="700">
-<tspan x="80" dy="0">Время на токен ≈</tspan>
-</text>
-<text x="782" y="663" font-size="26" fill="#252528" text-anchor="middle">
-<tspan x="782" dy="0">черновик + проверка + накладные расходы</tspan>
-</text>
-<path d="M 460 685 H 1105" fill="none" stroke="#6844bc" stroke-width="2" stroke-linejoin="round"/>
-<text x="782" y="729" font-size="29" fill="#252528" text-anchor="middle" font-weight="700">
-<tspan x="782" dy="0">число выданных токенов</tspan>
-</text>
-<text x="48" y="822" font-size="20" fill="#5e6572" text-anchor="start">
-<tspan x="48" dy="0">Высокий acceptance не гарантирует ускорение. Gemma assistant проверяется отдельно от CPU KV-offload.</tspan>
+<path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="731" font-size="18" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Принятие токенов на схеме условное. Стоимость черновика тоже входит во время ответа.</tspan>
 </text>
 </svg>

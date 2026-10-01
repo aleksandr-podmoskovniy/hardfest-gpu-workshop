@@ -1,89 +1,91 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-<title id="title">Длинный вход не обязан занимать весь шаг</title><desc id="desc">Схема работы планировщика. Размеры блоков условные, не длительность измерений.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
-<style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
-<rect x="1" y="1" width="1198" height="628" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-<rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
-<text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="64" dy="0">Длинный вход не обязан занимать весь шаг</tspan>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
+<title id="title">Чанкирование длинного входа</title><desc id="desc">Порции prefill чередуются с генерацией уже начатых ответов.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
+<rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
+<text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
+<tspan x="70" dy="0">Чанкирование длинного входа</tspan>
 </text>
-<text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
-<tspan x="64" dy="0">Схема работы планировщика. Размеры блоков условные, не длительность измерений.</tspan>
+<text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Порции prefill чередуются с генерацией уже начатых ответов.</tspan>
 </text>
-<text x="48" y="155" font-size="26" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="48" dy="0">Без чанкирования</tspan>
+<path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="181" font-size="19" fill="#536278" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">БЕЗ ЧАНКИРОВАНИЯ</tspan>
 </text>
-<rect x="48" y="175" width="760" height="70" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
-<text x="428" y="219" font-size="27" fill="#0750f5" text-anchor="middle" font-weight="700">
+<rect x="48" y="206" width="760" height="76" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="428" y="254" font-size="27" fill="#1554dc" text-anchor="middle" font-weight="700">
 <tspan x="428" dy="0">Весь длинный prefill</tspan>
 </text>
-<rect x="828" y="175" width="324" height="70" rx="14" fill="#fff2da" stroke="#a15b0b" stroke-width="2"/>
-<text x="990" y="219" font-size="26" fill="#a15b0b" text-anchor="middle" font-weight="700">
-<tspan x="990" dy="0">Decode ждёт</tspan>
+<rect x="832" y="206" width="320" height="76" rx="12" fill="#fff5e4" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="992" y="254" font-size="26" fill="#946017" text-anchor="middle" font-weight="700">
+<tspan x="992" dy="0">Decode ждёт</tspan>
 </text>
-<text x="48" y="297" font-size="26" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="48" dy="0">С чанкированием</tspan>
+<text x="48" y="343" font-size="19" fill="#536278" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">С ЧАНКИРОВАНИЕМ</tspan>
 </text>
-<rect x="48" y="320" width="166" height="70" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
-<text x="131" y="364" font-size="24" fill="#0750f5" text-anchor="middle" font-weight="700">
-<tspan x="131" dy="0">Prefill 1</tspan>
+<rect x="48" y="368" width="164" height="76" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="130" y="416" font-size="24" fill="#1554dc" text-anchor="middle" font-weight="700">
+<tspan x="130" dy="0">Prefill 1</tspan>
 </text>
-<rect x="222" y="320" width="90" height="70" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
-<text x="267" y="364" font-size="28" fill="#177c83" text-anchor="middle" font-weight="700">
-<tspan x="267" dy="0">D</tspan>
+<rect x="224" y="368" width="88" height="76" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="268" y="416" font-size="27" fill="#087d78" text-anchor="middle" font-weight="700">
+<tspan x="268" dy="0">D</tspan>
 </text>
-<rect x="328" y="320" width="166" height="70" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
-<text x="411" y="364" font-size="24" fill="#0750f5" text-anchor="middle" font-weight="700">
-<tspan x="411" dy="0">Prefill 2</tspan>
+<rect x="328" y="368" width="164" height="76" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="410" y="416" font-size="24" fill="#1554dc" text-anchor="middle" font-weight="700">
+<tspan x="410" dy="0">Prefill 2</tspan>
 </text>
-<rect x="502" y="320" width="90" height="70" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
-<text x="547" y="364" font-size="28" fill="#177c83" text-anchor="middle" font-weight="700">
-<tspan x="547" dy="0">D</tspan>
+<rect x="504" y="368" width="88" height="76" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="548" y="416" font-size="27" fill="#087d78" text-anchor="middle" font-weight="700">
+<tspan x="548" dy="0">D</tspan>
 </text>
-<rect x="608" y="320" width="166" height="70" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
-<text x="691" y="364" font-size="24" fill="#0750f5" text-anchor="middle" font-weight="700">
-<tspan x="691" dy="0">Prefill 3</tspan>
+<rect x="608" y="368" width="164" height="76" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="690" y="416" font-size="24" fill="#1554dc" text-anchor="middle" font-weight="700">
+<tspan x="690" dy="0">Prefill 3</tspan>
 </text>
-<rect x="782" y="320" width="90" height="70" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
-<text x="827" y="364" font-size="28" fill="#177c83" text-anchor="middle" font-weight="700">
-<tspan x="827" dy="0">D</tspan>
+<rect x="784" y="368" width="88" height="76" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="828" y="416" font-size="27" fill="#087d78" text-anchor="middle" font-weight="700">
+<tspan x="828" dy="0">D</tspan>
 </text>
-<rect x="888" y="320" width="166" height="70" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
-<text x="971" y="364" font-size="24" fill="#0750f5" text-anchor="middle" font-weight="700">
-<tspan x="971" dy="0">Prefill 4</tspan>
+<rect x="888" y="368" width="164" height="76" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="970" y="416" font-size="24" fill="#1554dc" text-anchor="middle" font-weight="700">
+<tspan x="970" dy="0">Prefill 4</tspan>
 </text>
-<rect x="1062" y="320" width="90" height="70" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
-<text x="1107" y="364" font-size="28" fill="#177c83" text-anchor="middle" font-weight="700">
-<tspan x="1107" dy="0">D</tspan>
+<rect x="1064" y="368" width="88" height="76" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="1108" y="416" font-size="27" fill="#087d78" text-anchor="middle" font-weight="700">
+<tspan x="1108" dy="0">D</tspan>
 </text>
-<text x="48" y="429" font-size="24" fill="#252528" text-anchor="start">
-<tspan x="48" dy="0">D — генерация токенов уже начатых ответов между порциями входа.</tspan>
+<text x="48" y="485" font-size="22" fill="#536278" text-anchor="start">
+<tspan x="48" dy="0">D — шаг decode. Размеры блоков условные, не длительность измерений.</tspan>
 </text>
-<rect x="48" y="464" width="352" height="108" rx="14" fill="#f1f4f8" stroke="#cbd5e1" stroke-width="2"/>
-<text x="64" y="496" font-size="21" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="64" dy="0">max-model-len</tspan>
+<rect x="48" y="528" width="352" height="130" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="68" y="564" font-size="21" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="68" dy="0">max-model-len</tspan>
 </text>
-<text x="64" y="526" font-size="20" fill="#252528" text-anchor="start">
-<tspan x="64" dy="0">Вход + генерация</tspan>
-<tspan x="64" dy="27.0">одной истории</tspan>
+<text x="68" y="602" font-size="22" fill="#17243b" text-anchor="start">
+<tspan x="68" dy="0">Вход + ответ</tspan>
+<tspan x="68" dy="30.799999999999997">одной истории</tspan>
 </text>
-<rect x="424" y="464" width="352" height="108" rx="14" fill="#f1f4f8" stroke="#cbd5e1" stroke-width="2"/>
-<text x="440" y="496" font-size="21" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="440" dy="0">max-num-seqs</tspan>
+<rect x="424" y="528" width="352" height="130" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="444" y="564" font-size="21" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="444" dy="0">max-num-seqs</tspan>
 </text>
-<text x="440" y="526" font-size="20" fill="#252528" text-anchor="start">
-<tspan x="440" dy="0">Последовательности</tspan>
-<tspan x="440" dy="27.0">в работе</tspan>
+<text x="444" y="602" font-size="22" fill="#17243b" text-anchor="start">
+<tspan x="444" dy="0">Последовательности</tspan>
+<tspan x="444" dy="30.799999999999997">в работе</tspan>
 </text>
-<rect x="800" y="464" width="352" height="108" rx="14" fill="#f1f4f8" stroke="#cbd5e1" stroke-width="2"/>
-<text x="816" y="496" font-size="21" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="816" dy="0">max-num-batched-tokens</tspan>
+<rect x="800" y="528" width="352" height="130" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="820" y="564" font-size="21" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="820" dy="0">max-num-batched-tokens</tspan>
 </text>
-<text x="816" y="526" font-size="20" fill="#252528" text-anchor="start">
-<tspan x="816" dy="0">Токены одного шага</tspan>
-<tspan x="816" dy="27.0">планировщика</tspan>
+<text x="820" y="602" font-size="22" fill="#17243b" text-anchor="start">
+<tspan x="820" dy="0">Бюджет токенов</tspan>
+<tspan x="820" dy="30.799999999999997">одного шага</tspan>
 </text>
-<text x="48" y="602" font-size="20" fill="#5e6572" text-anchor="start">
-<tspan x="48" dy="0">CUDA graphs уменьшают накладные расходы запусков, но не заменяют планировщик и занимают HBM.</tspan>
+<path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="731" font-size="18" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Меньше порция — короче отдельный шаг, но больше шагов для всего документа. Проверяем TTFT и ITL.</tspan>
 </text>
 </svg>

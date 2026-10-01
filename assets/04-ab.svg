@@ -1,56 +1,61 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660" role="img" aria-labelledby="title desc">
-<title id="title">Меняем настройки, а не условия задачи</title><desc id="desc">Одна версия vLLM, одинаковые BF16-веса, разные H100.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
-<style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
-<rect x="1" y="1" width="1198" height="658" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-<rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
-<text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="64" dy="0">Меняем настройки, а не условия задачи</tspan>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
+<title id="title">Gemma A — Base / Gemma B — Tune</title><desc id="desc">Одинаковые веса, версия движка и нагрузка. Меняется конфигурация.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
+<rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
+<text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
+<tspan x="70" dy="0">Gemma A — Base / Gemma B — Tune</tspan>
 </text>
-<text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
-<tspan x="64" dy="0">Одна версия vLLM, одинаковые BF16-веса, разные H100.</tspan>
+<text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Одинаковые веса, версия движка и нагрузка. Меняется конфигурация.</tspan>
 </text>
-<rect x="48" y="142" width="1104" height="68" rx="14" fill="#f1f4f8" stroke="#cbd5e1" stroke-width="2"/>
-<text x="600" y="185" font-size="30" fill="#252528" text-anchor="middle" font-weight="700">
-<tspan x="600" dy="0">Окно 65 536      Вход 32 768      Выход 2 048</tspan>
+<path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="48" y="160" width="1104" height="76" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="600" y="208" font-size="29" fill="#17243b" text-anchor="middle" font-weight="700">
+<tspan x="600" dy="0">Контекст 65 536     Вход 32 768     Выход 2 048</tspan>
 </text>
-<rect x="48" y="244" width="532" height="282" rx="14" fill="#f1f4f8" stroke="#5e6572" stroke-width="2"/>
-<text x="70" y="283" font-size="27" fill="#5e6572" text-anchor="start" font-weight="700">
-<tspan x="70" dy="0">Gemma A — Base</tspan>
+<rect x="48" y="270" width="532" height="278" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="72" y="312" font-size="25" fill="#536278" text-anchor="start" font-weight="700" data-max-width="484">
+<tspan x="72" dy="0">A / Base</tspan>
 </text>
-<rect x="620" y="244" width="532" height="282" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
-<text x="642" y="283" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="642" dy="0">Gemma B — Tune</tspan>
-</text>
-<text x="72" y="339" font-size="25" fill="#252528" text-anchor="start">
+<text x="72" y="365" font-size="26" fill="#17243b" text-anchor="start">
 <tspan x="72" dy="0">KV: BF16</tspan>
 </text>
-<text x="72" y="386" font-size="25" fill="#252528" text-anchor="start">
+<text x="72" y="411" font-size="26" fill="#17243b" text-anchor="start">
 <tspan x="72" dy="0">Prefix cache: выключен</tspan>
 </text>
-<text x="72" y="433" font-size="25" fill="#252528" text-anchor="start">
-<tspan x="72" dy="0">CUDA graphs / compile: выключены</tspan>
+<text x="72" y="457" font-size="26" fill="#17243b" text-anchor="start">
+<tspan x="72" dy="0">CUDA graphs: выключены</tspan>
 </text>
-<text x="72" y="480" font-size="25" fill="#252528" text-anchor="start">
+<text x="72" y="503" font-size="26" fill="#17243b" text-anchor="start">
 <tspan x="72" dy="0">Attention: FlashAttention 4</tspan>
 </text>
-<text x="644" y="339" font-size="25" fill="#252528" text-anchor="start">
+<rect x="620" y="270" width="532" height="278" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="644" y="312" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="484">
+<tspan x="644" dy="0">B / Tune</tspan>
+</text>
+<text x="644" y="365" font-size="26" fill="#17243b" text-anchor="start">
 <tspan x="644" dy="0">KV: FP8</tspan>
 </text>
-<text x="644" y="386" font-size="25" fill="#252528" text-anchor="start">
+<text x="644" y="411" font-size="26" fill="#17243b" text-anchor="start">
 <tspan x="644" dy="0">Prefix cache: включён</tspan>
 </text>
-<text x="644" y="433" font-size="25" fill="#252528" text-anchor="start">
-<tspan x="644" dy="0">CUDA graphs / compile: включены</tspan>
+<text x="644" y="457" font-size="26" fill="#17243b" text-anchor="start">
+<tspan x="644" dy="0">CUDA graphs: включены</tspan>
 </text>
-<text x="644" y="480" font-size="25" fill="#252528" text-anchor="start">
+<text x="644" y="503" font-size="26" fill="#17243b" text-anchor="start">
 <tspan x="644" dy="0">Attention: Triton</tspan>
 </text>
-<rect x="48" y="550" width="1104" height="58" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
-<text x="600" y="588" font-size="24" fill="#177c83" text-anchor="middle" font-weight="700">
-<tspan x="600" dy="0">У обоих: prefill по 4096, до 32 последовательностей, веса только в GPU</tspan>
+<rect x="48" y="579" width="1104" height="100" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="72" y="621" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="1056">
+<tspan x="72" dy="0">У обоих: prefill по 4096 и до 32 последовательностей</tspan>
 </text>
-<text x="48" y="632" font-size="20" fill="#5e6572" text-anchor="start">
-<tspan x="48" dy="0">Чанкирование оставлено у A для вместимости. KV в RAM здесь выключен; его проверяем отдельно.</tspan>
+<text x="72" y="661" font-size="22" fill="#17243b" text-anchor="start" data-max-width="1056">
+<tspan x="72" dy="0">Веса остаются на GPU; KV-offload на этом этапе выключен.</tspan>
+</text>
+<path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="731" font-size="18" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">A намеренно отключает оптимизации. Это не настройки по умолчанию vLLM 0.30.</tspan>
 </text>
 </svg>

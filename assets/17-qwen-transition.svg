@@ -1,117 +1,70 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1040" viewBox="0 0 1200 1040" role="img" aria-labelledby="title desc">
-<title id="title">От двух Gemma к одному сервису Qwen TP2</title><desc id="desc">Сначала освобождаем обе H100, затем проверяем заявку, размещение и ответ модели.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
-<style>text{font-family:Arial,Helvetica,sans-serif} .title{font-weight:700} </style>
-<rect x="1" y="1" width="1198" height="1038" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-<rect x="40" y="36" width="7" height="42" rx="3" fill="#0750f5" stroke="#0750f5" stroke-width="2"/>
-<text x="64" y="66" font-size="34" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="64" dy="0">От двух Gemma к одному сервису Qwen TP2</tspan>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
+<title id="title">От двух Gemma к одному Qwen</title><desc id="desc">WebUI, Bifrost и базы знаний остаются; обе H100 переходят одному сервису.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
+<rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
+<text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
+<tspan x="70" dy="0">От двух Gemma к одному Qwen</tspan>
 </text>
-<text x="64" y="104" font-size="21" fill="#5e6572" text-anchor="start">
-<tspan x="64" dy="0">Сначала освобождаем обе H100, затем проверяем заявку, размещение и ответ модели.</tspan>
+<text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">WebUI, Bifrost и базы знаний остаются; обе H100 переходят одному сервису.</tspan>
 </text>
-<rect x="48" y="146" width="1104" height="218" rx="14" fill="#f1f4f8" stroke="#cbd5e1" stroke-width="2"/>
-<text x="72" y="184" font-size="23" fill="#5e6572" text-anchor="start" font-weight="700">
-<tspan x="72" dy="0">1. ОСВОБОДИТЬ ОБЕ H100 ОТ ПРЕЖНИХ СЕРВИСОВ</tspan>
+<path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="178" font-size="19" fill="#536278" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">1 / ОСВОБОДИТЬ GPU</tspan>
 </text>
-<rect x="72" y="211" width="336" height="126" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-<text x="90" y="249" font-size="26" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="90" dy="0">Gemma A</tspan>
+<rect x="48" y="204" width="532" height="114" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="72" y="246" font-size="25" fill="#536278" text-anchor="start" font-weight="700" data-max-width="484">
+<tspan x="72" dy="0">Gemma A</tspan>
 </text>
-<text x="90" y="284" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="90" dy="0">replicaCount: 0</tspan>
-<tspan x="90" dy="29.700000000000003">GitOps: commit → sync</tspan>
+<text x="72" y="286" font-size="22" fill="#17243b" text-anchor="start" data-max-width="484">
+<tspan x="72" dy="0">replicaCount: 0 → commit → sync</tspan>
 </text>
-<rect x="432" y="211" width="336" height="126" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-<text x="450" y="249" font-size="26" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="450" dy="0">Gemma B</tspan>
+<rect x="620" y="204" width="532" height="114" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="644" y="246" font-size="25" fill="#536278" text-anchor="start" font-weight="700" data-max-width="484">
+<tspan x="644" dy="0">Gemma B</tspan>
 </text>
-<text x="450" y="284" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="450" dy="0">replicaCount: 0</tspan>
-<tspan x="450" dy="29.700000000000003">GitOps: commit → sync</tspan>
+<text x="644" y="286" font-size="22" fill="#17243b" text-anchor="start" data-max-width="484">
+<tspan x="644" dy="0">replicaCount: 0 → commit → sync</tspan>
 </text>
-<rect x="792" y="211" width="336" height="126" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-<text x="810" y="249" font-size="26" fill="#252528" text-anchor="start" font-weight="700">
-<tspan x="810" dy="0">Gemma AI Inference</tspan>
+<text x="48" y="355" font-size="22" fill="#536278" text-anchor="start">
+<tspan x="48" dy="0">Платформенную Gemma, если запущена, тоже остановить.</tspan>
 </text>
-<text x="810" y="284" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="810" dy="0">Если ещё запущена</tspan>
-<tspan x="810" dy="29.700000000000003">Удалить InferenceService</tspan>
+<text x="48" y="419" font-size="19" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">2 / СОЗДАТЬ СЕРВИС ЧЕРЕЗ AI INFERENCE</tspan>
 </text>
-<path d="M 600 366 V 389" fill="none" stroke="#5e6572" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<rect x="180" y="392" width="840" height="55" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
-<text x="600" y="427" font-size="24" fill="#177c83" text-anchor="middle" font-weight="700">
-<tspan x="600" dy="0">Обе H100 доступны; прежние Pod и claims освобождены</tspan>
+<rect x="48" y="447" width="352" height="143" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="72" y="489" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="304">
+<tspan x="72" dy="0">Рецепт Qwen</tspan>
 </text>
-<text x="48" y="490" font-size="23" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="48" dy="0">2. ЗАЯВКА ДОЛЖНА ВЫДЕЛИТЬ ДВЕ ПОЛНЫЕ GPU</tspan>
+<text x="72" y="529" font-size="22" fill="#17243b" text-anchor="start" data-max-width="304">
+<tspan x="72" dy="0">Throughput</tspan>
+<tspan x="72" dy="30.799999999999997">TP2 + MTP + CPU KV</tspan>
 </text>
-<rect x="48" y="519" width="316" height="146" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
-<text x="70" y="558" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="70" dy="0">DeviceClass</tspan>
+<path d="M404 519 H420" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="424" y="447" width="352" height="143" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="448" y="489" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="304">
+<tspan x="448" dy="0">DRA-заявка</tspan>
 </text>
-<text x="70" y="595" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="70" dy="0">Существующий класс</tspan>
-<tspan x="70" dy="29.700000000000003">для полных GPU</tspan>
+<text x="448" y="529" font-size="22" fill="#17243b" text-anchor="start" data-max-width="304">
+<tspan x="448" dy="0">count: 2</tspan>
+<tspan x="448" dy="30.799999999999997">Полные H100 одной ноды</tspan>
 </text>
-<rect x="442" y="519" width="310" height="146" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
-<text x="464" y="558" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="464" dy="0">ResourceClaim</tspan>
+<path d="M780 519 H796" fill="none" stroke="#1554dc" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="800" y="447" width="352" height="143" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="824" y="489" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="304">
+<tspan x="824" dy="0">Qwen API</tspan>
 </text>
-<text x="464" y="595" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="464" dy="0">count: 2</tspan>
-<tspan x="464" dy="29.700000000000003">Одна заявка для Pod</tspan>
+<text x="824" y="529" font-size="22" fill="#17243b" text-anchor="start" data-max-width="304">
+<tspan x="824" dy="0">Один Pod</tspan>
+<tspan x="824" dy="30.799999999999997">Ответ через прежний чат</tspan>
 </text>
-<path d="M 366 588 H 440" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<path d="M 754 588 H 832" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<rect x="834" y="519" width="318" height="146" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
-<text x="856" y="558" font-size="27" fill="#177c83" text-anchor="start" font-weight="700">
-<tspan x="856" dy="0">Одна нода</tspan>
+<text x="48" y="656" font-size="27" fill="#17243b" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">Перед запуском: прежние Pod завершены, обе GPU свободны.</tspan>
 </text>
-<rect x="856" y="582" width="125" height="57" rx="14" fill="#ffffff" stroke="#177c83" stroke-width="2"/>
-<text x="918.5" y="618" font-size="21" fill="#177c83" text-anchor="middle" font-weight="700">
-<tspan x="918.5" dy="0">H100 №1</tspan>
-</text>
-<rect x="1005" y="582" width="125" height="57" rx="14" fill="#ffffff" stroke="#177c83" stroke-width="2"/>
-<text x="1067.5" y="618" font-size="21" fill="#177c83" text-anchor="middle" font-weight="700">
-<tspan x="1067.5" dy="0">H100 №2</tspan>
-</text>
-<text x="48" y="718" font-size="23" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="48" dy="0">3. ПРОВЕРИТЬ API И ПОДКЛЮЧИТЬ ЕГО К ПРЕЖНЕМУ ШЛЮЗУ</tspan>
-</text>
-<rect x="48" y="750" width="316" height="128" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
-<text x="70" y="789" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="70" dy="0">Тот же Open WebUI</tspan>
-</text>
-<text x="70" y="826" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="70" dy="0">Чат и базы знаний</tspan>
-</text>
-<rect x="442" y="750" width="310" height="128" rx="14" fill="#edf3ff" stroke="#0750f5" stroke-width="2"/>
-<text x="464" y="789" font-size="27" fill="#0750f5" text-anchor="start" font-weight="700">
-<tspan x="464" dy="0">Тот же Bifrost</tspan>
-</text>
-<text x="464" y="826" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="464" dy="0">Маршрут к Qwen</tspan>
-</text>
-<rect x="834" y="750" width="318" height="128" rx="14" fill="#eaf6f5" stroke="#177c83" stroke-width="2"/>
-<text x="856" y="789" font-size="27" fill="#177c83" text-anchor="start" font-weight="700">
-<tspan x="856" dy="0">Qwen TP2</tspan>
-</text>
-<text x="856" y="826" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="856" dy="0">Один Pod, один сервис</tspan>
-<tspan x="856" dy="29.700000000000003">Проверенный ответ API</tspan>
-</text>
-<path d="M 366 810 H 440" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<path d="M 754 810 H 832" fill="none" stroke="#0750f5" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<path d="M 993 667 V 748" fill="none" stroke="#177c83" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<rect x="48" y="911" width="1104" height="75" rx="14" fill="#efe9fc" stroke="#6844bc" stroke-width="2"/>
-<text x="72" y="942" font-size="27" fill="#6844bc" text-anchor="start" font-weight="700">
-<tspan x="72" dy="0">WebUI и Bifrost сохраняются; меняется модель за маршрутом.</tspan>
-</text>
-<text x="72" y="972" font-size="22" fill="#252528" text-anchor="start">
-<tspan x="72" dy="0">План с одной GPU не выполняет требование TP2, даже если параметр запуска равен 2.</tspan>
-</text>
-<text x="48" y="1012" font-size="20" fill="#5e6572" text-anchor="start">
-<tspan x="48" dy="0">Классы берём у контроллера GPU. Для перехода не удаляем PVC, веса моделей и GPUClass / GPUPool.</tspan>
+<path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="731" font-size="18" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">PVC, веса, GPUClass/GPUPool и поисковые сервисы на A30 при переключении не удаляются.</tspan>
 </text>
 </svg>

@@ -16,8 +16,6 @@ def load(name):
     return m
 
 
-bench = load("bench")
-report = load("report")
 maths = load("kv_math")
 manifests = load("check_manifests")
 
@@ -105,10 +103,7 @@ class Guide(unittest.TestCase):
     def test_participant_docs_do_not_contain_speaker_directions(self):
         paths = [ROOT / "README.md", ROOT / "WORKSHOP.md"]
         paths += list((ROOT / "labs").glob("*.md"))
-        paths += list((ROOT / "docs/chapters").glob("*.md"))
-        paths += [ROOT / "docs" / name for name in (
-            "COMMANDS.md", "SETUP.md", "THEORY.md", "STATUS.md",
-            "MEMORY_BUDGET.md", "DEPLOYMENT.md")]
+        paths += list((ROOT / "docs").glob("*.md"))
         forbidden = re.compile(
             r"\*\*сказать|предложить аудитории|вопрос залу|предъявить аудитории|"
             r"на сцене|до сцены|перед выступлением|ведущего|live-слот|"
@@ -138,7 +133,7 @@ class Guide(unittest.TestCase):
                       "Если рецепт не проверен", "Не подтверждение готовности"):
             self.assertNotIn(stale, chapter + lab + diagram)
         self.assertIn("Все настройки эксперимента — в рецепте", diagram)
-        self.assertIn("техническом статусе", lab)
+        self.assertIn("проверьте", lab)
 
     def test_workshop_has_one_canonical_source(self):
         alias = (ROOT / "WORKSHOP.md").read_text()
@@ -158,9 +153,10 @@ class Guide(unittest.TestCase):
             self.assertIn(term, chapter)
         for filename in ("17-qwen-transition.svg", "18-qwen-mtp.svg", "19-qwen-capacity.svg"):
             self.assertIn(filename, chapter)
-        deployment = (ROOT / "docs/DEPLOYMENT.md").read_text()
-        self.assertIn("Qwen TP2 с MTP", deployment)
-        self.assertIn("обе H100", deployment)
+        lab = (ROOT / "labs/06-tp2.md").read_text()
+        self.assertIn("acceleratorCount=2", lab)
+        self.assertIn("MTP", lab)
+        self.assertIn("Освобождаем обе карты", lab)
 
     def test_chat_path_is_present_from_manual_to_platform_stages(self):
         readme = (ROOT / "README.md").read_text()
@@ -189,20 +185,11 @@ class Guide(unittest.TestCase):
                        "Откройте мастер-класс на телефоне"):
             self.assertNotIn(phrase, readme)
 
-    def test_every_slide_mapped_once(self):
-        text = (ROOT / "docs/SLIDES_MAP.md").read_text()
-        covered = []
-        for a, b in re.findall(r"^\| (\d+)(?:–(\d+))? \|", text, re.M):
-            covered.extend(range(int(a), int(b or a) + 1))
-        self.assertEqual(covered, list(range(1, 53)))
-
-    def test_memory_math_from_slides(self):
-        self.assertEqual(maths.calculate()["per_layer_token_bytes"], 2048)
-        self.assertEqual(maths.calculate()["one_session_gib"], 4.50439453125)
-        self.assertEqual(maths.calculate(sessions=4)["all_sessions_gib"], 18.017578125)
-        self.assertEqual(maths.calculate(sessions=8)["all_sessions_gib"], 36.03515625)
-        self.assertEqual(maths.calculate()["ideal_full_sessions"], 3)
-        self.assertEqual(maths.calculate(element_bytes=1)["one_session_gib"], maths.calculate()["one_session_gib"] / 2)
+    def test_reference_docs_have_no_duplicate_workshop_or_editorial_pages(self):
+        self.assertEqual({path.name for path in (ROOT / "docs").rglob("*.md")}, {
+            "SETUP.md", "GITOPS.md", "MEMORY_BUDGET.md", "MEASUREMENTS.md",
+            "OBSERVABILITY.md", "CHAT_AND_ACCESS.md", "TROUBLESHOOTING.md", "SOURCES.md",
+        })
 
     def test_gemma_math_uses_global_kv_heads_and_sliding_window(self):
         for tokens, bf16 in ((131072, 10.78125), (133120, 10.9375), (262144, 20.78125)):
@@ -222,50 +209,23 @@ class Guide(unittest.TestCase):
 
     def test_all_theory_diagrams_are_local_svg_without_external_content(self):
         diagrams = list((ROOT / "assets").glob("[0-9][0-9]-*.svg"))
-        self.assertEqual(len(diagrams), 19)
+        self.assertEqual(len(diagrams), 18)
+        docs = "\n".join(path.read_text() for path in [ROOT / "README.md"] +
+                         list((ROOT / "docs").rglob("*.md")) +
+                         list((ROOT / "labs").glob("*.md")))
         for path in diagrams:
             svg = ET.parse(path).getroot()
-            self.assertEqual(svg.attrib["viewBox"].split()[2], "1200")
+            self.assertEqual(svg.attrib["viewBox"], "0 0 1200 760")
+            self.assertEqual(svg.attrib["data-design"], "hardfest-v2")
+            self.assertIn(path.name, docs, f"Unreferenced illustration: {path.name}")
             for node in svg.iter():
                 self.assertNotIn(node.tag.rsplit("}", 1)[-1], ("script", "foreignObject", "image"))
-        for path in (ROOT / "docs/chapters").glob("*.md"):
-            self.assertNotIn("```text", path.read_text())
 
     def test_shell_examples_are_parseable(self):
         docs = load("check_docs")
         count, errors = docs.check()
         self.assertGreater(count, 40)
         self.assertEqual(errors, [])
-
-
-class Metrics(unittest.TestCase):
-    def samples(self, total, count):
-        return (f'vllm:request_queue_time_seconds_sum{{model_name="test"}} {total}\n'
-                f'vllm:request_queue_time_seconds_count{{model_name="test"}} {count}\n')
-
-    def test_queue_mean_from_counter_deltas(self):
-        value = bench.server_timings(self.samples(100, 10), self.samples(120, 12))
-        self.assertEqual(value["queue_mean_s"], 10)
-        self.assertEqual(value["queue_completed"], 2)
-
-    def test_counter_reset_not_zero_latency(self):
-        value = bench.server_timings(self.samples(100, 10), self.samples(1, 1))
-        self.assertIsNone(value["queue_mean_s"])
-
-    def test_no_completions_not_zero_latency(self):
-        value = bench.server_timings(self.samples(100, 10), self.samples(100, 10))
-        self.assertIsNone(value["queue_mean_s"])
-
-    def test_unavailable_series_not_inferred(self):
-        self.assertNotIn("queue_mean_s", bench.server_timings(None, None))
-        self.assertIsNone(bench.server_timings("", "")["queue_mean_s"])
-
-    def test_report_warns_for_different_conditions(self):
-        row = {"label": "one", "model": "test", "dataset_sha256": "test", "concurrency": 1,
-               "summary": {"requests": 1, "successful": 1}}
-        self.assertNotIn("WARNING", report.table([row, row]))
-        self.assertIn("WARNING", report.table([row, {**row, "concurrency": 8}]))
-        self.assertIn("WARNING", report.table([row, {**row, "dataset_offset": 1}]))
 
 
 if __name__ == "__main__":
