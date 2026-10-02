@@ -15,6 +15,7 @@ import (
 type nativeAPI struct {
 	mu                 sync.Mutex
 	users              []User
+	snapshot           []User
 	keys               []object
 	creates            int
 	failPost, hideKeys bool
@@ -27,6 +28,10 @@ func (n *nativeAPI) handler(t *testing.T) http.HandlerFunc {
 		respond := func(v any) { _ = json.NewEncoder(w).Encode(v) }
 		path := r.URL.Path
 		if path == "/api/v1/users/" {
+			if n.snapshot != nil {
+				respond(object{"users": n.snapshot, "total": len(n.snapshot)})
+				return
+			}
 			respond(object{"users": n.users, "total": len(n.users)})
 			return
 		}
@@ -157,6 +162,20 @@ func TestApprovalCreatesPersonalKeyAndPreservesSpend(t *testing.T) {
 	}
 	if api.keys[0]["description"] != b.description(api.users[0]) {
 		t.Fatal("display name not refreshed")
+	}
+}
+
+func TestStaleUserListDoesNotRevokeNewApproval(t *testing.T) {
+	b, api := testNativeAPI(t)
+	if _, err := b.ensureKey(context.Background(), api.users[0]); err != nil {
+		t.Fatal(err)
+	}
+	api.snapshot = []User{{ID: subjectID, Role: "pending"}}
+	if err := b.reconcile(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if api.keys[0]["is_active"] != true || api.creates != 1 {
+		t.Fatal("stale list revoked or replaced an approved key")
 	}
 }
 

@@ -59,6 +59,12 @@ func (b *Bridge) reconcile(ctx context.Context) error {
 			continue
 		}
 		if _, ok := approved[id]; !ok && k["is_active"] == true {
+			// The account may have been approved after the paginated snapshot.
+			// Do not deactivate a key just issued by the request path.
+			if current, lookupErr := b.user(ctx, id); lookupErr == nil {
+				approved[id] = current
+				continue
+			}
 			if err = b.gateway(ctx, "PUT", "/api/governance/virtual-keys/"+url.PathEscape(stringValue(k["id"])), object{"is_active": false}, nil); err != nil {
 				return err
 			}

@@ -27,6 +27,7 @@ type Config struct {
 	WebUIURL             string           `json:"webui_url"`
 	GatewayURL           string           `json:"gateway_url"`
 	ServiceUserID        string           `json:"service_user_id"`
+	TeamID               string           `json:"team_id,omitempty"`
 	ManagedBy            string           `json:"managed_by"`
 	KeyNamePrefix        string           `json:"key_name_prefix"`
 	ProvisioningMode     string           `json:"provisioning_mode"`
@@ -80,6 +81,9 @@ func (c Config) validate() error {
 	}
 	if !userIDPattern.MatchString(c.ServiceUserID) {
 		return fmt.Errorf("service_user_id is required")
+	}
+	if c.TeamID != "" && !userIDPattern.MatchString(c.TeamID) {
+		return fmt.Errorf("invalid team_id")
 	}
 	if !regexp.MustCompile(`^[a-zA-Z0-9_-]{1,64}$`).MatchString(c.ManagedBy) {
 		return fmt.Errorf("managed_by must identify this installation")

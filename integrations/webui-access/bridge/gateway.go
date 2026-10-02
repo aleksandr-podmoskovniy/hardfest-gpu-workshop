@@ -130,6 +130,9 @@ func (b *Bridge) createKey(ctx context.Context, u User) (object, error) {
 		"budgets":    []object{{"max_limit": b.cfg.BudgetUSD, "reset_duration": b.cfg.BudgetReset}},
 		"rate_limit": object{"request_max_limit": b.cfg.RequestsPerMinute, "request_reset_duration": "60s", "token_max_limit": b.cfg.TokensPerMinute, "token_reset_duration": "60s"},
 	}
+	if b.cfg.TeamID != "" {
+		body["team_id"] = b.cfg.TeamID
+	}
 	b.createAttempted[u.ID] = true
 	var out struct {
 		Key object `json:"virtual_key"`
@@ -219,6 +222,9 @@ func sameStrings(value any, expected []string) bool {
 }
 
 func (b *Bridge) validateKey(key object) error {
+	if b.cfg.TeamID != "" && stringValue(key["team_id"]) != b.cfg.TeamID {
+		return errors.New("key team policy drift")
+	}
 	var v struct {
 		Providers []struct {
 			Provider      string   `json:"provider"`

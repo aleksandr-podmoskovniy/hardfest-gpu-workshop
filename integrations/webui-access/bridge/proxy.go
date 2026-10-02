@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -134,15 +135,7 @@ func (b *Bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	data, _ := json.Marshal(clean)
 	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Minute)
 	defer cancel()
-	req, _ := http.NewRequestWithContext(ctx, "POST", b.cfg.GatewayURL+"/v1/chat/completions", bytes.NewReader(data))
-	req.Header.Set("Authorization", "Bearer "+key.Value)
-	req.Header.Set("x-bf-vk", key.Value)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-bf-mcp-include-tools", "")
-	req.Header.Set("x-bf-cache-key", b.cfg.ManagedBy+"-personal-"+id)
-	req.Header.Set("x-bf-cache-type", "direct")
-	req.Header.Set("x-bf-cache-no-store", "true")
-	resp, err := b.streamClient.Do(req)
+	resp, err := b.inference(ctx, id, key, data)
 	if err != nil {
 		fail(w, 502, "model gateway unavailable")
 		return
@@ -170,4 +163,66 @@ func (b *Bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+// HA nodes can briefly retain the disabled state of a newly activated VK.
+// Only retry the exact pre-inference denial, never timeouts, 5xx, quotas or SSE.
+// Recheck approval and persisted policy before every retry; never reactivate here.
+func (b *Bridge) inference(ctx context.Context, id string, key credential, data []byte) (*http.Response, error) {
+	for attempt := 0; ; attempt++ {
+		req, err := http.NewRequestWithContext(ctx, "POST", b.cfg.GatewayURL+"/v1/chat/completions", bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+key.Value)
+		req.Header.Set("x-bf-vk", key.Value)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("x-bf-mcp-include-tools", "")
+		req.Header.Set("x-bf-cache-key", b.cfg.ManagedBy+"-personal-"+id)
+		req.Header.Set("x-bf-cache-type", "direct")
+		req.Header.Set("x-bf-cache-no-store", "true")
+		resp, err := b.streamClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode != http.StatusForbidden || attempt >= 4 {
+			return resp, nil
+		}
+		raw, readErr := io.ReadAll(io.LimitReader(resp.Body, 4097))
+		originalBody := resp.Body
+		resp.Body = &replayBody{Reader: io.MultiReader(bytes.NewReader(raw), originalBody), Closer: originalBody}
+		var denial struct {
+			Bifrost bool `json:"is_bifrost_error"`
+			Error   struct {
+				Message string `json:"message"`
+			} `json:"error"`
+		}
+		if readErr != nil || len(raw) > 4096 || json.Unmarshal(raw, &denial) != nil || !denial.Bifrost || denial.Error.Message != "Virtual key is inactive" {
+			return resp, nil
+		}
+		if _, err := b.user(ctx, id); err != nil {
+			return resp, nil
+		}
+		var out struct {
+			Key object `json:"virtual_key"`
+		}
+		if err := b.gateway(ctx, "GET", "/api/governance/virtual-keys/"+url.PathEscape(key.ID), nil, &out); err != nil ||
+			out.Key["is_active"] != true || b.keyUserID(out.Key) != id || stringValue(out.Key["id"]) != key.ID ||
+			stringValue(out.Key["value"]) != key.Value || b.validateKey(out.Key) != nil {
+			return resp, nil
+		}
+		resp.Body.Close()
+		timer := time.NewTimer(time.Duration(1<<attempt) * 250 * time.Millisecond)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return nil, ctx.Err()
+		case <-timer.C:
+		}
+	}
+}
+
+type replayBody struct {
+	io.Reader
+	io.Closer
 }
