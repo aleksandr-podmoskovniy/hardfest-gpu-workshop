@@ -12,7 +12,8 @@ import (
 	"time"
 )
 
-const inactiveReply = `{"is_bifrost_error":true,"error":{"message":"Virtual key is inactive"}}`
+// Actual governance denial is a policy outcome, not an internal Bifrost error.
+const inactiveReply = `{"type":"virtual_key_blocked","status_code":403,"is_bifrost_error":false,"error":{"message":"Virtual key is inactive"}}`
 
 func TestActivationRetryOnlyForConfirmedActivePersonalKey(t *testing.T) {
 	for _, tc := range []struct {

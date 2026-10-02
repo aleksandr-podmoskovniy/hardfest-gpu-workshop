@@ -192,13 +192,23 @@ func (b *Bridge) inference(ctx context.Context, id string, key credential, data 
 		originalBody := resp.Body
 		resp.Body = &replayBody{Reader: io.MultiReader(bytes.NewReader(raw), originalBody), Closer: originalBody}
 		var denial struct {
-			Bifrost bool `json:"is_bifrost_error"`
-			Error   struct {
+			Type   string `json:"type"`
+			Status int    `json:"status_code"`
+			Error  struct {
 				Message string `json:"message"`
 			} `json:"error"`
 		}
-		if readErr != nil || len(raw) > 4096 || json.Unmarshal(raw, &denial) != nil || !denial.Bifrost || denial.Error.Message != "Virtual key is inactive" {
+		if readErr != nil || len(raw) > 4096 || json.Unmarshal(raw, &denial) != nil || denial.Type != "virtual_key_blocked" || denial.Status != 403 || denial.Error.Message != "Virtual key is inactive" {
 			return resp, nil
+		}
+		// Let the activation propagate before checking its persisted view.
+		timer := time.NewTimer(time.Duration(1<<attempt) * 250 * time.Millisecond)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			resp.Body.Close()
+			return nil, ctx.Err()
+		case <-timer.C:
 		}
 		if _, err := b.user(ctx, id); err != nil {
 			return resp, nil
@@ -212,13 +222,6 @@ func (b *Bridge) inference(ctx context.Context, id string, key credential, data 
 			return resp, nil
 		}
 		resp.Body.Close()
-		timer := time.NewTimer(time.Duration(1<<attempt) * 250 * time.Millisecond)
-		select {
-		case <-ctx.Done():
-			timer.Stop()
-			return nil, ctx.Err()
-		case <-timer.C:
-		}
 	}
 }
 
