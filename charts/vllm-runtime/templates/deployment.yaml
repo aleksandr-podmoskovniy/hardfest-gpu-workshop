@@ -7,6 +7,8 @@ metadata:
     {{- include "vllm.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  # Allow the 30-minute startup probe plus scheduling/image-pull headroom.
+  progressDeadlineSeconds: 2400
   strategy:
     type: Recreate
   selector:

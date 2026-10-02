@@ -27,6 +27,14 @@ class HelmProfiles(unittest.TestCase):
                 self.assertNotIn("cpu-offload-gb", config)
                 self.assertEqual(actual["Deployment"]["spec"]["replicas"], 0)
 
+    def test_rollout_deadline_covers_cold_start_probe(self):
+        actual = checker.render(ROOT / "values/gemma-b.yaml")
+        spec = actual["Deployment"]["spec"]
+        probe = spec["template"]["spec"]["containers"][0]["startupProbe"]
+        probe_budget = probe["periodSeconds"] * probe["failureThreshold"]
+        self.assertEqual(spec["progressDeadlineSeconds"], 2400)
+        self.assertGreater(spec["progressDeadlineSeconds"], probe_budget)
+
     def test_ab_keeps_weights_context_and_gpu_budget_equal(self):
         profiles = [yaml.safe_load(checker.render(ROOT / "values" / name)["ConfigMap"]["data"]["profile.yaml"])
                     for name in ("gemma-a.yaml", "gemma-b.yaml")]
