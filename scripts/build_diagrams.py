@@ -124,7 +124,7 @@ def topology():
     d.text(428, 194, 'GPU-КЛАСТЕР', 18, MUTED, True)
     webui = d.card(72, 328, 272, 156, 'Open WebUI', ['Чат и голос', 'Пароль / OIDC'])
     knowledge = d.card(72, 542, 272, 112, 'Базы знаний', ['Документы и индекс'], MINT, TEAL)
-    gateway = d.card(428, 328, 280, 156, 'HA Bifrost', ['Ключи, квоты и учёт', 'Маршруты моделей'])
+    gateway = d.card(428, 328, 280, 156, 'ai-mcp-gateway', ['Ключи, квоты и учёт', 'Маршруты моделей'])
     d.connect(webui, knowledge, ('bottom', 'top'), color=TEAL)
     d.connect(webui, gateway)
     services = [
@@ -433,7 +433,7 @@ def rag():
 
 def qwen_transition():
     d = Diagram('17-qwen-transition', 'От двух Gemma к одному Qwen',
-                'WebUI, Bifrost и базы знаний остаются; обе H100 переходят одному сервису.')
+                'WebUI, ai-mcp-gateway и базы знаний остаются; обе H100 переходят одному сервису.')
     d.text(48, 178, '1 / ОСВОБОДИТЬ GPU', 19, MUTED, True)
     d.card(48, 204, 532, 114, 'Gemma A', ['replicaCount: 0 → commit → sync'], GRAY, MUTED)
     d.card(620, 204, 532, 114, 'Gemma B', ['replicaCount: 0 → commit → sync'], GRAY, MUTED)

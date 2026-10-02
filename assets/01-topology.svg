@@ -36,7 +36,7 @@
 </text>
 <rect x="428" y="328" width="280" height="156" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="452" y="370" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="232">
-<tspan x="452" dy="0">HA Bifrost</tspan>
+<tspan x="452" dy="0">ai-mcp-gateway</tspan>
 </text>
 <text x="452" y="410" font-size="22" fill="#17243b" text-anchor="start" data-max-width="232">
 <tspan x="452" dy="0">Ключи, квоты и учёт</tspan>
