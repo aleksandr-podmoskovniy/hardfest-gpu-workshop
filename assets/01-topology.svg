@@ -79,7 +79,7 @@
 <path d="M752 492.0 L794 492.0" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
 <path d="M752 608.0 L794 608.0" fill="none" stroke="#7041b8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-7041b8)" stroke-dasharray="6 5" data-connector="true"/>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="48" y="731" font-size="18" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">При переходе к Qwen меняется модель за шлюзом; чат, пользователи и базы знаний сохраняются.</tspan>
+<text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Gemma сменяется на Qwen. Чат, пользователи и базы знаний остаются.</tspan>
 </text>
 </svg>

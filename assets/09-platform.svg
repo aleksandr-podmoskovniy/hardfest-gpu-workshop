@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
-<title id="title">AI Inference: запуск по рецепту</title><desc id="desc">Параметры модели и ресурсы описаны один раз; размещением управляет платформа.</desc>
+<title id="title">AI Inference: запуск по рецепту</title><desc id="desc">Каталог хранит веса. Рецепт задаёт запуск. Платформа выделяет ресурсы.</desc>
 <defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
@@ -8,12 +8,12 @@
 <tspan x="70" dy="0">AI Inference: запуск по рецепту</tspan>
 </text>
 <text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">Параметры модели и ресурсы описаны один раз; размещением управляет платформа.</tspan>
+<tspan x="48" dy="0">Каталог хранит веса. Рецепт задаёт запуск. Платформа выделяет ресурсы.</tspan>
 </text>
 <path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <rect x="48" y="160" width="322" height="142" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="72" y="202" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="274">
-<tspan x="72" dy="0">AI Models</tspan>
+<tspan x="72" dy="0">ai-models</tspan>
 </text>
 <text x="72" y="242" font-size="22" fill="#17243b" text-anchor="start" data-max-width="274">
 <tspan x="72" dy="0">Модель и ревизия</tspan>
@@ -21,10 +21,10 @@
 </text>
 <rect x="418" y="160" width="734" height="142" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="442" y="202" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="686">
-<tspan x="442" dy="0">Рецепт + оборудование + стратегия</tspan>
+<tspan x="442" dy="0">Рецепт, стратегия и оборудование</tspan>
 </text>
 <text x="442" y="242" font-size="22" fill="#17243b" text-anchor="start" data-max-width="686">
-<tspan x="442" dy="0">Runtime, параметры движка и бюджет памяти</tspan>
+<tspan x="442" dy="0">Движок, оптимизации, бюджет памяти</tspan>
 <tspan x="442" dy="30.799999999999997">Latency / Throughput</tspan>
 </text>
 <path d="M209.0 308 L209.0 330.0 Q209 338 201.0 338.0 L176.0 338.0 Q168 338 168.0 346.0 L168.0 368" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
@@ -60,15 +60,24 @@
 <text x="928" y="460" font-size="21" fill="#17243b" text-anchor="start">
 <tspan x="928" dy="0">Ответ модели</tspan>
 </text>
-<rect x="48" y="550" width="1104" height="100" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="72" y="592" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="1056">
-<tspan x="72" dy="0">Все настройки эксперимента — в рецепте</tspan>
+<rect x="48" y="542" width="528" height="126" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="584" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="480">
+<tspan x="72" dy="0">Рецепт Gemma</tspan>
 </text>
-<text x="72" y="632" font-size="22" fill="#17243b" text-anchor="start" data-max-width="1056">
-<tspan x="72" dy="0">FP8 KV, prefix cache, chunked prefill, CUDA graphs, CPU KV, assistant, TP2 и MTP.</tspan>
+<text x="72" y="624" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
+<tspan x="72" dy="0">FP8 KV, prefix cache, CPU KV</tspan>
+<tspan x="72" dy="30.799999999999997">Chunked prefill, graphs, assistant</tspan>
+</text>
+<rect x="624" y="542" width="528" height="126" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="648" y="584" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="480">
+<tspan x="648" dy="0">Рецепт Qwen</tspan>
+</text>
+<text x="648" y="624" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
+<tspan x="648" dy="0">Две H100, TP2 и MTP</tspan>
+<tspan x="648" dy="30.799999999999997">Кэши и параметры движка</tspan>
 </text>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="48" y="731" font-size="18" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">Проверяем цепочку: рецепт → план → выделенные устройства → параметры движка → ответ API.</tspan>
+<text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Все настройки эксперимента — в рецепте. Проверяем план, GPU и ответ API.</tspan>
 </text>
 </svg>

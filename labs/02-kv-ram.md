@@ -1,53 +1,53 @@
-# Возврат KV из оперативной памяти
+# Проверить возврат KV из оперативной памяти
 
-В первой итерации включаем prefix cache и CPU KV у B при окне 65 536.
-Для проверки возврата используем вход 32 768 и выход 128; это отдельная
-серия, не замер скорости decode из A/B с выходом 2048.
+Prefix cache экономит повторный prefill. KV-offload сохраняет блоки
+за пределами GPU и возвращает их при повторном запросе. Проверим именно
+возврат из RAM, а не просто быстрый ответ из GPU-кэша.
 
-Основной профиль: [B, первая итерация](../values/gemma-b.yaml).
-Для контрольной серии выключайте только `kv-transfer-config`, сохраняя остальные
-параметры и лимиты. Для расширения до 128K есть историческая пара
-[без RAM](../values/gemma-b-128k.yaml) / [с RAM](../values/gemma-b-ram.yaml).
-У обоих RAM-профилей:
-request 56 GiB, limit 80 GiB, shm 40 GiB. На VM 128 GiB A остановлена.
-Веса в RAM не выгружаются; увеличенный активный контекст должен помещаться на GPU.
+## Перед началом
 
-Переносите изменения в одно Application B по [GitOps](../docs/GITOPS.md).
-Для каждой серии нужен новый процесс движка и одинаковый прогрев на другом префиксе.
+- [ ] Рабочий каталог — `k8s-config`; переменные заданы по [GitOps](../docs/GITOPS.md).
+- [ ] B отвечает с текущим профилем: окно 64K, FP8 KV,
+  prefix cache и 32 GiB CPU KV. Первый проход — с [первой B](../values/gemma-b.yaml),
+  повтор после assistant — со второй B, не заменяя её профиль.
+- [ ] RAM request/limit — 56/80 GiB, shared memory — 40 GiB.
+- [ ] На VM 128 GiB A остановлена; посторонних запросов к B нет.
 
-## Подготовить запросы без Python
+Серия использует вход 32 768 и выход 128 токенов. Она не заменяет замер
+decode из A/B, где выход равен 2048. Веса остаются на GPU.
 
-Для демонстрации механизма используем десять **синтетических последовательностей
-token ID**, не осмысленные тексты. Первые токены различаются, остальная длина одинакова.
-Эти результаты нельзя выдавать за качество ответов или измерения по учебным документам.
+## 1. Подготовить одинаковые входы
+
+Создадим десять синтетических последовательностей token ID обычным shell.
+Первый токен у каждой последовательности различается.
 
 ```bash
-mkdir -p results/hardfest/kv-requests
 export INPUT_TOKENS=32768
+export REQUEST_DIR="results/hardfest/kv-requests-$INPUT_TOKENS"
+mkdir -p "$REQUEST_DIR"
 for DOC in 0 1 2 3 4 5 6 7 8 9; do
-  jq -n --argjson doc "$DOC" --argjson tokens "$INPUT_TOKENS" '{
-    model:"gemma-4-31b",
-    prompt: ([1000+$doc] + [range(0;($tokens-1)) | 1250]),
-    max_tokens:128, ignore_eos:true, temperature:0, stream:false
-  }' > "results/hardfest/kv-requests/$DOC.json"
+  awk -v doc="$DOC" -v tokens="$INPUT_TOKENS" 'BEGIN {
+    printf "{\"model\":\"gemma-4-31b\",\"prompt\":[%d", 1000 + doc
+    for (i = 1; i < tokens; i++) printf ",1250"
+    printf "],\"max_tokens\":128,\"ignore_eos\":true,\"temperature\":0,\"stream\":false}\n"
+  }' > "$REQUEST_DIR/$DOC.json"
 done
-shasum -a 256 results/hardfest/kv-requests/*.json
+shasum -a 256 "$REQUEST_DIR"/*.json
 ```
 
-Token ID относятся к конкретному токенизатору Gemma. Для другой модели сначала
-проверьте словарь. Сохраните usage.prompt_tokens первого ответа: оно должно быть
-равно `$INPUT_TOKENS`; иначе не используйте эту серию как сравнимую.
-При окне 128K повторите отдельную серию с `INPUT_TOKENS=65536`, заново
-сгенерировав запросы. Старые результаты сохраните до замены файлов.
+Это искусственная нагрузка для проверки механизма, не качества ответов.
+Token ID относятся к токенизатору Gemma; для другой модели сначала
+проверьте словарь.
 
-Откройте port-forward B в отдельном терминале:
+## 2. Выполнить серию с RAM-кэшем
+
+В отдельном терминале откройте доступ к B:
 
 ```bash
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo port-forward svc/hf-gemma-b 18002:8000
 ```
 
-Дальше задайте имя
-серии `cache-off` или `cache-on`; не смешивайте их результаты:
+В основном терминале отправьте разные префиксы:
 
 ```bash
 export SERIES=cache-on
@@ -55,39 +55,130 @@ mkdir -p "results/hardfest/$SERIES"
 curl --fail http://127.0.0.1:18002/metrics > "results/hardfest/$SERIES/before.txt"
 for DOC in 0 1 2 3 4 5 6 7 8 9; do
   curl --fail --max-time 600 http://127.0.0.1:18002/v1/completions \
-    -H 'Content-Type: application/json' \
-    --data-binary "@results/hardfest/kv-requests/$DOC.json" \
-    -o "results/hardfest/$SERIES/$DOC.json"
+    -H 'Content-Type: application/json' --data-binary "@$REQUEST_DIR/$DOC.json" \
+    -o "results/hardfest/$SERIES/$DOC.json" || break
 done
-curl --fail http://127.0.0.1:18002/metrics > "results/hardfest/$SERIES/before-return.txt"
-curl --fail --max-time 600 http://127.0.0.1:18002/v1/completions \
-  -H 'Content-Type: application/json' --data-binary @results/hardfest/kv-requests/0.json \
-  -o "results/hardfest/$SERIES/return.json"
-curl --fail http://127.0.0.1:18002/metrics > "results/hardfest/$SERIES/after-return.txt"
-jq .usage "results/hardfest/$SERIES/return.json"
 ```
 
-Этот curl-запрос не измеряет клиентский TTFT: stream выключен.
-TTFT возврата берите из приращения server histogram sum/count при **единственном**
-выполненном запросе и отсутствии посторонней нагрузки, либо используйте streaming benchmark.
-Не используйте curl time_starttransfer как TTFT нестримингового ответа.
+Проверьте все десять файлов ответа в редакторе. У каждого должны быть полный
+ответ без `error`, `usage.prompt_tokens: 32768` и выход 128 токенов.
+Если curl прервал цикл, серию сначала нужно завершить без ошибок.
 
-## Что считать подтверждением
+Теперь вернитесь к первому префиксу, сняв метрики вокруг одного запроса:
 
-Нужны приращения:
-`vllm:kv_offload_total_bytes_total{transfer_type="CPU_to_GPU"}`,
-`vllm:external_prefix_cache_hits_total` и `vllm:prefix_cache_hits_total`.
-Последний относится к GPU-кэшу. Сравните before-return и after-return.
+```bash
+curl --fail http://127.0.0.1:18002/metrics > "results/hardfest/$SERIES/before-return.txt"
+curl --fail --max-time 600 http://127.0.0.1:18002/v1/completions \
+  -H 'Content-Type: application/json' --data-binary "@$REQUEST_DIR/0.json" \
+  -o "results/hardfest/$SERIES/return.json"
+curl --fail http://127.0.0.1:18002/metrics > "results/hardfest/$SERIES/after-return.txt"
+```
 
-Если X остался на GPU, быстрый повтор не доказывает offload. Если X исчез и из RAM,
-полное prefill не доказывает неисправность коннектора. Число документов подбирается
-по фактическим счётчикам, не по одной оценке памяти.
+## 3. Сопоставить счётчики
 
-[Ранее зафиксированный опыт](../results/kv-ram/README.md) дал 2,89 GiB CPU → GPU,
-65 504 внешних cache hits и 0 локальных hits. Там использовался другой генератор
-документов; новые команды выше — самостоятельная серия, старые цифры к ней
-автоматически не относятся.
+Откройте `before-return.txt` и `after-return.txt`. Сравните приращения
+только за повтор первого запроса:
 
-Далее переходите ко [второй итерации](03-speculation.md): её полный профиль
-возвращает 64K, но **сохраняет** 32 GiB CPU KV и прежние memory/shm.
-На узле 128 GiB A остаётся выключенной. PVC сохраняется.
+| Счётчик | Что показывает |
+| --- | --- |
+| `vllm:kv_offload_total_bytes_total{transfer_type="CPU_to_GPU"}` | Переданные из RAM на GPU байты |
+| `vllm:external_prefix_cache_hits_total` | Повторно использованные внешние блоки |
+| `vllm:prefix_cache_hits_total` | Попадания в локальный GPU-кэш |
+
+Точные имена и labels сверяйте с `HELP/TYPE` вашего runtime.
+Для доказательства offload нужны ненулевые CPU → GPU передачи и внешние
+попадания на повторе.
+
+| Наблюдение | Следующее действие |
+| --- | --- |
+| Префикс остался на GPU | Увеличить вытесняющую серию; быстрый повтор ещё не доказывает offload |
+| Префикс вытеснен также из RAM | Уменьшить серию; полный prefill не доказывает неисправность коннектора |
+| Возврат из RAM подтверждён | Сохранить ответы и приращения метрик |
+
+Запросы нестриминговые. `curl time_starttransfer` не равен TTFT первого
+токена. Серверное время повтора берите из приращений histogram `sum/count`
+без посторонней нагрузки либо измеряйте отдельно streaming-клиентом.
+
+## 4. Провести контроль без offload
+
+В редакторе откройте `$DEMO_DIR/values/gemma-b.yaml` и удалите **только**
+блок `vllm.kv-transfer-config`. Не меняйте prefix cache, FP8 KV, окно
+или ресурсные лимиты. Доставьте изменение по [GitOps](../docs/GITOPS.md).
+
+После нового запуска повторите шаги 2–3 с:
+
+```bash
+export SERIES=cache-off
+```
+
+У обеих серий должны быть новый процесс движка и одинаковый прогрев
+на отдельном префиксе. По завершении верните `kv-transfer-config`
+из первого профиля B через Git/Argo и проверьте запуск.
+
+## Отдельный опыт: окно 128K после второй итерации
+
+Этот шаг выполняется после [настройки assistant](03-speculation.md).
+Сначала сохраните результаты второй B при 64K. В активном
+`$DEMO_DIR/values/gemma-b.yaml` измените **только** `vllm.max-model-len`:
+
+```yaml
+max-model-len: 131072
+```
+
+Не заменяйте весь профиль: `speculative-config`, prefill 2048, offload и
+оба mount из `site/gemma-assistant.yaml` должны сохраниться.
+
+```bash
+helm template hf-gemma-b "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
+  -f "$DEMO_DIR/values/gemma-b.yaml" -f "$DEMO_DIR/site/gemma-assistant.yaml" |
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f -
+```
+
+После успешной проверки:
+
+```bash
+git diff -- "$DEMO_DIR/values/gemma-b.yaml"
+git add -- "$DEMO_DIR/values/gemma-b.yaml"
+git commit -S -s -m "Measure tuned Gemma at 128K"
+git push
+REVISION=$(git rev-parse HEAD)
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application hardfest-gemma-b \
+  --type merge --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get application hardfest-gemma-b \
+  -o jsonpath='{.status.operationState.phase}{" "}{.status.sync.revision}{"\n"}'
+```
+
+Дождитесь `Succeeded` для `$REVISION`, затем rollout B и успешного короткого ответа.
+Для новой серии повторите шаг 1 с `INPUT_TOKENS=65536` и новым `REQUEST_DIR`,
+затем шаги 2–3. Ожидаемое `usage.prompt_tokens` теперь равно 65 536.
+Этот вход проверяет offload, но сам по себе не проверяет всю границу 128K.
+Для проверки границы увеличивайте вход отдельно, оставляя место под 128 токенов
+ответа и контролируя отсутствие обрезки. Результаты храните отдельно от 64K.
+
+> [!IMPORTANT]
+> Активный контекст должен помещаться на GPU. Offload не превращает RAM
+> в дополнительную HBM для произвольно длинной истории.
+> В RAM-профиле остаются лимиты 56/80 GiB и shm 40 GiB; A на VM 128 GiB выключена.
+
+После сохранения результата верните **только** `vllm.max-model-len: 65536`
+через commit/push/sync того же Application. Сверьте наличие assistant,
+prefill 2048 и CPU KV перед сравнением с платформенной Gemma.
+
+Профили [128K без CPU KV](../values/gemma-b-128k.yaml) и
+[128K с CPU KV](../values/gemma-b-ram.yaml) относятся к прежнему опыту без
+assistant. Они сохранены для воспроизводимости тех результатов и в этом
+переходе не применяются.
+
+## Проверка
+
+- [ ] Входы и ответы имеют согласованные длины.
+- [ ] Возврат подтверждён байтами CPU → GPU и внешними cache hits.
+- [ ] Контрольная серия без offload сохранена отдельно.
+- [ ] После опыта восстановлен RAM-кэш B.
+
+[Прежний опыт](../results/kv-ram/README.md) дал 2,89 GiB CPU → GPU
+и 65 504 внешних попадания, но использовал другой генератор входов.
+Это не ожидаемые цифры текущей серии.
+
+Далее примените [вторую итерацию B](03-speculation.md): она возвращает
+окно 64K и сохраняет 32 GiB CPU KV, RAM 56/80 GiB и shm 40 GiB.

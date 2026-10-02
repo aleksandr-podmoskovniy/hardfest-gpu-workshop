@@ -1,2 +1,2 @@
-# Repository checks only; participants use kubectl, jq and yq.
+# Repository checks only; participants use Git, Helm, kubectl and curl.
 PyYAML==6.0.3

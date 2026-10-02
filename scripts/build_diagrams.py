@@ -109,7 +109,7 @@ class Diagram:
 
     def footer(self, note):
         self.path("M48 698 H1152", LINE, width=1)
-        self.text(48, 731, note, 18, MUTED, width=1104)
+        self.text(48, 731, note, 20, MUTED, width=1104)
 
     def save(self):
         (ROOT / "assets" / f"{self.name}.svg").write_text("\n".join(self.parts + ['</svg>']) + '\n')
@@ -138,7 +138,7 @@ def topology():
     for service, color, dashed in zip(services, (BLUE, BLUE, TEAL, PURPLE), (False, False, False, True)):
         y = service.port('left')[1]
         d.connector([(752, y), service.port('left')], color, dashed)
-    d.footer('При переходе к Qwen меняется модель за шлюзом; чат, пользователи и базы знаний сохраняются.')
+    d.footer('Gemma сменяется на Qwen. Чат, пользователи и базы знаний остаются.')
     d.save()
 
 
@@ -158,7 +158,7 @@ def latency():
         d.path(f'M48 {y-10} V{y} H{end} V{y-10}', color)
         d.text((48+end)/2, y-18, label, 25, color, True, 'middle')
     d.text(48, 654, 'p95(TTFT) − p95(очереди) ≠ p95(prefill)', 30, bold=True)
-    d.footer('Шкала условная. Рассуждение может отсутствовать; сеть и движок добавляют накладные расходы.')
+    d.footer('Шкала условная. Сеть и движок добавляют накладные расходы.')
     d.save()
 
 
@@ -177,27 +177,33 @@ def memory():
         d.text(76, y+54, context, 34, bold=True)
         d.text(480, y+54, bf16, 36, bold=True, anchor='middle')
         d.text(940, y+54, fp8, 36, TEAL, True, 'middle')
-    d.footer('64K — сравнение A/B; 128K — опыт вместимости. 256K здесь только расчёт, не результат запуска.')
+    d.footer('64K — сравнение A/B. 128K — опыт вместимости. 256K — расчёт, не замер запуска.')
     d.save()
 
 
 def ab():
-    d = Diagram('04-ab', 'Две итерации, затем сервис платформы',
-                'Одна Gemma, одинаковые веса. Основные сравнения — при окне 64K.')
-    d.card(48, 160, 336, 300, 'A / Base',
-           ['H100 №1', 'BF16 KV', 'Без prefix cache и offload', 'Без CUDA graphs', 'Prefill: 4096'], GRAY, MUTED)
-    first = d.card(432, 160, 336, 300, 'B / 1. Кэш',
-           ['H100 №2', 'FP8 KV, Triton attention', 'Prefix cache + RAM 32 GiB', 'Без CUDA graphs', 'Prefill: 4096'], MINT, TEAL)
-    second = d.card(816, 160, 336, 300, 'B / 2. Генерация',
-           ['Та же H100 №2', 'Кэши первой итерации', 'Prefill: 2048', 'CUDA graphs', 'Gemma assistant'])
+    d = Diagram('04-ab', 'От базового запуска к сервису',
+                'Gemma A и B: одинаковые веса и окно 64K. Меняются только настройки движка.')
+    for x, label, color in [(48, 'СТАРТ / H100 №1', MUTED),
+                            (432, '1. КЭШ / H100 №2', TEAL),
+                            (816, '2. ГЕНЕРАЦИЯ / H100 №2', BLUE)]:
+        d.text(x, 177, label, 19, color, True, width=336)
+    baseline = d.card(48, 200, 336, 276, 'Gemma A — Base',
+           ['BF16 KV', 'Без prefix cache и offload', 'Без CUDA graphs', 'Prefill: 4096'], GRAY, MUTED)
+    first = d.card(432, 200, 336, 276, 'Gemma B — Tune',
+           ['FP8 KV / Triton attention', 'Prefix cache', 'KV в RAM: 32 GiB', 'Без CUDA graphs', 'Prefill: 4096'], MINT, TEAL)
+    second = d.card(816, 200, 336, 276, 'Gemma B — Tune',
+           ['Кэши первой итерации', 'Prefill: 2048', 'CUDA graphs', 'Gemma assistant / MTP'])
+    d.connect(baseline, first, color=TEAL)
     d.connect(first, second)
-    d.text(48, 505, 'ПОСЛЕ РУЧНЫХ ОПТИМИЗАЦИЙ', 19, MUTED, True)
-    platform = d.card(48, 536, 528, 132, '3. Gemma через AI Inference',
-                      ['H100 №1, параметры второй итерации'])
-    qwen = d.card(624, 536, 528, 132, '4. Qwen через AI Inference',
+    d.text(48, 520, '3. AI INFERENCE / ОДНА GPU', 19, BLUE, True)
+    d.text(624, 520, '4. AI INFERENCE / ДВЕ GPU', 19, PURPLE, True)
+    platform = d.card(48, 544, 528, 124, 'Gemma',
+                      ['H100 №1, рецепт второй итерации'])
+    qwen = d.card(624, 544, 528, 124, 'Qwen',
                   ['Обе H100, TP2 и MTP'], LILAC, PURPLE)
     d.connect(platform, qwen, color=PURPLE)
-    d.footer('На 128 GiB RAM запускаем полные конфигурации последовательно. Для совместного запуска нужен запас.')
+    d.footer('128 GiB RAM: запускаем профили последовательно, оставляя память системе.')
     d.save()
 
 
@@ -219,7 +225,7 @@ def offload():
     d.connect(pairs[2][1], pairs[2][0], ('left', 'right'))
     d.text(600, 533, 'Чтение', 22, BLUE, anchor='middle')
     d.text(48, 660, 'Проверяем CPU → GPU байты и отсутствие локального cache hit.', 26, bold=True)
-    d.footer('RAM хранит блоки между обращениями. Во время вычисления рабочий KV должен находиться на GPU.')
+    d.footer('RAM хранит KV между запросами. Для вычисления нужные блоки возвращаются на GPU.')
     d.save()
 
 
@@ -245,7 +251,7 @@ def scheduler():
         d.rect(x, 528, 352, 130)
         d.text(x+20, 564, name, 21, BLUE, True)
         d.text(x+20, 602, body, 22)
-    d.footer('Меньше порция — короче отдельный шаг, но больше шагов для всего документа. Проверяем TTFT и ITL.')
+    d.footer('Меньше порция — короче шаг, но больше шагов. Эффект проверяем по TTFT и ITL.')
     d.save()
 
 
@@ -268,7 +274,7 @@ def speculation():
     d.text(798, 613, 'черновик + проверка + накладные расходы', 24, anchor='middle')
     d.path('M456 628 H1128', PURPLE, width=1.5)
     d.text(798, 660, 'число выданных токенов', 25, bold=True, anchor='middle')
-    d.footer('Принятие токенов на схеме условное. Стоимость черновика тоже входит во время ответа.')
+    d.footer('Пример условный. Работа черновика тоже входит во время ответа.')
     d.save()
 
 
@@ -292,16 +298,16 @@ def mig():
     d.text(912, 394, 'Свободно', 25, TEAL, True)
     d.text(912, 439, ['1g из 4', 'Для следующей', 'заявки'], 23)
     d.text(48, 643, 'Завершение Pod → освобождение claim → проверка геометрии', 27, bold=True)
-    d.footer('Целевая схема размещения. Квота MPS не гарантирует долю скорости; аппаратную изоляцию даёт MIG.')
+    d.footer('Целевая геометрия. MPS ограничивает ресурсы, MIG даёт аппаратную изоляцию.')
     d.save()
 
 
 def platform():
     d = Diagram('09-platform', 'AI Inference: запуск по рецепту',
-                'Параметры модели и ресурсы описаны один раз; размещением управляет платформа.')
-    models = d.card(48, 160, 322, 142, 'AI Models', ['Модель и ревизия', 'Проверенные файлы'])
-    recipe = d.card(418, 160, 734, 142, 'Рецепт + оборудование + стратегия',
-           ['Runtime, параметры движка и бюджет памяти', 'Latency / Throughput'], MINT, TEAL)
+                'Каталог хранит веса. Рецепт задаёт запуск. Платформа выделяет ресурсы.')
+    models = d.card(48, 160, 322, 142, 'ai-models', ['Модель и ревизия', 'Проверенные файлы'])
+    recipe = d.card(418, 160, 734, 142, 'Рецепт, стратегия и оборудование',
+           ['Движок, оптимизации, бюджет памяти', 'Latency / Throughput'], MINT, TEAL)
     d.connect(models, Box(48, 374, 240, 120), ('bottom', 'top'), via=((209, 338), (168, 338)))
     d.connect(recipe, Box(336, 374, 240, 120), ('bottom', 'top'),
               via=((785, 338), (456, 338)), color=TEAL)
@@ -312,9 +318,11 @@ def platform():
         d.text(x+16, 460, body, 21)
         if x < 912:
             d.connect(node, Box(x+288, 374, 240, 120))
-    d.band(550, 'Все настройки эксперимента — в рецепте',
-           'FP8 KV, prefix cache, chunked prefill, CUDA graphs, CPU KV, assistant, TP2 и MTP.', MINT, TEAL)
-    d.footer('Проверяем цепочку: рецепт → план → выделенные устройства → параметры движка → ответ API.')
+    d.card(48, 542, 528, 126, 'Рецепт Gemma',
+           ['FP8 KV, prefix cache, CPU KV', 'Chunked prefill, graphs, assistant'], MINT, TEAL)
+    d.card(624, 542, 528, 126, 'Рецепт Qwen',
+           ['Две H100, TP2 и MTP', 'Кэши и параметры движка'], LILAC, PURPLE)
+    d.footer('Все настройки эксперимента — в рецепте. Проверяем план, GPU и ответ API.')
     d.save()
 
 
@@ -331,7 +339,7 @@ def tp2():
     d.text(600, 491, 'DRA выделяет два устройства; vLLM распределяет модель.', 23, anchor='middle')
     d.band(565, 'TP2 не равно двум репликам',
            'Обе GPU участвуют в одном запросе. HBM не становится прозрачным общим пулом.', MINT, TEAL)
-    d.footer('PP делит слои по стадиям; TP делит тензоры внутри слоёв. Режим выбирают под архитектуру и топологию.')
+    d.footer('PP делит слои по стадиям. TP делит тензоры внутри слоёв.')
     d.save()
 
 
@@ -349,24 +357,26 @@ def gemma_formula():
             (424, 'b', ['Байт на элемент', 'BF16: 2 / FP8: 1']),
             (800, 'S', ['Длина истории', 'Вход + ответ'])]:
         d.card(x, 554, 352, 126, title, body, GRAY, BLUE)
-    d.footer('Число слоёв × KV-головы × размерность × токены. Результат в байтах; для GiB делим на 2³⁰.')
+    d.footer('Слои × KV-головы × размерность × токены. Для перевода байтов в GiB делим на 2³⁰.')
     d.save()
 
 
 def gitops():
     d = Diagram('12-gitops', 'Helm в Git, доставка через Argo CD',
-                'Один чарт, отдельные профили и привязки площадки. Без прямого изменения Deployment.')
-    github = d.card(48, 160, 330, 158, 'GitHub', ['Чарт и примеры', 'Профили экспериментов', 'Без секретов'], GRAY, MUTED)
-    gitlab = d.card(446, 160, 706, 158, 'GitLab / k8s-config',
-           ['Чарт + values + site-values', 'Проверка diff → подписанный commit → push', 'Application указывает на этот репозиторий'])
-    argo = d.card(48, 411, 504, 163, 'Управляющий кластер', ['Argo CD', 'Helm render → sync выбранного SHA'])
-    gpu = d.card(648, 411, 504, 163, 'GPU-кластер',
-           ['ConfigMap, Deployment, Service', 'ResourceClaimTemplate, NetworkPolicy'], MINT, TEAL)
+                'Редактируем values, отправляем коммит и применяем его через Argo CD.')
+    github = d.card(48, 160, 528, 168, 'GitHub / исходники',
+           ['Helm-чарты', 'Профили экспериментов', 'Примеры настройки'], GRAY, MUTED)
+    gitlab = d.card(624, 160, 528, 168, 'GitLab / k8s-config',
+           ['Чарт + values + настройки площадки', 'Проверка diff → commit → push', 'Источник для Argo CD'])
+    argo = d.card(48, 424, 528, 168, 'Argo CD / управляющий кластер',
+           ['Читает выбранный коммит', 'Рендерит Helm-чарт', 'Применяет манифесты'])
+    gpu = d.card(624, 424, 528, 168, 'GPU-кластер',
+           ['ConfigMap с параметрами vLLM', 'Deployment + DRA-заявка', 'Service + NetworkPolicy'], MINT, TEAL)
     d.connect(github, gitlab)
-    d.connect(gitlab, argo, ('bottom', 'top'), via=((799, 365), (300, 365)))
+    d.connect(gitlab, argo, ('bottom', 'top'), via=((888, 376), (312, 376)))
     d.connect(argo, gpu, color=TEAL)
-    d.text(48, 645, 'Изменение values → новый checksum Pod → перезапуск Recreate', 27, bold=True)
-    d.footer('Примеры выключены: replicaCount = 0, autosync отсутствует. Секреты передаются отдельно от Git.')
+    d.text(48, 651, 'Новые параметры vLLM → новый Pod → проверка готовности', 28, bold=True)
+    d.footer('В примерах replicaCount: 0, autosync выключен. Секреты хранятся вне Git.')
     d.save()
 
 
@@ -384,7 +394,7 @@ def attention():
     d.connector([query.port('bottom'), (216, 358)])
     d.connector([history.port('bottom'), (600, 358)], TEAL)
     d.text(48, 653, 'Кэш хранит тензоры, а не готовые ответы.', 29, bold=True)
-    d.footer('d — размерность головы. Маски опущены; при GQA память KV считают по KV-головам, не по Q-головам.')
+    d.footer('d — размерность головы. При GQA память считаем по KV-головам. Маски опущены.')
     d.save()
 
 
@@ -427,26 +437,29 @@ def rag():
     d.text(694, 363, 'Поиск похожих векторов', 21, TEAL, anchor='middle')
     d.band(566, 'LLM можно заменить без пересоздания индекса',
            'При смене эмбеддера документы нужно переиндексировать.', MINT, TEAL)
-    d.footer('Проверяем не только ответ: нужный документ должен попасть в контекст, а ссылка — вести к источнику.')
+    d.footer('Проверка RAG: нужный документ попал в контекст, ссылка ведёт к источнику.')
     d.save()
 
 
 def qwen_transition():
     d = Diagram('17-qwen-transition', 'От двух Gemma к одному Qwen',
-                'WebUI, ai-mcp-gateway и базы знаний остаются; обе H100 переходят одному сервису.')
+                'Сначала готовим веса Qwen в ai-models, затем освобождаем обе H100.')
     d.text(48, 178, '1 / ОСВОБОДИТЬ GPU', 19, MUTED, True)
-    d.card(48, 204, 532, 114, 'Gemma A', ['replicaCount: 0 → commit → sync'], GRAY, MUTED)
-    d.card(620, 204, 532, 114, 'Gemma B', ['replicaCount: 0 → commit → sync'], GRAY, MUTED)
-    d.text(48, 355, 'Платформенную Gemma, если запущена, тоже остановить.', 22, MUTED)
-    d.text(48, 419, '2 / СОЗДАТЬ СЕРВИС ЧЕРЕЗ AI INFERENCE', 19, BLUE, True)
+    d.card(48, 204, 528, 128, 'Ручные Gemma A и B',
+           ['replicaCount: 0', 'commit → push → sync'], GRAY, MUTED)
+    d.card(624, 204, 528, 128, 'Gemma через AI Inference',
+           ['Если запущена — остановить', 'через свой InferenceService'], GRAY, MUTED)
+    d.rect(48, 356, 1104, 70, SAND)
+    d.text(600, 400, 'Проверить: Pod Gemma завершены, обе H100 свободны',
+           26, AMBER, True, 'middle', width=1056)
+    d.text(48, 472, '2 / ЗАПУСТИТЬ QWEN ЧЕРЕЗ AI INFERENCE', 19, BLUE, True)
     for x, title, body in [(48, 'Рецепт Qwen', ['Throughput', 'TP2 + MTP + CPU KV']),
             (432, 'DRA-заявка', ['count: 2', 'Полные H100 одной ноды']),
             (816, 'Qwen API', ['Один Pod', 'Ответ через прежний чат'])]:
-        node = d.card(x, 447, 336, 143, title, body)
+        node = d.card(x, 496, 336, 143, title, body)
         if x < 816:
-            d.connect(node, Box(x+384, 447, 336, 143))
-    d.text(48, 656, 'Перед запуском: прежние Pod завершены, обе GPU свободны.', 27, bold=True)
-    d.footer('PVC, веса, GPUClass/GPUPool и поисковые сервисы на A30 при переключении не удаляются.')
+            d.connect(node, Box(x+384, 496, 336, 143))
+    d.footer('WebUI, ai-mcp-gateway, базы знаний, веса и сервисы на A30 остаются.')
     d.save()
 
 
@@ -473,7 +486,7 @@ def qwen_mtp():
         d.text(x+w/2, 620, top, 23, anchor='middle')
         d.path(f'M{x+40} 631 H{x+w-40}', color, width=1.5)
         d.text(x+w/2, 662, bottom, 23, anchor='middle')
-    d.footer('В профиле стартуем с num_speculative_tokens=1. Сравниваем MTP on/off при одинаковой нагрузке.')
+    d.footer('Старт: num_speculative_tokens=1. Сравнение MTP on/off — на одинаковых запросах.')
     d.save()
 
 
@@ -495,7 +508,7 @@ def qwen_capacity():
         d.card(x, 331, 258, 140, title, body, fill, color)
     d.card(48, 515, 532, 123, 'Пороги соблюдены', ['Следующая ступень нагрузки'], MINT, TEAL)
     d.card(620, 515, 532, 123, 'Хотя бы один порог нарушен', ['Остановить рост нагрузки'], SAND, AMBER)
-    d.footer('256K — окно одной истории. 50 пользователей не означают 50 одновременно заполненных окон.')
+    d.footer('Окно 256K не означает, что сервис выдержит 50 одновременных историй по 256K.')
     d.save()
 
 

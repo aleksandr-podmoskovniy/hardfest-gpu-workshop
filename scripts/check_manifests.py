@@ -78,6 +78,11 @@ def check():
         if path.stem == "observability":
             if source.get("directory") != {"recurse": False}:
                 errors.append("observability must retain its standalone directory")
+        elif path.stem == "platform":
+            if source.get("directory") != {"recurse": False, "include": "*.yaml"}:
+                errors.append("platform must include only its top-level order YAML files")
+            if not source.get("path", "").endswith("/hardfest-demo/platform") or "helm" in source:
+                errors.append("platform must use its separate directory, not a manual runtime chart")
         elif "directory" in source or "helm" not in source:
             errors.append(f"{path.name}: expected Helm source, not directory")
         else:

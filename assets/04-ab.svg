@@ -1,70 +1,81 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
-<title id="title">Две итерации, затем сервис платформы</title><desc id="desc">Одна Gemma, одинаковые веса. Основные сравнения — при окне 64K.</desc>
+<title id="title">От базового запуска к сервису</title><desc id="desc">Gemma A и B: одинаковые веса и окно 64K. Меняются только настройки движка.</desc>
 <defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
 <text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
-<tspan x="70" dy="0">Две итерации, затем сервис платформы</tspan>
+<tspan x="70" dy="0">От базового запуска к сервису</tspan>
 </text>
 <text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">Одна Gemma, одинаковые веса. Основные сравнения — при окне 64K.</tspan>
+<tspan x="48" dy="0">Gemma A и B: одинаковые веса и окно 64K. Меняются только настройки движка.</tspan>
 </text>
 <path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="48" y="160" width="336" height="300" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="72" y="202" font-size="25" fill="#536278" text-anchor="start" font-weight="700" data-max-width="288">
-<tspan x="72" dy="0">A / Base</tspan>
+<text x="48" y="177" font-size="19" fill="#536278" text-anchor="start" font-weight="700" data-max-width="336">
+<tspan x="48" dy="0">СТАРТ / H100 №1</tspan>
 </text>
-<text x="72" y="242" font-size="22" fill="#17243b" text-anchor="start" data-max-width="288">
-<tspan x="72" dy="0">H100 №1</tspan>
-<tspan x="72" dy="30.799999999999997">BF16 KV</tspan>
+<text x="432" y="177" font-size="19" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="336">
+<tspan x="432" dy="0">1. КЭШ / H100 №2</tspan>
+</text>
+<text x="816" y="177" font-size="19" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="336">
+<tspan x="816" dy="0">2. ГЕНЕРАЦИЯ / H100 №2</tspan>
+</text>
+<rect x="48" y="200" width="336" height="276" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="242" font-size="25" fill="#536278" text-anchor="start" font-weight="700" data-max-width="288">
+<tspan x="72" dy="0">Gemma A — Base</tspan>
+</text>
+<text x="72" y="282" font-size="22" fill="#17243b" text-anchor="start" data-max-width="288">
+<tspan x="72" dy="0">BF16 KV</tspan>
 <tspan x="72" dy="30.799999999999997">Без prefix cache и offload</tspan>
 <tspan x="72" dy="30.799999999999997">Без CUDA graphs</tspan>
 <tspan x="72" dy="30.799999999999997">Prefill: 4096</tspan>
 </text>
-<rect x="432" y="160" width="336" height="300" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="456" y="202" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="288">
-<tspan x="456" dy="0">B / 1. Кэш</tspan>
+<rect x="432" y="200" width="336" height="276" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="456" y="242" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="288">
+<tspan x="456" dy="0">Gemma B — Tune</tspan>
 </text>
-<text x="456" y="242" font-size="22" fill="#17243b" text-anchor="start" data-max-width="288">
-<tspan x="456" dy="0">H100 №2</tspan>
-<tspan x="456" dy="30.799999999999997">FP8 KV, Triton attention</tspan>
-<tspan x="456" dy="30.799999999999997">Prefix cache + RAM 32 GiB</tspan>
+<text x="456" y="282" font-size="22" fill="#17243b" text-anchor="start" data-max-width="288">
+<tspan x="456" dy="0">FP8 KV / Triton attention</tspan>
+<tspan x="456" dy="30.799999999999997">Prefix cache</tspan>
+<tspan x="456" dy="30.799999999999997">KV в RAM: 32 GiB</tspan>
 <tspan x="456" dy="30.799999999999997">Без CUDA graphs</tspan>
 <tspan x="456" dy="30.799999999999997">Prefill: 4096</tspan>
 </text>
-<rect x="816" y="160" width="336" height="300" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="840" y="202" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="288">
-<tspan x="840" dy="0">B / 2. Генерация</tspan>
+<rect x="816" y="200" width="336" height="276" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="840" y="242" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="288">
+<tspan x="840" dy="0">Gemma B — Tune</tspan>
 </text>
-<text x="840" y="242" font-size="22" fill="#17243b" text-anchor="start" data-max-width="288">
-<tspan x="840" dy="0">Та же H100 №2</tspan>
-<tspan x="840" dy="30.799999999999997">Кэши первой итерации</tspan>
+<text x="840" y="282" font-size="22" fill="#17243b" text-anchor="start" data-max-width="288">
+<tspan x="840" dy="0">Кэши первой итерации</tspan>
 <tspan x="840" dy="30.799999999999997">Prefill: 2048</tspan>
 <tspan x="840" dy="30.799999999999997">CUDA graphs</tspan>
-<tspan x="840" dy="30.799999999999997">Gemma assistant</tspan>
+<tspan x="840" dy="30.799999999999997">Gemma assistant / MTP</tspan>
 </text>
-<path d="M774 310.0 L810 310.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
-<text x="48" y="505" font-size="19" fill="#536278" text-anchor="start" font-weight="700">
-<tspan x="48" dy="0">ПОСЛЕ РУЧНЫХ ОПТИМИЗАЦИЙ</tspan>
+<path d="M390 338.0 L426 338.0" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
+<path d="M774 338.0 L810 338.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<text x="48" y="520" font-size="19" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">3. AI INFERENCE / ОДНА GPU</tspan>
 </text>
-<rect x="48" y="536" width="528" height="132" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="72" y="578" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="480">
-<tspan x="72" dy="0">3. Gemma через AI Inference</tspan>
+<text x="624" y="520" font-size="19" fill="#7041b8" text-anchor="start" font-weight="700">
+<tspan x="624" dy="0">4. AI INFERENCE / ДВЕ GPU</tspan>
 </text>
-<text x="72" y="618" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
-<tspan x="72" dy="0">H100 №1, параметры второй итерации</tspan>
+<rect x="48" y="544" width="528" height="124" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="586" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="480">
+<tspan x="72" dy="0">Gemma</tspan>
 </text>
-<rect x="624" y="536" width="528" height="132" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="648" y="578" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="480">
-<tspan x="648" dy="0">4. Qwen через AI Inference</tspan>
+<text x="72" y="626" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
+<tspan x="72" dy="0">H100 №1, рецепт второй итерации</tspan>
 </text>
-<text x="648" y="618" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
+<rect x="624" y="544" width="528" height="124" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="648" y="586" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="480">
+<tspan x="648" dy="0">Qwen</tspan>
+</text>
+<text x="648" y="626" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
 <tspan x="648" dy="0">Обе H100, TP2 и MTP</tspan>
 </text>
-<path d="M582 602.0 L618 602.0" fill="none" stroke="#7041b8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-7041b8)" data-connector="true"/>
+<path d="M582 606.0 L618 606.0" fill="none" stroke="#7041b8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-7041b8)" data-connector="true"/>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="48" y="731" font-size="18" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">На 128 GiB RAM запускаем полные конфигурации последовательно. Для совместного запуска нужен запас.</tspan>
+<text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">128 GiB RAM: запускаем профили последовательно, оставляя память системе.</tspan>
 </text>
 </svg>

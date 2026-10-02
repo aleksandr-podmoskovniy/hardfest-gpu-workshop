@@ -1,17 +1,23 @@
-# Helm через GitLab и Argo CD
+# Развёртывание через GitLab и Argo CD
 
 ![Helm-чарт и values в GitLab; Argo CD управляющего кластера применяет ресурсы в GPU-кластер](../assets/12-gitops.svg)
 
-В публичном репозитории — чарт и восемь профилей. В вашей репе k8s-config —
-их закреплённая копия, параметры площадки и Application. Argo CD использует
-Helm для рендеринга, а жизненным циклом ресурсов управляет сам.
-Поверх этих ресурсов не выполняем `helm install/upgrade` или прямой `kubectl scale`.
-[Как Argo CD работает с Helm](https://argo-cd.readthedocs.io/en/stable/user-guide/helm/).
+В GitLab хранится версия стенда: чарт, профиль движка и привязка к площадке.
+Argo CD в управляющем кластере читает её и создаёт ресурсы в GPU-кластере.
+Helm здесь рендерит YAML; отдельного Helm release нет.
 
-## 1. Подготовить контексты
+## Перед началом
 
-Нужны Helm 3+, Git, kubectl, jq и yq Mike Farah v4. Команды выполняются из k8s-config;
-публичный репозиторий расположен рядом. Подставьте свои значения:
+- Пройдена [проверка стенда](SETUP.md): namespace, PVC, DRA и доступы готовы.
+- Рабочая директория — корень **частной репы `k8s-config`**.
+- Клон `hardfest-gpu-workshop` находится рядом с ней.
+- На рабочей машине есть Git, Helm 3+ и kubectl. YAML редактируется в редакторе.
+
+> [!IMPORTANT]
+> Не выполняйте `helm upgrade`, `kubectl scale` и ручное редактирование Deployment
+> поверх Argo. Все изменения runtime проходят через values, commit, push и sync.
+
+## 1. Задать контексты
 
 ```bash
 export ARGO_CONTEXT=management
@@ -20,18 +26,18 @@ export ARGO_NAMESPACE=argocd
 export DEMO_DIR=argo-projects/gpu-cluster/hardfest-demo
 set -o pipefail
 
-kubectl config get-contexts
 kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get applications
 kubectl --context "$GPU_CONTEXT" get nodes,deviceclasses
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pvc
 ```
 
-Namespace, PVC, целевой кластер и GitLab уже подготовлены и подключены к Argo.
-Не добавляйте токены в repoURL. Project и destination должны разрешать выбранный кластер.
+Проверьте, что первый контекст ведёт в кластер Argo, второй — в кластер моделей.
+Не добавляйте токен GitLab в `repoURL`: доступ к репозиторию настраивается в Argo.
 
-## 2. Скопировать чарт и профили
+## 2. Скопировать чарт и values в k8s-config
 
-Для новой установки:
+Этот блок предназначен для **нового** каталога. Если стенд уже существует,
+обновляйте файлы через просмотр diff, не перезаписывайте `site/`.
 
 ```bash
 git switch -c hardfest-demo
@@ -39,20 +45,32 @@ mkdir -p "$DEMO_DIR/charts" "$DEMO_DIR/values" "$DEMO_DIR/site" "$DEMO_DIR/argo-
 cp -R ../hardfest-gpu-workshop/charts/vllm-runtime "$DEMO_DIR/charts/"
 cp ../hardfest-gpu-workshop/values/*.yaml "$DEMO_DIR/values/"
 cp ../hardfest-gpu-workshop/examples/site-gemma.yaml "$DEMO_DIR/site/gemma.yaml"
+cp ../hardfest-gpu-workshop/examples/site-gemma-assistant.yaml "$DEMO_DIR/site/gemma-assistant.yaml"
 cp ../hardfest-gpu-workshop/argocd/gemma-a.yaml "$DEMO_DIR/argo-app/"
 cp ../hardfest-gpu-workshop/argocd/gemma-b.yaml "$DEMO_DIR/argo-app/"
 ```
 
-При обновлении существующей установки сначала сравните diff и рендер:
-имена Service, selectors и ссылки на PVC должны сохраняться.
+Каталог моделей добавляется отдельным Application по
+[инструкции ai-models](../catalog/README.md). Здесь настраиваются только ручные A/B.
 
-В `site/gemma.yaml` замените ноду, созданный контроллером DeviceClass, PVC и subPath.
-Добавьте точные tolerations и разрешения NetworkPolicy для Bifrost/мониторинга.
-Не меняйте одинаковые для A/B веса, runtime и класс физических H100.
+## 3. Заполнить site-файлы и Application
 
-В `argo-app/*.yaml` задайте repoURL, ветку, project и destination.
-`source.path` указывает на `$DEMO_DIR/charts/vllm-runtime`.
-Пути valueFiles считаются от каталога чарта:
+Откройте перечисленные файлы в редакторе. В публичных примерах нет реальных
+адресов, имён PVC и DeviceClass вашего кластера.
+
+| Файл относительно `$DEMO_DIR` | Что заменить | Как проверить |
+| --- | --- | --- |
+| `site/gemma.yaml` | Ноду, DeviceClass, PVC, subPath | `get nodes,deviceclasses` и `get pvc` |
+| `site/gemma-assistant.yaml` | Те же поля и отдельный mount assistant | Оба каталога весов доступны Pod |
+| `site/*.yaml` | Tolerations и ingress от шлюза/мониторинга | Сверить taints и сетевые политики площадки |
+| `argo-app/gemma-a.yaml`, `argo-app/gemma-b.yaml` | `repoURL`, `targetRevision`, `project`, `source.path`, `destination` | Git доступен Argo, проект разрешает destination |
+
+В каждом Application путь `source.path` должен вести к
+`argo-projects/gpu-cluster/hardfest-demo/charts/vllm-runtime` либо вашему
+эквиваленту. `destination.name` — имя зарегистрированного кластера Argo,
+не обязательно имя kubectl-контекста.
+
+У B оставьте такой порядок файлов:
 
 ```yaml
 helm:
@@ -62,13 +80,14 @@ helm:
     - ../../site/gemma.yaml
 ```
 
-Порядок важен: **один полный профиль, затем привязки площадки**.
-В site-файле не переопределяйте replicaCount, vllm, resources и shmSize — иначе
-он перекроет переключение учебного профиля. Не наслаивайте B RAM на B assistant:
-Helm объединяет словари и может сохранить ненужные флаги. Списки, включая
-modelVolumes, заменяются целиком; для assistant в site-файле нужны обе модели.
+В `site/` находятся только привязки площадки. Не добавляйте туда `replicaCount`,
+`vllm`, `resources` или `shmSize`: они перекроют учебный профиль.
+Используйте **один полный профиль и один site-файл**. Списки Helm заменяет
+целиком, поэтому для assistant site-файл содержит оба mount.
 
-Проверка до отправки:
+Все профили пока оставьте с `replicaCount: 0`. Autosync и общий prune не включайте.
+
+## 4. Проверить и отправить первую ревизию
 
 ```bash
 for SLOT in a b; do
@@ -82,99 +101,105 @@ git diff -- "$DEMO_DIR"
 git add -- "$DEMO_DIR"
 git diff --cached --check
 git diff --cached --stat
+git diff --cached -- "$DEMO_DIR"
 git commit -S -s -m "Add HardFest Helm chart and profiles"
 git push -u origin hardfest-demo
 ```
 
-`-S -s` использует ваш настроенный ключ и DCO. Проверяйте staged diff:
-секреты в него не входят. Чарт создаёт пять ресурсов с нулём реплик,
-не создаёт namespace, PVC, GPUClass или DeviceClass.
+До commit проверьте **полный staged diff**, а не только stat. В нём не должно
+быть токенов и Secret с открытыми значениями. `-S -s` использует ваш настроенный
+ключ подписи и добавляет DCO sign-off.
 
-## 3. Зарегистрировать Application и выполнить sync
+Чарт создаёт runtime-ресурсы с нулём реплик. Namespace, PVC, GPUClass и DeviceClass
+он не создаёт. Server dry-run не проверяет наличие весов и работу CUDA.
 
-Application находится в управляющем кластере. В примерах нет autosync,
-автоматического prune и каскадного finalizer:
+## 5. Зарегистрировать Application и синхронизировать
+
+Если `argo-app/` уже управляется родительским Application, доставьте изменения
+через него. Иначе зарегистрируйте новые Application в **управляющем** кластере:
 
 ```bash
 kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply --dry-run=server -f "$DEMO_DIR/argo-app/"
 kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply -f "$DEMO_DIR/argo-app/"
+```
 
+Синхронизируйте именно отправленный commit:
+
+```bash
 REVISION=$(git rev-parse HEAD)
 for APP in hardfest-gemma-a hardfest-gemma-b; do
   kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application "$APP" \
-    --type merge -p "$(jq -nc --arg rev "$REVISION" '{operation:{sync:{revision:$rev,prune:false}}}')"
+    --type merge --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
 done
-kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get applications hardfest-gemma-a hardfest-gemma-b
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get applications \
+  hardfest-gemma-a hardfest-gemma-b \
+  -o custom-columns='NAME:.metadata.name,SYNC:.status.sync.status,HEALTH:.status.health.status,OPERATION:.status.operationState.phase,REVISION:.status.sync.revision'
 ```
 
-Первый sync не занимает GPU. Дождитесь завершения операции именно на отправленной
-ревизии и посмотрите diff. Если Application управляется родительским GitOps-приложением,
-меняйте его source через родителя, не создавайте второго владельца.
+Проверьте `Synced`, `Healthy`, `Succeeded` и совпадение `REVISION` с commit.
+Не запускайте следующую sync-операцию, пока предыдущая не закончилась.
+Первый sync не должен занимать GPU — обе реплики выключены.
 
-## 4. Начать с базовой реплики
+## 6. Запустить Gemma A через values/gemma-a.yaml
+
+В редакторе измените только верхний `replicaCount`:
+
+| Файл | Значение |
+| --- | --- |
+| `$DEMO_DIR/values/gemma-a.yaml` | `replicaCount: 1` |
+| `$DEMO_DIR/values/gemma-b.yaml` | `replicaCount: 0` |
+
+Повторите lint и server dry-run из шага 4, затем отправьте изменение:
 
 ```bash
-yq -i '.replicaCount = 1' "$DEMO_DIR/values/gemma-a.yaml"
-yq -i '.replicaCount = 0' "$DEMO_DIR/values/gemma-b.yaml"
-git diff -- "$DEMO_DIR"
+git diff -- "$DEMO_DIR/values/gemma-a.yaml" "$DEMO_DIR/values/gemma-b.yaml"
 git add -- "$DEMO_DIR/values/gemma-a.yaml" "$DEMO_DIR/values/gemma-b.yaml"
+git diff --cached --check
 git commit -S -s -m "Start Gemma baseline"
 git push
 ```
 
-Перед commit повторите lint и server dry-run из шага 2, затем sync из шага 3
-с новым REVISION. Чарт откажется включать Pod с незаполненными REPLACE-параметрами.
+Повторите **шаг 5 с новым `REVISION`**, затем проверьте runtime:
 
 ```bash
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo rollout status deployment/hf-gemma-a --timeout=15m
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo rollout status deployment/hf-gemma-a --timeout=40m
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-a --tail=80
 ```
 
-Прежний Ready Pod не подтверждает новый sync. Сверьте ревизию, логи и ответ API.
-Дальше включайте B по [первой итерации](../README.md#ram), а затем переключайте
-её на [вторую](../labs/03-speculation.md). На 128 GiB сначала выключайте A:
-лимиты A + B с offload складываются в 128 GiB без запаса системе.
+Дождитесь загрузки весов и проверьте ответ API по [основному руководству](../README.md).
+Старый Ready Pod не подтверждает применение нового commit.
 
-## 5. Изменение профиля и откат
+## 7. Менять профиль B без смены Service
 
-Настройки движка находятся в `vllm` файла values.
-Чарт собирает ConfigMap и checksum из одних и тех же данных.
-При изменении конфигурации Recreate останавливает прежний Pod перед запуском нового.
-
-Один параметр:
-
-```bash
-yq -i '.vllm.max-model-len = 131072' "$DEMO_DIR/values/gemma-b.yaml"
-```
-
-Переход на контрольный профиль 128K с KV в RAM, включая бюджеты памяти
-(в основном `gemma-b.yaml` offload уже включён):
+Итерации B используют тот же `gemma-b.yaml`, Application и Service.
+Для переключения замените **профиль целиком**, а не накладывайте один вариант на другой.
+Например, отдельный опыт с контекстом 128K и CPU KV:
 
 ```bash
 cp "$DEMO_DIR/values/gemma-b-ram.yaml" "$DEMO_DIR/values/gemma-b.yaml"
-yq -i '.replicaCount = 1' "$DEMO_DIR/values/gemma-b.yaml"
-helm template hf-gemma-b "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
-  -f "$DEMO_DIR/values/gemma-b.yaml" -f "$DEMO_DIR/site/gemma.yaml" |
-  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f - || exit 1
-git diff -- "$DEMO_DIR/values/gemma-b.yaml"
-git add -- "$DEMO_DIR/values/gemma-b.yaml"
-git diff --cached --check
-git commit -S -s -m "Enable Gemma B CPU KV cache"
-git push
 ```
 
-Синхронизируйте новый коммит. Application, Deployment и Service B остаются прежними.
-Перед опытом с RAM на VM 128 GiB остановите A.
-Для assistant отдельно подготовьте site-values с обоими PVC/mount.
-Его профиль сохраняет CPU KV первой итерации; [переключение site-файла](../labs/03-speculation.md).
+Затем в редакторе установите `replicaCount: 1` в `gemma-b.yaml`, проверьте бюджет
+RAM и выключите A через её values.
 
-При изменении спецификации DRA чарт сам меняет имя ResourceClaimTemplate и ссылку Pod.
-Старая активная заявка не изменяется и не удаляется вручную. При prune=false старый
-шаблон может остаться: удаляйте только подтверждённо неиспользуемый шаблон отдельным
-согласованным действием, не включайте общий prune.
+> [!IMPORTANT]
+> На ноде с 128 GiB сначала синхронизируйте остановку A и дождитесь удаления Pod.
+> Только затем включайте B. Смена значений в Git сама по себе память не освобождает.
 
-Откат:
+Для второй итерации с assistant дополнительно смените второй `valueFiles`
+у Application B на `../../site/gemma-assistant.yaml`.
+Подробные изменения движка — в [лабораторной](../labs/03-speculation.md).
+
+После каждой правки повторяйте: **lint → server dry-run → diff → commit/push →
+sync конкретного commit → Ready и запрос API**.
+Чарт сам обновляет ConfigMap, checksum и перезапускает Pod стратегией `Recreate`.
+
+При изменении DRA чарт создаёт новое имя ResourceClaimTemplate. Не удаляйте
+активные заявки вручную. Неиспользуемый старый шаблон при `prune: false` может
+остаться; его удаление — отдельное действие после проверки ссылок.
+
+## 8. Откатить изменение
 
 ```bash
 git log --oneline -5 -- "$DEMO_DIR"
@@ -182,50 +207,60 @@ git revert --no-edit YOUR_PROFILE_COMMIT
 git push
 ```
 
-Синхронизируйте получившуюся ревизию. Helm rollback здесь не используется:
-источник состояния — Git и Argo CD.
+Синхронизируйте новый commit по шагу 5. Источник состояния — Git;
+`helm rollback` здесь не используется. Не удаляйте PVC и модели при откате.
 
-## 6. Секреты и публичная копия
+## 9. Подготовить Application для AI Inference
 
-В GitHub входят `charts/`, `values/`, обезличенные `argocd/`, документация, схемы и
-обезличенные измерения. В GitLab — привязки стенда и те же профили.
-
-Ключи Bifrost, пароли, cookies, kubeconfig, SSH-ключи, токены Hugging Face
-не хранятся ни в одном из этих каталогов. Используйте принятый на площадке
-External Secrets / SOPS / Sealed Secrets, либо создайте Secret из защищённого
-локального файла. Base64 в обычном Secret YAML **не является шифрованием**.
-Не выгружайте `kubectl get secret -o yaml` в репозиторий или результаты замеров.
-
-Для адаптера доступа используйте отдельный Secret с четырьмя полями.
-Выгрузите значения из менеджера секретов в защищённый каталог вне репозитория.
-Management-ключ выпускается в Bifrost, ключ служебной учётки — в Open WebUI;
-транспортный и JWT-секреты генерируются отдельно. Личные VK затем создаёт адаптер.
+Заказами платформы управляет отдельный `hardfest-platform`. Он читает обычные
+YAML из `platform/`, не рендерит runtime-чарт и не владеет его Deployment.
+Для этого используется [directory-режим Argo CD](https://argo-cd.readthedocs.io/en/stable/user-guide/directory/).
 
 ```bash
-export WEBUI_CONTEXT=chat-cluster
-export WEBUI_NAMESPACE=chat
-export SECRET_DIR=/secure/path/webui-access
-for FIELD in WEBUI_ADMIN_API_KEY BIFROST_MANAGEMENT_KEY WEBUI_TRANSPORT_KEY FORWARD_USER_INFO_HEADER_JWT_SECRET; do
-  test -s "$SECRET_DIR/$FIELD" || exit 1
-  chmod 600 "$SECRET_DIR/$FIELD"
-done
-set -o pipefail
-kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" \
-  create secret generic webui-access \
-  --from-file=WEBUI_ADMIN_API_KEY="$SECRET_DIR/WEBUI_ADMIN_API_KEY" \
-  --from-file=BIFROST_MANAGEMENT_KEY="$SECRET_DIR/BIFROST_MANAGEMENT_KEY" \
-  --from-file=WEBUI_TRANSPORT_KEY="$SECRET_DIR/WEBUI_TRANSPORT_KEY" \
-  --from-file=FORWARD_USER_INFO_HEADER_JWT_SECRET="$SECRET_DIR/FORWARD_USER_INFO_HEADER_JWT_SECRET" \
-  --dry-run=client -o yaml |
-kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" apply --server-side -f -
+export PLATFORM_APP=hardfest-platform
+mkdir -p "$DEMO_DIR/platform"
+touch "$DEMO_DIR/platform/.gitkeep"
+cp ../hardfest-gpu-workshop/argocd/platform.yaml "$DEMO_DIR/argo-app/platform.yaml"
 ```
 
-Ключи не попадают в аргументы процесса или YAML-файл в Git.
-Не выполняйте блок с `set -x`, не добавляйте `tee` и не показывайте содержимое файлов.
-Подключение WebUI и значения полей описаны в [интеграции](../integrations/webui-access/README.md).
-Если Secret управляется контроллером секретов, настраивайте его через этот контроллер,
-а не создавайте второго владельца командой выше.
+В `$DEMO_DIR/argo-app/platform.yaml` замените те же `repoURL`, ветку, проект
+и destination, что у ручных Application. `source.path` должен указывать на
+`$DEMO_DIR/platform`; вместо переменной в YAML впишите полный путь в репозитории.
+Пока каталог содержит только `.gitkeep`: заказов и GPU-нагрузки ещё нет.
 
-При переносе проверяйте конкретный diff; не выполняйте `git add .` в большой рабочей
-репе. Для общедоступного репозитория предусмотрена отдельная проверка публичных файлов
-в CI. Скриншоты также проверьте: адресная строка может содержать токен.
+```bash
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply --dry-run=server \
+  -f "$DEMO_DIR/argo-app/platform.yaml"
+git add -- "$DEMO_DIR/argo-app/platform.yaml" "$DEMO_DIR/platform/.gitkeep"
+git diff --cached --check
+git diff --cached
+git commit -S -s -m "Prepare AI Inference GitOps application"
+git push
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply \
+  -f "$DEMO_DIR/argo-app/platform.yaml"
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get application "$PLATFORM_APP"
+```
+
+Если Application принадлежит родительскому GitOps-приложению, вместо последнего
+`apply` доставьте его через родителя. Autosync и общий prune не включайте.
+
+Файл `platform/gemma.yaml` появится в [лабораторной Gemma](../labs/04-deckhouse.md),
+`platform/qwen.yaml` — в [лабораторной Qwen](../labs/06-tp2.md). Там приведены
+проверка заказа, commit и sync нужной ревизии. В `platform/` не помещайте
+дочерние StatefulSet/Deployment: ими управляет контроллер AI Inference.
+
+## Секреты и публичные файлы
+
+| Куда | Что хранить |
+| --- | --- |
+| GitHub | Чарты, профили, шаблоны Application, руководство, схемы, обезличенные измерения |
+| Частный GitLab | Копию исходников и параметры площадки в `site/` |
+| Менеджер секретов | Пароли, токены, kubeconfig, ключи SSH, Bifrost и Hugging Face |
+
+Секреты доставляйте принятым на площадке способом: External Secrets, SOPS или
+Sealed Secrets. Base64 в обычном Secret YAML не является шифрованием.
+Не сохраняйте `kubectl get secret -o yaml` в Git, замерах или терминальном логе.
+Поля и создание Secret адаптера описаны в [интеграции WebUI](../integrations/webui-access/README.md).
+
+Проверяйте также скриншоты: адресная строка и открытые настройки могут содержать
+токены. Не переносите каталог площадки в публичную репу целиком.

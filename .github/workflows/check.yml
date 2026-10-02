@@ -19,6 +19,10 @@ jobs:
           for profile in values/*.yaml; do
             helm lint charts/vllm-runtime --strict -f "$profile"
           done
+      - name: Lint model catalog
+        run: |
+          helm lint charts/model-catalog --strict
+          helm lint charts/model-catalog --strict -f catalog/models.yaml
       - name: Validate rendered resources and automatic checksums
         run: python3 scripts/check_manifests.py
       - name: Verify committed illustrations match their source

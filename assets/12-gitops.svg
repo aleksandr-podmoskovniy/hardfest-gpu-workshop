@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
-<title id="title">Helm в Git, доставка через Argo CD</title><desc id="desc">Один чарт, отдельные профили и привязки площадки. Без прямого изменения Deployment.</desc>
+<title id="title">Helm в Git, доставка через Argo CD</title><desc id="desc">Редактируем values, отправляем коммит и применяем его через Argo CD.</desc>
 <defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
@@ -8,51 +8,53 @@
 <tspan x="70" dy="0">Helm в Git, доставка через Argo CD</tspan>
 </text>
 <text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">Один чарт, отдельные профили и привязки площадки. Без прямого изменения Deployment.</tspan>
+<tspan x="48" dy="0">Редактируем values, отправляем коммит и применяем его через Argo CD.</tspan>
 </text>
 <path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="48" y="160" width="330" height="158" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="72" y="202" font-size="25" fill="#536278" text-anchor="start" font-weight="700" data-max-width="282">
-<tspan x="72" dy="0">GitHub</tspan>
+<rect x="48" y="160" width="528" height="168" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="202" font-size="25" fill="#536278" text-anchor="start" font-weight="700" data-max-width="480">
+<tspan x="72" dy="0">GitHub / исходники</tspan>
 </text>
-<text x="72" y="242" font-size="22" fill="#17243b" text-anchor="start" data-max-width="282">
-<tspan x="72" dy="0">Чарт и примеры</tspan>
+<text x="72" y="242" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
+<tspan x="72" dy="0">Helm-чарты</tspan>
 <tspan x="72" dy="30.799999999999997">Профили экспериментов</tspan>
-<tspan x="72" dy="30.799999999999997">Без секретов</tspan>
+<tspan x="72" dy="30.799999999999997">Примеры настройки</tspan>
 </text>
-<rect x="446" y="160" width="706" height="158" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="470" y="202" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="658">
-<tspan x="470" dy="0">GitLab / k8s-config</tspan>
+<rect x="624" y="160" width="528" height="168" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="648" y="202" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="480">
+<tspan x="648" dy="0">GitLab / k8s-config</tspan>
 </text>
-<text x="470" y="242" font-size="22" fill="#17243b" text-anchor="start" data-max-width="658">
-<tspan x="470" dy="0">Чарт + values + site-values</tspan>
-<tspan x="470" dy="30.799999999999997">Проверка diff → подписанный commit → push</tspan>
-<tspan x="470" dy="30.799999999999997">Application указывает на этот репозиторий</tspan>
+<text x="648" y="242" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
+<tspan x="648" dy="0">Чарт + values + настройки площадки</tspan>
+<tspan x="648" dy="30.799999999999997">Проверка diff → commit → push</tspan>
+<tspan x="648" dy="30.799999999999997">Источник для Argo CD</tspan>
 </text>
-<rect x="48" y="411" width="504" height="163" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="72" y="453" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="456">
-<tspan x="72" dy="0">Управляющий кластер</tspan>
+<rect x="48" y="424" width="528" height="168" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="466" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="480">
+<tspan x="72" dy="0">Argo CD / управляющий кластер</tspan>
 </text>
-<text x="72" y="493" font-size="22" fill="#17243b" text-anchor="start" data-max-width="456">
-<tspan x="72" dy="0">Argo CD</tspan>
-<tspan x="72" dy="30.799999999999997">Helm render → sync выбранного SHA</tspan>
+<text x="72" y="506" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
+<tspan x="72" dy="0">Читает выбранный коммит</tspan>
+<tspan x="72" dy="30.799999999999997">Рендерит Helm-чарт</tspan>
+<tspan x="72" dy="30.799999999999997">Применяет манифесты</tspan>
 </text>
-<rect x="648" y="411" width="504" height="163" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="672" y="453" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="456">
-<tspan x="672" dy="0">GPU-кластер</tspan>
+<rect x="624" y="424" width="528" height="168" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="648" y="466" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="480">
+<tspan x="648" dy="0">GPU-кластер</tspan>
 </text>
-<text x="672" y="493" font-size="22" fill="#17243b" text-anchor="start" data-max-width="456">
-<tspan x="672" dy="0">ConfigMap, Deployment, Service</tspan>
-<tspan x="672" dy="30.799999999999997">ResourceClaimTemplate, NetworkPolicy</tspan>
+<text x="648" y="506" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
+<tspan x="648" dy="0">ConfigMap с параметрами vLLM</tspan>
+<tspan x="648" dy="30.799999999999997">Deployment + DRA-заявка</tspan>
+<tspan x="648" dy="30.799999999999997">Service + NetworkPolicy</tspan>
 </text>
-<path d="M384 239.0 L440 239.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
-<path d="M799.0 324 L799.0 357.0 Q799 365 791.0 365.0 L308.0 365.0 Q300 365 300.0 373.0 L300.0 405" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
-<path d="M558 492.5 L642 492.5" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
-<text x="48" y="645" font-size="27" fill="#17243b" text-anchor="start" font-weight="700">
-<tspan x="48" dy="0">Изменение values → новый checksum Pod → перезапуск Recreate</tspan>
+<path d="M582 244.0 L618 244.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M888.0 334 L888.0 368.0 Q888 376 880.0 376.0 L320.0 376.0 Q312 376 312.0 384.0 L312.0 418" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M582 508.0 L618 508.0" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
+<text x="48" y="651" font-size="28" fill="#17243b" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">Новые параметры vLLM → новый Pod → проверка готовности</tspan>
 </text>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="48" y="731" font-size="18" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">Примеры выключены: replicaCount = 0, autosync отсутствует. Секреты передаются отдельно от Git.</tspan>
+<text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">В примерах replicaCount: 0, autosync выключен. Секреты хранятся вне Git.</tspan>
 </text>
 </svg>

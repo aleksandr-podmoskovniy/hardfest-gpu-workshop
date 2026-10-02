@@ -1,7 +1,5 @@
-import json
 import pathlib
 import re
-import subprocess
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -19,21 +17,24 @@ class BenchmarkResult(unittest.TestCase):
             ({**success, "total_input_tokens": 262143}, False),
             ({}, False),
         ]
-        filters = []
-        for filename in ("README.md", "labs/01-ab.md"):
-            text = (ROOT / filename).read_text()
-            matches = re.findall(
-                r"jq -e '\n(.*?)\n' \"results/hardfest/\$SERIES/result.json\"",
-                text, re.S)
-            self.assertEqual(len(matches), 1, filename)
-            filters.append(matches[0])
-            for result, accepted in cases:
-                with self.subTest(filename=filename, result=result):
-                    run = subprocess.run(["jq", "-e", matches[0]],
-                                         input=json.dumps(result), text=True,
-                                         capture_output=True, timeout=5)
-                    self.assertEqual(run.returncode == 0, accepted, run.stderr)
-        self.assertEqual(filters[0], filters[1])
+        text = (ROOT / "labs/01-ab.md").read_text()
+        # The reader checks an explicit field/value table, not a hidden parser.
+        # Tie those requirements to the actual command's workload dimensions.
+        requirements = {key: int(value) for key, value in re.findall(
+            r"^\| `(failed|completed|total_input_tokens|total_output_tokens)` \| `(\d+)` \|$",
+            text, re.M)}
+        self.assertEqual(requirements, success)
+        prompts = int(re.search(r"--num-prompts (\d+)", text)[1])
+        input_tokens = int(re.search(r"--random-input-len (\d+)", text)[1])
+        output_tokens = int(re.search(r"--random-output-len (\d+)", text)[1])
+        self.assertEqual(requirements["completed"], prompts)
+        self.assertEqual(requirements["total_input_tokens"], prompts * input_tokens)
+        self.assertEqual(requirements["total_output_tokens"], prompts * output_tokens)
+        for result, accepted in cases:
+            with self.subTest(result=result):
+                self.assertEqual(all(result.get(key) == value
+                                     for key, value in requirements.items()), accepted)
+        self.assertIn("labs/01-ab.md", (ROOT / "README.md").read_text())
 
 
 if __name__ == "__main__":

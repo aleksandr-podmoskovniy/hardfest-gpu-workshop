@@ -61,12 +61,15 @@ class Guide(unittest.TestCase):
     def test_expanded_context_is_separate_from_ab(self):
         readme = (ROOT / "README.md").read_text()
         ram = readme.split('id="ram"', 1)[1].split('id="speculation"', 1)[0]
-        self.assertIn("max-model-len: 131072", ram)
+        second = readme.split('id="speculation"', 1)[1].split('id="platform"', 1)[0]
+        self.assertNotIn("max-model-len: 131072", ram)
+        self.assertIn("Отдельно проверить расширение окна до 128K", second)
+        self.assertIn("max-model-len: 131072", second)
+        self.assertIn("верните `max-model-len: 65536`", second)
         self.assertIn("cpu_bytes_to_use: 34359738368", ram)
         self.assertIn("остановите A через Git", ram)
-        self.assertIn("values/gemma-b-128k.yaml", ram)
-        self.assertIn("values/gemma-b-ram.yaml", ram)
-        self.assertIn("того же Application B", ram)
+        self.assertIn("values/gemma-b-128k.yaml", second)
+        self.assertIn("values/gemma-b-ram.yaml", second)
 
     def test_primary_workshop_uses_gitops_not_private_python_wrappers(self):
         readme = (ROOT / "README.md").read_text()
@@ -77,8 +80,25 @@ class Guide(unittest.TestCase):
         self.assertNotIn("kustomize", readme.lower())
         self.assertNotIn("```text", readme)
         gitops = (ROOT / "docs/GITOPS.md").read_text()
-        for term in ("ARGO_CONTEXT", "GPU_CONTEXT", "operation:{sync", "revision:$rev", "prune:false"):
+        for term in ("ARGO_CONTEXT", "GPU_CONTEXT", '--type merge --patch',
+                     r'\"operation\"', r'\"revision\":\"$REVISION\"', r'\"prune\":false'):
             self.assertIn(term, gitops)
+
+    def test_participant_commands_need_no_json_yaml_cli_or_python_wrapper(self):
+        paths = [ROOT / "README.md", ROOT / "docs/GITOPS.md", ROOT / "docs/SETUP.md",
+                 ROOT / "catalog/README.md"] + list((ROOT / "labs").glob("*.md"))
+        for path in paths:
+            shell = "\n".join(re.findall(r"```(?:bash|sh)\n(.*?)```", path.read_text(), re.S))
+            with self.subTest(path=path.relative_to(ROOT)):
+                self.assertNotRegex(shell, r"(?m)(?:^|[|;])\s*(?:jq|yq|python3?)(?:\s|$)")
+
+    def test_labs_expose_preconditions_numbered_steps_and_completion_checks(self):
+        for path in (ROOT / "labs").glob("*.md"):
+            text = path.read_text()
+            with self.subTest(path=path.name):
+                self.assertIn("## Перед началом", text)
+                self.assertIn("## Проверка", text)
+                self.assertGreaterEqual(len(re.findall(r"^## \d+\. ", text, re.M)), 3)
 
     def test_helm_profiles_are_safe_and_complete(self):
         profiles = list((ROOT / "values").glob("*.yaml"))
@@ -132,13 +152,13 @@ class Guide(unittest.TestCase):
         self.assertIn("рецепт Gemma 64K", chapter)
         for setting in ('второй итерации', '32 GiB', '2048', 'assistant', 'первой H100'):
             self.assertIn(setting, chapter)
-        for recipe in ("Gemma 64K", "Gemma 128K с KV в RAM", "Gemma с assistant", "Qwen TP2 с MTP"):
+        for recipe in ("Gemma 64K", "Gemma 128K с CPU KV", "Gemma с assistant", "Qwen TP2 с MTP"):
             self.assertIn(recipe, lab)
         for stale in ("не переключатель", "сам по себе их не гарантирует",
                       "Если рецепт не проверен", "Не подтверждение готовности"):
             self.assertNotIn(stale, chapter + lab + diagram)
         self.assertIn("Все настройки эксперимента — в рецепте", diagram)
-        self.assertIn("проверьте", lab)
+        self.assertIn("## Проверка", lab)
 
     def test_workshop_has_one_canonical_source(self):
         alias = (ROOT / "WORKSHOP.md").read_text()
@@ -161,7 +181,28 @@ class Guide(unittest.TestCase):
         lab = (ROOT / "labs/06-tp2.md").read_text()
         self.assertIn("acceleratorCount=2", lab)
         self.assertIn("MTP", lab)
-        self.assertIn("Освобождаем обе карты", lab)
+        self.assertIn("## 2. Освободить обе H100", lab)
+
+    def test_platform_preflight_precedes_releasing_working_gpus(self):
+        gemma = (ROOT / "labs/04-deckhouse.md").read_text()
+        preflight = gemma.split("## 2. Освободить GPU и RAM", 1)[0]
+        self.assertIn("до её успешного завершения", preflight.lower())
+        self.assertIn("inference-readiness", preflight)
+        qwen = (ROOT / "labs/06-tp2.md").read_text()
+        preflight = qwen.split("## 2. Освободить обе H100", 1)[0]
+        for field in ("acceleratorPolicy.maxAcceleratorCount", "scalingPolicy.minReplicas",
+                      "scalingPolicy.maxReplicas", "exposurePolicy.authentication"):
+            self.assertIn(field, preflight)
+        self.assertIn("Не меньше `2`", preflight)
+        self.assertIn("Оба `1`", preflight)
+
+    def test_context_extension_preserves_second_iteration(self):
+        lab = (ROOT / "labs/02-kv-ram.md").read_text()
+        extension = lab.split("## Отдельный опыт:", 1)[1].split("## Проверка", 1)[0]
+        for setting in ("vllm.max-model-len", "speculative-config", "prefill 2048",
+                        "site/gemma-assistant.yaml", "65536"):
+            self.assertIn(setting, extension)
+        self.assertIn("Не заменяйте весь профиль", extension)
 
     def test_chat_path_is_present_from_manual_to_platform_stages(self):
         readme = (ROOT / "README.md").read_text()

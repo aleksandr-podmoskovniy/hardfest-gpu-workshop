@@ -8,235 +8,283 @@
 
 Александр Подмосковный, Флант / Deckhouse Platform
 
-У LLM-сервиса может закончиться память задолго до того, как GPU загрузится вычислениями. На первой H100 запустим базовую Gemma, на второй последовательно настроим повторное использование KV, выгрузку в RAM, обработку длинного входа и черновую генерацию. Затем перенесём полученную конфигурацию в AI Inference на первую карту. На A30 разместим небольшие сервисы через MIG/MPS. В финале освободим обе H100 и запустим один Qwen через AI Inference — с TP2, MTP и проверкой допустимой нагрузки.
+У LLM-сервиса может закончиться память, пока GPU ещё простаивает. Разберём, куда уходят память и время, затем последовательно изменим настройки одной модели и измерим разницу.
 
-Мастер-класс рассчитан на 90 минут с [заранее подготовленным стендом](docs/SETUP.md), включая веса Gemma assistant и рецепты обеих моделей. Полная серия до 50 одновременных запросов — отдельное измерение после короткого прогона.
+Начнём с двух вариантов Gemma на H100. Настроим кэш, работу с длинным входом и черновую генерацию, перенесём конфигурацию в AI Inference. На A30 разместим небольшие сервисы через MIG и MPS. В конце отдадим обе H100 одной Qwen и проверим, сколько одновременных запросов она выдерживает.
+
+**90 минут на подготовленном стенде.** Загрузка весов и настройка инфраструктуры выполняются заранее; полная нагрузочная серия до 50 запросов — после короткого прогона.
 
 <a id="contents"></a>
 
 ## Содержание
 
-1. [Стенд и подключение](#topology)
-2. [Подготовка окружения](#setup)
-3. [Где теряется время](#latency)
-4. [Сколько памяти нужно Gemma](#memory)
-5. [Исходный запуск Gemma A](#ab)
-6. [Итерация 1: prefix cache и KV-offload](#ram)
-7. [Итерация 2: chunked prefill и speculative decoding](#speculation)
-8. [Gemma через AI Inference на первой GPU](#platform)
-9. [Динамический MIG и MPS](#placement)
-10. [Qwen через AI Inference на двух H100](#tp2)
-11. [Остановка](#cleanup)
-12. [Результаты](#results)
+| Этап | Что получим |
+| --- | --- |
+| [Стенд и подключение](#topology) | Чат, шлюз и GPU-сервисы в общей схеме |
+| [Подготовка](#setup) | Проверенные доступы, модели и GitOps |
+| [1. Где теряется время](#latency) | Очередь, prefill, decode и метрики |
+| [2. Сколько памяти нужно Gemma](#memory) | Расчёт весов, KV и рабочих буферов |
+| [3. Gemma A](#ab) | Исходный результат при окне 64K |
+| [4. Prefix cache и KV-offload](#ram) | Первая итерация B: повторное использование вычислений |
+| [5. Prefill и speculative decoding](#speculation) | Вторая итерация B: обработка входа и генерация |
+| [6. Gemma через AI Inference](#platform) | Та же конфигурация, созданная сервисом платформы |
+| [7. MIG и MPS](#placement) | Эмбеддер на A30 и освобождение ресурсов |
+| [8. Qwen через AI Inference](#tp2) | Две H100, TP2, MTP и проверка конкурентности |
+| [Остановка](#cleanup) и [результаты](#results) | Сохранённые измерения и освобождённые GPU |
 
 <a id="topology"></a>
 
 ## Стенд и подключение
 
-![Два кластера: Open WebUI обращается к ai-mcp-gateway, который направляет запросы к двум Gemma и сервисам поиска](assets/01-topology.svg)
+![Open WebUI в одном кластере, ai-mcp-gateway и GPU-сервисы в другом; отдельный административный доступ к MCP](assets/01-topology.svg)
 
-У Gemma A и B **одинаковые веса Gemma 4 31B**: отличаются параметры движка, а не модель или квантование весов. Сервисы поиска на A30 независимы от LLM. При переключении на платформенную Gemma и Qwen сохраняются Open WebUI, ai-mcp-gateway, документы и поисковый индекс. Шлюз использует Bifrost; далее его API и настройки называются по имени реализации.
+| Компонент | Роль в опыте |
+| --- | --- |
+| Open WebUI | Один чат, базы знаний и голосовой ввод |
+| ai-mcp-gateway | Маршруты моделей, личные ключи, квоты и учёт; реализация — Bifrost |
+| Первая H100 | Gemma A, затем сервис через AI Inference |
+| Вторая H100 | Gemma B с последовательными оптимизациями |
+| Обе H100 в финале | Один Qwen с tensor parallelism |
+| A30 | Небольшие сервисы в динамических MIG-разделах, MPS поверх MIG |
+| ai-models | Каталог и закреплённые артефакты моделей |
 
-Образ vLLM, ревизии и размеры моделей закреплены в [models.lock.json](models.lock.json). Здесь 64K — 65 536 токенов, 128K — 131 072, GiB — двоичные гигабайты.
+A и B используют **одинаковые веса Gemma 4 31B**. Меняются настройки движка, а не модель. При переходе к Qwen сохраняются чат, пользователи, документы и индекс.
 
-[Каталог ai-models](catalog/README.md) хранит закреплённые веса Gemma, assistant и Qwen для ручного vLLM и сервисов AI Inference. Импорт задаётся Helm-чартом; готовность модели и готовность инференса проверяются отдельно.
+Версии образа, моделей и размеры файлов закреплены в [models.lock.json](models.lock.json). Здесь 64K — 65 536 токенов, 128K — 131 072; GiB — двоичные гигабайты.
 
 <a id="chat"></a>
 
-По мере запуска сервисов выберите в Open WebUI **Gemma A — Base**, затем **Gemma B — Tune**. Задайте одинаковый вопрос по одному документу. Документы и индекс остаются в базе знаний при смене LLM; выключенный сервис не должен оставаться доступным маршрутом.
+В WebUI каждой реплике соответствует своё имя: **Gemma A — Base** и **Gemma B — Tune**. Они подключаются отдельным маршрутом Bifrost, без балансировки между A/B и без кэша готовых ответов шлюза.
 
-Регистрация участников — с подтверждением администратора. Им предназначены модели, базы знаний и голосовой ввод; Kubernetes MCP — отдельный доступ администратора через OIDC. Персональные Virtual Key и квоты требуют настройки: они не возникают от регистрации в WebUI. [Подключение и права доступа](docs/CHAT_AND_ACCESS.md).
+После подтверждения регистрации участник получает личный Virtual Key, модели, базы знаний и голосовой ввод. Kubernetes MCP доступен администратору через OIDC. Настройка и проверка этой цепочки — в [подключении чата](docs/CHAT_AND_ACCESS.md).
 
 <a id="setup"></a>
 
 ## Подготовка окружения
 
-Нужны Git, Helm 3+, kubectl, jq и **yq Mike Farah v4**. На ноутбуке не нужны Python, CUDA и веса моделей.
+### 1. Проверить стенд
 
-Один Helm-чарт описывает запуск vLLM, отдельные values — настройки каждого эксперимента. В GitLab лежат чарт, профили и привязки площадки; Argo CD рендерит выбранный коммит и применяет его в GPU-кластер.
+До запуска A должны быть готовы:
 
-![Публичные примеры переносятся в GitLab; Argo CD управляющего кластера применяет выбранный коммит в GPU-кластер](assets/12-gitops.svg)
+- [ ] Две H100 доступны через DRA; межкарточный обмен проверен.
+- [ ] На A30 заранее включён MIG mode. Разделы будет создавать драйвер по заявкам.
+- [ ] Загружены Gemma, её assistant и Qwen; настроены рецепты AI Inference.
+- [ ] Созданы namespace, PVC и привязки площадки.
+- [ ] Argo CD имеет доступ к GitLab и GPU-кластеру.
+- [ ] Настроены чат, личные ключи и [дашборд](docs/OBSERVABILITY.md).
 
-[Однократная подготовка GitOps](docs/GITOPS.md): готовые PVC, подстановка DeviceClass, регистрация двух Application. Драйвер, DRA и режим MIG на A30 должны работать **до** начала занятия.
+> [!IMPORTANT]
+> На узле с 128 GiB RAM опыты A и B с KV-offload выполняются последовательно.
+> Лимиты A и B — 48 и 80 GiB: вместе они не оставляют памяти системе.
+> Перед включением B остановите A и дождитесь удаления её Pod.
+> Для параллельного запуска нужен отдельный [расчёт RAM](docs/MEMORY_BUDGET.md).
 
-Дальнейшие команды выполняются из вашей репы **k8s-config**. Замените контексты и каталог своими:
+[Подготовка ноды и весов](docs/SETUP.md) и [подключение каталога ai-models](catalog/README.md) выполняются один раз.
+
+**Граница текущих примеров:** AI Inference получает модель из ai-models. Ручной чарт `vllm-runtime` пока монтирует существующий PVC; автоматическое подключение ai-models в этот чарт ещё не встроено. Перед занятием подготовьте оба пути доставки по инструкции, а не считайте статус модели проверкой ручного Pod.
+
+Платформенное повторение второй B также требует обновлённого рецепта: в проверенных исходниках Gemma пока нет assistant и CPU KV. Эта зависимость вынесена в [проверку поставки AI Inference](docs/SETUP.md#inference-readiness); до её выполнения этап 6 не готов к прогону.
+
+### 2. Задать рабочую директорию и контексты
+
+На рабочей машине нужны **Git, Helm 3+, kubectl, curl и редактор YAML**. Команды ниже предназначены для Bash и выполняются из корня вашей частной репы **k8s-config**.
+
+Замените значения своими:
 
 ```bash
 export ARGO_CONTEXT=management
 export GPU_CONTEXT=gpu-cluster
 export ARGO_NAMESPACE=argocd
 export DEMO_DIR=argo-projects/gpu-cluster/hardfest-demo
+set -o pipefail
 
 kubectl config get-contexts
-kubectl --context "$GPU_CONTEXT" get nodes
-kubectl --context "$GPU_CONTEXT" get deviceclasses
+kubectl --context "$GPU_CONTEXT" get nodes,deviceclasses
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pvc,pods,resourceclaims
 ```
 
-Для запуска нужны три части:
+`ARGO_CONTEXT` ведёт в управляющий кластер, `GPU_CONTEXT` — в кластер моделей. DeviceClass берём у GPUClass/GPUPool-контроллера.
 
-| Файл | Назначение |
+### 3. Подготовить GitOps
+
+![Helm-чарт, профиль и привязки площадки попадают в GitLab; Argo CD применяет выбранный коммит в GPU-кластер](assets/12-gitops.svg)
+
+[Инструкция GitOps](docs/GITOPS.md) создаёт такую структуру в `$DEMO_DIR`:
+
+| Путь | Что в нём меняем |
 | --- | --- |
-| [charts/vllm-runtime](charts/vllm-runtime/README.md) | Deployment, ConfigMap, DRA-заявка, Service и NetworkPolicy |
-| [values/gemma-b.yaml](values/gemma-b.yaml) | Параметры vLLM, GPU и CPU/RAM; `replicaCount` |
-| `site/gemma.yaml` в вашей GitLab-репе | Нода, DeviceClass, существующий PVC и доступ Bifrost; [пример](examples/site-gemma.yaml) |
+| `charts/vllm-runtime/` | Общий шаблон Deployment, ConfigMap, Service и DRA-заявки |
+| `values/gemma-a.yaml`, `values/gemma-b.yaml` | Параметры опыта и число реплик |
+| `site/gemma.yaml`, `site/gemma-assistant.yaml` | Нода, DeviceClass, PVC и доступ шлюза |
+| `argo-app/` | Application: репозиторий, профиль и целевой кластер |
+| `platform/` | Заказы InferenceService для этапов Gemma и Qwen |
 
-В примерах `replicaCount: 0`, autosync выключен. DeviceClass берём у GPUClass/GPUPool-контроллера, не создаём вручную. [Требования к RAM и ноде](docs/SETUP.md).
-
-До нагрузки откройте **AI Inference / Live performance** в мониторинге Console. [Манифесты дашборда и сбор метрик](docs/OBSERVABILITY.md) доставляются тем же Argo CD.
+В исходниках все реплики выключены, autosync не включён. Helm только рендерит YAML; применяет его Argo CD. Секреты в Git не добавляем.
 
 <a id="latency"></a>
 
 ## 1. Где теряется время
 
-![Временная шкала: очередь, обработка входа, первый токен и начало видимого ответа](assets/02-latency.svg)
+![Запрос проходит очередь, обработку входа и генерацию; первый токен может предшествовать первому слову ответа](assets/02-latency.svg)
 
-Документ сначала проходит **prefill** — обработку входа. Затем начинается **decode** — генерация продолжения. При нехватке памяти или слотов обработки запрос стоит в очереди.
+| Участок | Что происходит | На что смотрим |
+| --- | --- | --- |
+| Очередь | Запрос ждёт свободного места или слота обработки | Длина очереди, время ожидания |
+| Prefill | Модель обрабатывает вход и строит KV-кэш | Длина входа, повторное использование KV, TTFT |
+| Decode | Модель генерирует продолжение | Интервал между токенами, output tokens/s |
 
-TTFT — время от отправки до первого токена, не обязательно первого слова итогового ответа: перед ним может идти рассуждение. Очередь и prefill смотрим отдельно. Вычитание p95 очереди из p95 TTFT не даёт p95 prefill.
+**TTFT** — время до первого токена. У модели с рассуждениями это ещё не обязательно первое слово итогового ответа. Общая скорость сервиса тоже не равна скорости одного чата.
+
+При сравнении сохраняем длины входа и выхода, конкурентность и состояние кэша. Вычитание p95 очереди из p95 TTFT не даёт p95 prefill. [Методика измерений](docs/MEASUREMENTS.md).
 
 <a id="memory"></a>
 
 ## 2. Сколько памяти нужно Gemma
 
-KV-кэш хранит ключи и значения предыдущих токенов, чтобы attention не вычислял их заново. При GQA несколько голов запросов используют общие K/V. Память считаем по **KV-головам**, не по всем головам внимания.
+KV-кэш хранит ключи и значения предыдущих токенов, которые attention использует при генерации продолжения. При GQA несколько голов запросов делят общие K/V: считаем **KV-головы**, не все головы внимания.
 
 ![Текущий запрос Q обращается к сохранённым ключам K и значениям V; формула attention](assets/13-attention.svg)
 
-У нашей Gemma 10 слоёв полного внимания и 50 локального. Локальным слоям достаточно окна до 1024 токенов.
+У этой Gemma 10 слоёв полного внимания и 50 локального. Локальным слоям достаточно окна до 1024 токенов.
 
-![Формула KV-памяти Gemma: полное и локальное внимание, два массива K/V и размер элемента BF16 или FP8](assets/11-gemma-kv.svg)
+![Расчёт KV-памяти Gemma учитывает полные и локальные слои, два массива K/V и размер элемента](assets/11-gemma-kv.svg)
 
-Это полезные K/V одной истории. Округление блоков, рабочие буферы и способ выделения памяти движком считаются отдельно. Удвоение контекста не удваивает память весов.
+На карте размещаются три разные части:
 
-![Расчёт памяти одной истории Gemma при 64K, 128K и 256K в BF16 и FP8; замер весов 57,91 GiB](assets/03-memory.svg)
+1. **Веса** — не растут от длины запроса.
+2. **KV-кэш** — зависит от истории и числа активных запросов.
+3. **Рабочие буферы и CUDA graphs** — зависят от конфигурации движка.
 
-Расчёт **256K не означает, что такой профиль запущен**. Основное сравнение — 64K, опыт вместимости — 128K. Размер фактического KV-пула проверяем в логах после запуска:
+![Полезные K/V одной истории Gemma при 64K, 128K и 256K для BF16 и FP8; веса и резерв считаются отдельно](assets/03-memory.svg)
 
-```bash
-for SLOT in a b; do
-  kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs "deployment/hf-gemma-$SLOT" |
-    grep -E 'model loading|KV cache|GPU KV|Maximum concurrency|CUDA graph'
-done
-```
+Формула даёт полезные K/V одной истории. Фактический пул включает округление блоков и особенности выделения памяти. Его размер проверим в логах **после запуска модели**.
 
-[Выкладка и бюджет RAM](docs/MEMORY_BUDGET.md).
+Основной опыт — 64K; расширение до 128K измеряем отдельно. Расчёт 256K на рисунке не означает, что такой профиль уже запущен. [Полная выкладка и бюджет RAM](docs/MEMORY_BUDGET.md).
 
 <a id="ab"></a>
 
 ## 3. Исходный запуск Gemma A
 
-![Gemma A остаётся базовой; на B сначала включаются prefix cache и KV-offload, затем настройка prefill и assistant](assets/04-ab.svg)
+![Последовательность сравнения: исходная A, первая итерация B с кэшем и RAM, вторая с настройкой prefill и assistant](assets/04-ab.svg)
 
-A намеренно отключает prefix cache и CUDA graphs. Это **не настройки по умолчанию vLLM 0.30 и не запуск старой версии**. Минимальное чанкирование 4096 оставлено для вместимости: без него baseline не вместил окно 64K. Его бюджет будем настраивать во второй итерации. Веса в RAM не выгружаются.
+Сначала получим исходную точку: окно 64K, KV в BF16, без prefix cache и CUDA graphs.
 
-Начните только с A. B будет включена в первой итерации:
+> [!NOTE]
+> Это намеренно упрощённый профиль, **не defaults vLLM 0.30 и не старая версия**.
+> Минимальное чанкирование prefill с бюджетом 4096 токенов оставлено для вместимости:
+> полностью отключённый chunked prefill не вместил окно 64K.
+> Веса в RAM не выгружаются.
+
+### 1. Включить только A
+
+В редакторе измените верхнее поле `replicaCount`:
+
+| Файл | Значение |
+| --- | --- |
+| `$DEMO_DIR/values/gemma-a.yaml` | `replicaCount: 1` |
+| `$DEMO_DIR/values/gemma-b.yaml` | `replicaCount: 0` |
+
+Проверьте будущие объекты и отправьте изменение:
 
 ```bash
-yq -i '.replicaCount = 1' "$DEMO_DIR/values/gemma-a.yaml"
-yq -i '.replicaCount = 0' "$DEMO_DIR/values/gemma-b.yaml"
-
-set -o pipefail
 for SLOT in a b; do
   helm template "hf-gemma-$SLOT" "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
     -f "$DEMO_DIR/values/gemma-$SLOT.yaml" -f "$DEMO_DIR/site/gemma.yaml" |
     kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f - || exit 1
 done
-git diff -- "$DEMO_DIR"
+git diff -- "$DEMO_DIR/values/gemma-a.yaml" "$DEMO_DIR/values/gemma-b.yaml"
 git add -- "$DEMO_DIR/values/gemma-a.yaml" "$DEMO_DIR/values/gemma-b.yaml"
 git diff --cached --check
 git commit -S -s -m "Start Gemma A baseline at 64K"
 git push
-```
 
-Примените **отправленный коммит**. Этот блок используется и после следующих изменений values:
-
-```bash
 REVISION=$(git rev-parse HEAD)
 for APP in hardfest-gemma-a hardfest-gemma-b; do
   kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application "$APP" \
-    --type merge -p "$(jq -nc --arg rev "$REVISION" '{operation:{sync:{revision:$rev,prune:false}}}')"
+    --type merge --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
 done
 ```
 
-Дождитесь завершения операции в Argo и совпадения её revision с `$REVISION`. Прежний Ready Pod не подтверждает новый sync.
+### 2. Проверить применённую ревизию и запуск
 
 ```bash
-kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get applications hardfest-gemma-a hardfest-gemma-b
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo rollout status deployment/hf-gemma-a --timeout=15m
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get applications \
+  hardfest-gemma-a hardfest-gemma-b \
+  -o custom-columns='NAME:.metadata.name,OPERATION:.status.operationState.phase,REVISION:.status.sync.revision,HEALTH:.status.health.status'
+```
+
+Дождитесь `Succeeded` и совпадения ревизии с `$REVISION`. Затем:
+
+```bash
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo rollout status deployment/hf-gemma-a --timeout=40m
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-a --tail=200
 ```
 
-### Нагрузка на длинном входе
+В логах найдите размер KV-пула, число доступных токенов и завершение запуска HTTP API. Старый Ready Pod не подтверждает применение нового коммита.
 
-Каждый запрос получает 32 768 входных и 2048 выходных токенов. Сначала измерьте A. В следующих итерациях повторяйте блок с `SLOT=b` и новым `SERIES`, не перезаписывая исходный результат:
+### 3. Проверить ответ и сохранить исходный замер
+
+В отдельном терминале с теми же переменными:
 
 ```bash
-export SLOT=a SERIES=a-base
-mkdir -p "results/hardfest/$SERIES"
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec "deployment/hf-gemma-$SLOT" -- \
-    vllm bench serve \
-      --backend vllm \
-      --base-url "http://hf-gemma-$SLOT.hardfest-demo.svc.cluster.local:8000" \
-      --endpoint /v1/completions \
-      --model gemma-4-31b --tokenizer /models/gemma \
-      --dataset-name random --seed 42 \
-      --random-input-len 32768 --random-output-len 2048 --random-range-ratio 0 \
-      --num-prompts 8 --max-concurrency 4 --ignore-eos --temperature 0 \
-      --percentile-metrics ttft,tpot,itl --metric-percentiles 95,99 \
-      --save-result --result-dir /runtime/bench --result-filename "$SERIES.json"
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec "deployment/hf-gemma-$SLOT" -- \
-  cat "/runtime/bench/$SERIES.json" > "results/hardfest/$SERIES/result.json"
-jq -e '
-  .failed == 0 and .completed == 8
-  and .total_input_tokens == (8 * 32768)
-  and .total_output_tokens == (8 * 2048)
-' "results/hardfest/$SERIES/result.json"
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo port-forward service/hf-gemma-a 8000:8000
 ```
 
-`vllm bench` может завершиться с кодом 0 при ошибках запросов или оборванной генерации.
-Проверка JSON выше должна вернуть `true`; иначе серия не годится для сравнения скорости.
-Сохраните отчёт и проверьте логи, перезапуски Pod и ECC до следующей нагрузки.
+Отправьте запрос:
 
-Это синтетическая пробная серия, не проверка качества и не устойчивый p95. CLI делает предварительный запрос: серию нельзя целиком называть холодной. Здесь клиент расходует CPU/RAM проверяемого Pod; для итогового сравнения вынесите его на одну отдельную CPU-ноду и повторите тест не менее трёх раз в одинаковых условиях. [Методика](labs/01-ab.md).
+```bash
+curl --fail-with-body -N http://127.0.0.1:8000/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"gemma-4-31b","messages":[{"role":"user","content":"Объясни, зачем модели нужен KV-кэш."}],"max_tokens":1024,"stream":true}'
+```
 
-В WebUI два имени должны вести к **разным** Service, без балансировки A/B и внешнего кэша ответов Bifrost. На графиках сравнивайте сервисы: `model_name` у них одинаковый.
+Теперь выполните [нагрузочную серию A/B](labs/01-ab.md): 8 запросов, вход 32 768, выход 2048 токенов, конкурентность 4. Сохраните её как `a-base`.
+
+**Перед переходом к B:** A отвечает через API и WebUI, графики показывают её нагрузку, все 8 запросов завершились полностью, файл результата сохранён вне Pod. Код завершения benchmark сам по себе не доказывает успех запросов.
 
 <a id="ram"></a>
 
 ## 4. Итерация 1: prefix cache и KV-offload
 
-Первый шаг на B — не вычислять заново общий префикс и сохранять его KV в оперативной памяти после вытеснения с GPU. Окно пока **64K**, как у A. В [полном профиле первой итерации](values/gemma-b.yaml) включены prefix cache, FP8 KV и 32 GiB CPU KV; CUDA graphs и assistant пока выключены. FP8 использует Triton attention: это пакет изменений памяти, а не измерение одного флага.
+На B оставим окно **64K**, но перестанем заново обрабатывать одинаковое начало запросов. Кэш GPU будет дополняться хранилищем KV в RAM.
 
-![Повторно используются одинаковые токены с начала запроса; изменённое начало разрывает общий префикс](assets/14-prefix.svg)
+![Повторное использование одинаковых токенов с начала запроса; изменение начала уменьшает общий префикс](assets/14-prefix.svg)
 
-Префиксный кэш полезен для повторяющихся входов. Сначала повторите документ, пока его KV ещё на GPU, затем проверьте возврат из RAM после вытеснения.
+| Изменение в [профиле B](values/gemma-b.yaml) | Для чего |
+| --- | --- |
+| Prefix cache | Повторно использовать вычисления общего префикса |
+| FP8 KV и Triton attention | Уменьшить объём KV на GPU |
+| CPU KV-offload, 32 GiB | Сохранить вытесненные блоки в оперативной памяти |
+| Eager, prefill 4096, без assistant | Пока не менять вторую группу оптимизаций |
 
-У A limit 48 GiB, у B с offload — 80 GiB. **На узле 128 GiB сначала остановите A через Git**, сохранив результаты; одновременный запуск не оставляет памяти системе. Для совместного запуска проверьте больший бюджет узла по [расчёту](docs/MEMORY_BUDGET.md).
+Это пакет изменений памяти, а не измерение эффекта одного флага. Уникальные входы могут почти не выиграть от prefix cache.
+
+### 1. Освободить RAM перед включением B
+
+> [!IMPORTANT]
+> На узле с 128 GiB сначала **остановите A через Git**.
+> В `$DEMO_DIR/values/gemma-a.yaml` установите `replicaCount: 0`.
+> Не запускайте B до завершения sync и удаления Pod A.
 
 ```bash
-yq -i '.replicaCount = 0' "$DEMO_DIR/values/gemma-a.yaml"
 git add -- "$DEMO_DIR/values/gemma-a.yaml"
+git diff --cached
 git commit -S -s -m "Release baseline RAM before KV offload"
 git push
+REVISION=$(git rev-parse HEAD)
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application hardfest-gemma-a \
+  --type merge --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims
 ```
 
-Выполните блок sync выше, дождитесь завершения Pod A. Если на узле достаточно памяти для обеих реплик, пропустите эту остановку. Включите B:
+Для параллельного опыта на более ёмкой ноде сначала проверьте суммарный бюджет; две свободные GPU не гарантируют свободную RAM.
 
-```bash
-yq -i '.replicaCount = 1' "$DEMO_DIR/values/gemma-b.yaml"
-helm template hf-gemma-b "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
-  -f "$DEMO_DIR/values/gemma-b.yaml" -f "$DEMO_DIR/site/gemma.yaml" |
-  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f - || exit 1
-git add -- "$DEMO_DIR/values/gemma-b.yaml"
-git commit -S -s -m "Enable Gemma prefix cache and KV offload"
-git push
-```
+### 2. Включить B с первым профилем
 
-Синхронизируйте новый коммит того же Application B и дождитесь Ready. Контекст 64K и прежние длины запросов сохраняются; повторите нагрузку с `SLOT=b`, `SERIES=b-cache`. Для offload в `vllm` задано:
+В `$DEMO_DIR/values/gemma-b.yaml` измените только `replicaCount: 1`. В профиле уже задан CPU KV:
 
 ```yaml
-enable-prefix-caching: true
 kv-transfer-config:
   kv_connector: OffloadingConnector
   kv_role: kv_both
@@ -244,259 +292,297 @@ kv-transfer-config:
     cpu_bytes_to_use: 34359738368
 ```
 
-Профиль задаёт RAM request 56 GiB, limit 80 GiB, `/dev/shm` 40 GiB. 32 GiB offload уже входят в лимиты — повторно не прибавляются. CPU-кэш должен быть больше фактического GPU KV-пула, иначе он может хранить только ещё не вытесненные блоки. Сверьте размер пула в логах.
-
-![Обработать документ, вытеснить его KV из GPU другими документами и загрузить сохранённые блоки из RAM](assets/05-kv-ram.svg)
-
-Повторите документ после других длинных документов. Если первый ещё в GPU, быстрый повтор доказывает только prefix cache. Для offload нужны **чтение из RAM и отсутствие локальных GPU hits**. [Запросы и счётчики](labs/02-kv-ram.md).
-
-### Расширение B до 128K
-
-После сравнения при 64K увеличьте окно B — это отдельный опыт вместимости, не новая строка в таблице ускорения A/B:
+Этот фрагмент находится внутри `vllm`, не на верхнем уровне values.
 
 ```bash
-yq -i '.vllm.max-model-len = 131072' "$DEMO_DIR/values/gemma-b.yaml"
+helm template hf-gemma-b "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
+  -f "$DEMO_DIR/values/gemma-b.yaml" -f "$DEMO_DIR/site/gemma.yaml" |
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f - || exit 1
+git diff -- "$DEMO_DIR/values/gemma-b.yaml"
+git add -- "$DEMO_DIR/values/gemma-b.yaml"
+git commit -S -s -m "Enable Gemma B prefix cache and CPU KV"
+git push
+REVISION=$(git rev-parse HEAD)
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application hardfest-gemma-b \
+  --type merge --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
 ```
 
-Выполните проверку, commit/push/sync. Prefix cache и offload остаются включены. Сохранённый опыт ниже использовал [B 128K без RAM](values/gemma-b-128k.yaml) и [B 128K с RAM](values/gemma-b-ram.yaml); эти контрольные профили также включали CUDA graphs. Не приписывайте их цифры новой последовательности флагов.
+После `Succeeded` для этой ревизии проверьте rollout, логи и ответ `hf-gemma-b`. Повторите ту же нагрузочную серию под именем `b-cache`.
+
+### 3. Отличить попадание в GPU-кэш от возврата из RAM
+
+![Активный KV находится в HBM, вытесненные блоки сохраняются в RAM и возвращаются перед продолжением обработки](assets/05-kv-ram.svg)
+
+Выполните [опыт с повторным запросом и вытеснением](labs/02-kv-ram.md):
+
+1. Отправьте длинный документ первый раз.
+2. Повторите его, пока KV находится на GPU.
+3. Вытесните блоки другой нагрузкой.
+4. Повторите документ и проверьте счётчики загрузки KV из RAM.
+
+**Доказательство offload:** вырос объём возвращённых CPU-блоков. Один быстрый ответ этого не доказывает — он мог использовать GPU-кэш. Сравнивайте TTFT вместе со счётчиками и расходом RAM.
+
+<a id="speculation"></a>
+<a id="compute"></a>
+
+## 5. Итерация 2: prefill и speculative decoding
+
+Теперь изменим обработку длинного входа и генерацию. Окно остаётся **64K**.
+
+![Планировщик чередует части длинного prefill с decode уже запущенных запросов; размер чанка ограничивает работу шага](assets/06-scheduler.svg)
+
+`max-num-batched-tokens` — бюджет одного шага планировщика, не длина контекста. Переход с 4096 на 2048 уменьшает порцию prefill, но эффект на скорость проверяется под нагрузкой.
+
+![Assistant предлагает токены, основная Gemma проверяет их; выигрыш зависит от доли принятых продолжений](assets/07-speculation.svg)
+
+Assistant предлагает несколько следующих токенов, основная модель проверяет их. Для этого опыта используем [Gemma assistant](https://huggingface.co/google/gemma-4-31B-it-assistant) с `method: mtp` и одним speculative token. Измеряем долю принятия и скорость, а не только наличие флага.
+
+### 1. Заменить полный профиль B
+
+[Профиль второй итерации](values/gemma-b-spec.yaml) включает:
+
+| Настройка | Значение |
+| --- | --- |
+| Контекст | 65 536 |
+| KV | FP8, prefix cache и 32 GiB CPU KV |
+| Бюджет prefill | 2048 |
+| CUDA graphs | Включены, capture size до 32 |
+| Assistant | `/models/assistant`, MTP, 1 speculative token |
+
+Перенесите полный профиль в активный `$DEMO_DIR/values/gemma-b.yaml`, установите `replicaCount: 1`. В `$DEMO_DIR/argo-app/gemma-b.yaml` замените site-файл на `../../site/gemma-assistant.yaml`.
+
+> [!IMPORTANT]
+> Не накладывайте несколько профилей B друг на друга.
+> Список `modelVolumes` Helm заменяет целиком: site-файл должен содержать
+> **обе** модели — Gemma и assistant.
+
+[Лабораторная второй итерации](labs/03-speculation.md) содержит точные изменения файлов, команды отправки и sync, проверку mounts и конфигурации процесса.
+
+### 2. Повторить замер при тех же ограничениях
+
+Сохраните серию как `b-spec`. Вход, выход, конкурентность и условия прогрева должны совпадать с A и первой B.
+
+Переходите дальше, когда:
+
+- assistant действительно загружен, а запросы завершаются полностью;
+- доступны счётчики предложенных и принятых токенов;
+- сохранены TTFT, интервалы генерации, tokens/s и пики памяти.
+
+Высокое принятие не гарантирует ускорения: создание и проверка черновика тоже стоят времени.
+
+### 3. Отдельно проверить расширение окна до 128K
+
+После сравнения на 64K можно увеличить в активном профиле B:
 
 ```yaml
 max-model-len: 131072
 ```
 
-В сохранённом опыте восстановлено **2,89 GiB**: 65 504 токена из RAM, локальных попаданий — 0. TTFT первого входа — **57,29 с**, повтора после вытеснения — **1,47 с**. Это два отдельных запроса, **не p95 и не результат A/B**. [Исходные измерения](results/kv-ram/README.md).
+Это **отдельный опыт вместимости**, не продолжение сравнения при одинаковых ограничениях. Проверьте RAM, фактический KV-пул и успешный длинный запрос по [лабораторной KV](labs/02-kv-ram.md).
 
-RAM не заменяет HBM при вычислении: рабочие блоки KV должны вернуться на GPU. Выгрузка KV и выгрузка весов — разные механизмы; `cpu-offload-gb` здесь не используется.
+Перед сравнением с платформенной Gemma верните `max-model-len: 65536`.
 
-<a id="speculation"></a>
+<details>
+<summary>Что уже измерялось в отдельном опыте KV-offload</summary>
 
-## 5. Итерация 2: chunked prefill и speculative decoding
+С профилями [B 128K](values/gemma-b-128k.yaml) и [B 128K + RAM](values/gemma-b-ram.yaml) зафиксирован возврат 2,89 GiB KV для 65 504 токенов. TTFT первого запроса — 57,29 с, после возврата — 1,47 с.
 
-Prefix cache и 32 GiB KV в RAM сохраняются. Теперь настраиваем обработку длинного входа и добавляем Gemma assistant. Для сравнения итераций возвращаем окно **64K**: полный [профиль второй итерации](values/gemma-b-spec.yaml) фиксирует то же окно, веса и бюджет KV, что у первой.
+Это два наблюдения, не p95 и не результат текущего профиля с assistant. [Данные и границы опыта](results/kv-ram/README.md).
 
-<a id="compute"></a>
-
-![Чанкирование позволяет чередовать порции длинного входа с генерацией уже работающих запросов](assets/06-scheduler.svg)
-
-`max-model-len` ограничивает одну историю вместе с ответом, `max-num-seqs` — обрабатываемые последовательности, `max-num-batched-tokens` — бюджет токенов одного шага. Меняем последний с **4096 на 2048**: меньшие порции могут уменьшить паузы decode, но увеличивают число шагов prefill. Это настройка, которую проверяем по TTFT и ITL, не гарантированное ускорение. Чанкирование уже было включено ради вместимости 64K.
-
-![Черновик предлагает токены, основная модель принимает совпавшее начало и исправляет первое отклонение](assets/07-speculation.svg)
-
-Включаем CUDA graphs и assistant: черновик предлагает продолжение, основная Gemma проверяет его. [Gemma 4 assistant в vLLM 0.30](https://docs.vllm.ai/en/v0.30.0/features/speculative_decoding/mtp/) использует `method: mtp`, отдельные веса и общий KV с основной моделью. Оцениваем принятую длину и время ответа, а не только процент принятия.
-
-```yaml
-enable-chunked-prefill: true
-max-num-batched-tokens: 2048
-enforce-eager: false
-max-cudagraph-capture-size: 32
-speculative-config:
-  method: mtp
-  model: /models/assistant
-  num_speculative_tokens: 1
-```
-
-Переключите **то же** Application B на полный профиль. Привязку с двумя mount подготовьте заранее по [примеру](examples/site-gemma-assistant.yaml): Helm заменяет список `modelVolumes` целиком. [Команды переключения, проверки API и счётчиков](labs/03-speculation.md).
-
-Повторите нагрузку с `SLOT=b`, `SERIES=b-spec`, тем же входом и состоянием кэша. Проверьте также возврат KV из RAM при включённом assistant. Совместная конфигурация требует прогона на выбранном образе: наличие обоих блоков в YAML ещё не подтверждает работу. Новых замеров этой комбинации в репозитории пока нет.
+</details>
 
 <a id="platform"></a>
 
 ## 6. Gemma через AI Inference на первой GPU
 
-![Модель и рецепт преобразуются в план, DRA-заявку и Pod; проверяется вся цепочка до ответа API](assets/09-platform.svg)
+Ручной опыт дал конфигурацию. Теперь создадим её через рецепт AI Inference на **первой H100** и сравним результат без смены весов и нагрузки.
 
-Ручные оптимизации закончены. Теперь освобождаем карту A и переносим **конфигурацию второй итерации** в сервис платформы: те же веса, 64K, FP8 KV, prefix cache, 32 GiB offload, prefill 2048, CUDA graphs и assistant. Выберите соответствующий рецепт Gemma 64K с assistant и стратегию Throughput. [Рецепты и порядок запуска](labs/04-deckhouse.md).
+![AI Inference связывает модель из каталога, рецепт, параметры ресурсов и DRA-заявку с работающим API](assets/09-platform.svg)
 
-Остановите A через values, commit/push/sync, если она ещё работает. На узле 128 GiB сохраните результат B и остановите также B: две конфигурации с limit 80 GiB одновременно не помещаются в бюджет. Для одновременного сравнения ручного и платформенного запуска планируйте минимум 192 GiB RAM с проверкой остальных потребителей.
+### 1. Проверить рецепт, затем освободить ресурсы
 
-Создайте в Console `hf-platform-gemma` на первой H100. Helm обслуживает ручной эксперимент; платформенный StatefulSet создаёт AI Inference. Когда B остаётся на второй карте, свободная карта A достаётся новому claim; если свободны обе, для выбора именно первой нужна привязка к устройству, поддерживаемая установленным DRA-драйвером. Один только `count: 1` не закрепляет номер GPU — проверьте выделенное устройство в ResourceClaim.
+> [!IMPORTANT]
+> До остановки Gemma проверьте [состав установленного рецепта](labs/04-deckhouse.md).
+> Если он не доставляет assistant или не включает CPU KV, оставьте ручной сервис
+> работающим. Заказ ниже не добавляет недостающие возможности в рецепт.
 
-Сопоставьте рецепт, сформированный план и параметры процесса с ручным B, выполните запрос и повторите нагрузку. Подключите сервис отдельным маршрутом Bifrost в прежнем Open WebUI. Сравнение ручного и платформенного запуска проводится при одинаковых **64K** и одной конфигурации, а не по названию стратегии.
+Сохраните `b-spec` и верните B к 64K, если расширяли окно. Остановите A. На узле 128 GiB остановите также B: две реплики с лимитами по 80 GiB не помещаются в общий бюджет.
+
+Выберите **рецепт Gemma 64K с assistant** — настройки второй итерации:
+
+| Параметр заказа | Значение |
+| --- | --- |
+| Имя | `hf-platform-gemma` |
+| Источник | Готовая Model из ai-models |
+| Стратегия | Throughput |
+| Ускоритель | DeviceClass H100, одна карта |
+| KV | FP8, prefix cache, 32 GiB CPU KV |
+| Prefill и генерация | Бюджет 2048, CUDA graphs, assistant MTP |
+| Контекст | 65 536 |
+
+### 2. Создать заказ через GitOps
+
+В [лабораторной AI Inference](labs/04-deckhouse.md) находятся YAML заказа, проверка доступных рецептов и команды для `hardfest-platform`. Они создают InferenceService; дочерний workload формирует контроллер.
+
+Проверяем по порядку:
+
+1. Model имеет статус Ready и ожидаемую ревизию.
+2. План выбрал нужный рецепт, одну H100 и корректный бюджет памяти.
+3. Конфигурация запущенного движка соответствует таблице.
+4. API отвечает, повторная серия `platform-gemma` завершается полностью.
+5. Маршрут в шлюзе ведёт в новый Service; чат продолжает работать.
+
+Сам статус Ready модели подтверждает артефакт, не запуск CUDA. Сравниваем ручной и платформенный сервис **при одинаковых 64K**.
 
 <a id="placement"></a>
 
 ## 7. Динамический MIG и MPS
 
-![Геометрия A30: отдельный MIG для эмбеддера, MPS внутри другого MIG и свободная доля карты](assets/08-mig-mps.svg)
+Большая LLM остаётся на H100. Эмбеддеру не нужна целая A30: выделим MIG-раздел по DRA-заявке, затем запустим клиент MPS внутри раздела.
 
-Режим MIG включён заранее. **Разделы не преднарезаны конфигом карты**: GPUClass/GPUPool создаёт классы, ResourceClaim запрашивает профиль, DRA-драйвер готовит раздел.
+![A30 делится на изолированные MIG-разделы; MPS позволяет нескольким клиентам использовать ресурсы одного раздела](assets/08-mig-mps.svg)
 
-MIG выделяет аппаратную часть памяти и вычислительных ресурсов. MPS позволяет процессам работать внутри одного GPU или MIG-раздела. Time-slicing только чередует выполнение и не увеличивает память.
+> [!IMPORTANT]
+> MIG mode уже включён при подготовке. Сейчас не меняем драйвер и режим карты.
+> Геометрию создаёт наша реализация драйвера по заявкам GPUClass/GPUPool,
+> без предварительного статического разбиения карты.
 
-Подготовлены values для [эмбеддера в MIG](values/embed-mig.yaml) и [эмбеддера с MPS](values/embed-mps.yaml). Они используют тот же чарт, но отдельные [Application](argocd/embed-mig.yaml) и [Application MPS](argocd/embed-mps.yaml), собственные site-values и destination кластера с A30.
-
-```bash
-export MIG_CONTEXT=cluster-with-a30
-kubectl --context "$MIG_CONTEXT" get deviceclasses
-kubectl --context "$MIG_CONTEXT" -n hardfest-demo get resourceclaims
-```
-
-У MPS-профиля квота 25% active threads и 4 GiB памяти. В vLLM отдельно ограничен VRAM-бюджет: CUDA может показывать полный объём MIG, а не квоту клиента. 25% MPS не означают четверть скорости.
-
-После commit/push/sync и Ready Pod откройте доступ к API:
+### 1. Проверить классы и существующие заявки
 
 ```bash
-kubectl --context "$MIG_CONTEXT" -n hardfest-demo port-forward svc/hf-embed-mig 18003:8000
+kubectl --context "$GPU_CONTEXT" get deviceclasses
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims
 ```
 
-В другом терминале:
+### 2. Разместить сервисы и посмотреть геометрию
 
-```bash
-curl --fail --max-time 30 http://127.0.0.1:18003/v1/embeddings \
-  -H 'Content-Type: application/json' \
-  -d '{"model":"embedding","input":["Динамическое разделение GPU","Очередь инференса"]}'
-```
+[Лабораторная MIG/MPS](labs/05-mig-mps.md) содержит два Helm-профиля и команды Git/Argo:
 
-Ответ содержит два вектора. Посмотрите устройства в ResourceClaim, остановите сервис через Git и проверьте освобождение заявки. Второй клиент MPS и реранкер на схеме — следующий опыт: их совместный запуск пока не подтверждён. [Профили, квоты и освобождение геометрии](labs/05-mig-mps.md).
+1. Запустить эмбеддер в отдельном MIG-разделе.
+2. Остановить его и проверить освобождение заявки.
+3. Запустить MPS-вариант с лимитом памяти и долей активных потоков.
+4. Сопоставить заявку, геометрию и фактическое потребление.
+
+MPS 25% — ограничение активных потоков, не обещание четверти измеренной производительности. Второй MPS-клиент и совместный реранкер требуют отдельного замера; не считаем их проверенными по одному успешному эмбеддеру.
+
+![Документ проходит эмбеддер и индекс, поиск возвращает фрагменты, реранкер уточняет порядок, LLM формирует ответ](assets/16-rag.svg)
+
+Эмбеддер и реранкер обслуживают поиск независимо от LLM. При смене Gemma на Qwen база знаний остаётся той же.
 
 <a id="tp2"></a>
 
 ## 8. Qwen через AI Inference на двух H100
 
-В начале сравнения каждая H100 обслуживала отдельную Gemma. Теперь объединяем обе карты для **одного Qwen3.8-Flash-Next-NVFP4**. Это другой способ использования того же оборудования: не третья колонка в сравнении Gemma A/B, а запуск более крупной модели и поиск её рабочей нагрузки.
+Переходим от двух отдельных реплик к одной модели, распределённой на обе карты. Qwen создаём **через AI Inference**, используя модель из ai-models и рецепт TP2 с MTP.
 
-![Переход от двух отдельных Gemma к одному Qwen: освобождение H100, сохранение WebUI, шлюза и поиска на A30](assets/17-qwen-transition.svg)
+![Переход на Qwen: сохранить результаты Gemma, освободить обе H100, проверить заявки и создать один сервис TP2](assets/17-qwen-transition.svg)
 
-### Освободить карты и применить рецепт
+### 1. Проверить готовность перед остановкой Gemma
 
-До остановки Gemma проверьте готовность весов Qwen, рецепта и образа, обе GPU, NVLink/NCCL и бюджет RAM по [полному упражнению](labs/06-tp2.md). План установленного AI Inference должен запрашивать два устройства, а не только передавать движку TP=2. Размер файлов весов в lock-файле — около 123,6 GiB; это не расход HBM после загрузки. Для выбранной архитектуры нужно отдельно учесть рабочие буферы, графы, KV и MTP. При новых неисправимых ECC нагрузку не запускают: сначала восстанавливают оборудование.
+- [ ] Model Qwen в ai-models — Ready; ревизия совпадает с lock-файлом.
+- [ ] В установленной ветке AI Inference доступен рецепт Qwen TP2 с MTP.
+- [ ] DeviceClass позволяет получить две H100 на одной ноде.
+- [ ] Межкарточный обмен проверен; есть бюджет RAM для профиля.
+- [ ] Результаты Gemma сохранены вне Pod.
 
-Сохраните результаты Gemma, затем остановите ручные A/B через Git:
+> [!WARNING]
+> При новой неисправимой ECC-ошибке остановите нагрузку и сохраните диагностику.
+> Подбор параметров vLLM не является исправлением аппаратной ошибки.
+
+Файлы NVFP4-весов занимают около **123,6 GiB**. Это размер артефакта, а не окончательный расход HBM. [Расчёт размещения](docs/MEMORY_BUDGET.md).
+
+### 2. Освободить обе H100
+
+В активных `values/gemma-a.yaml` и `values/gemma-b.yaml` установите `replicaCount: 0` и примените коммит через соответствующие Application. Затем удалите только заказ `hf-platform-gemma` способом его создания.
+
+[Полная последовательность остановки и запуска Qwen](labs/06-tp2.md) включает Git, адресный sync и проверку освобождения DRA-заявок. Не удаляйте дочерний StatefulSet вместо его InferenceService.
+
+### 3. Создать сервис Qwen
+
+| Параметр заказа | Значение |
+| --- | --- |
+| Имя | `hf-platform-qwen` |
+| Источник | Qwen из ai-models |
+| Стратегия | Throughput, рецепт Qwen TP2 с MTP |
+| Ускорители | DeviceClass H100, две карты на одной ноде |
+| Параллелизм | `tensor-parallel-size: 2` |
+| Контекст профиля | 262 144 |
+| Оптимизации | Prefix cache, chunked prefill, CUDA graphs, CPU KV-offload, MTP |
+
+![Tensor parallelism делит вычисления модели между двумя H100; NVLink переносит межкарточный обмен](assets/10-tp2.svg)
+
+В [лабораторной Qwen](labs/06-tp2.md) — YAML заказа, закреплённые параметры рецепта, проверка фактического плана и логов. Перед запуском запросов подтвердите **две выделенные GPU** и успешный NCCL, а не только два устройства в названии класса.
+
+### 4. Проверить API, MTP и чат
+
+Возьмите имена дочернего workload и Service из созданного InferenceService:
 
 ```bash
-yq -i '.replicaCount = 0' "$DEMO_DIR/values/gemma-a.yaml"
-yq -i '.replicaCount = 0' "$DEMO_DIR/values/gemma-b.yaml"
-git add -- "$DEMO_DIR/values/gemma-a.yaml" "$DEMO_DIR/values/gemma-b.yaml"
-git diff --cached --check
-git commit -S -s -m "Release both H100 GPUs for Qwen TP2"
-git push
-
-REVISION=$(git rev-parse HEAD)
-for APP in hardfest-gemma-a hardfest-gemma-b; do
-  kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application "$APP" \
-    --type merge -p "$(jq -nc --arg rev "$REVISION" '{operation:{sync:{revision:$rev,prune:false}}}')"
-done
+export QWEN_WORKLOAD=statefulset/REPLACE_WITH_CREATED_NAME
+export QWEN_SERVICE=REPLACE_WITH_CREATED_SERVICE
+export QWEN_PORT=8000
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo rollout status "$QWEN_WORKLOAD" --timeout=40m
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs "$QWEN_WORKLOAD" --tail=200
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo port-forward "service/$QWEN_SERVICE" "18004:$QWEN_PORT"
 ```
 
-Дождитесь завершения sync и освобождения обеих GPU. Если `hf-platform-gemma` ещё существует, удалите только этот InferenceService через Console либо его GitOps-владельца. Не удаляйте чужие ResourceClaim и не останавливайте Bifrost, Open WebUI или сервисы A30.
+`QWEN_PORT` должен совпасть с портом выбранного Service. В другом терминале отправьте запрос на `http://127.0.0.1:18004/v1/chat/completions` по команде лабораторной: там учтён ключ сервисного API. Этот ключ не заменяет личный Virtual Key участника на шлюзе.
 
-Создайте сервис через AI Inference с именем `hf-platform-qwen`, стратегией Throughput и рецептом Qwen TP2 с MTP. В плане нужны **DeviceClass полноразмерной H100, два устройства одной ноды и `tensor-parallel-size: 2`**. Две реплики по одной карте этому плану не соответствуют. Для декларативного запуска используйте экспорт по установленной схеме API, как в [этапе AI Inference](labs/04-deckhouse.md).
+![MTP предлагает продолжение, основная модель проверяет токены; измеряются принятие, стоимость проверки и итоговая скорость](assets/18-qwen-mtp.svg)
 
-![Один Pod Qwen получает два устройства H100; процессы TP обмениваются данными через NVLink и NCCL](assets/10-tp2.svg)
+После прямого API подключите маршрут Qwen в ai-mcp-gateway. Проверьте запрос через WebUI и запись расхода на личный Virtual Key. Участнику доступны знания и голос; администратору через OIDC — Kubernetes MCP.
 
-На этом стенде NVLink ускоряет обмен между процессами TP, но его наличие само по себе не доказывает работу NCCL. DRA выделяет устройства; деление модели между ними выполняет движок. В этом упражнении проверяем обе части цепочки.
+### 5. Найти рабочую конкурентность
 
-Откройте дочерние ресурсы сервиса в Console и подставьте фактические имена StatefulSet и Service. Имена, созданные контроллером, могут отличаться от имени InferenceService:
+![Нагрузка увеличивается ступенями до 50 запросов; выбор ёмкости учитывает TTFT, интервалы токенов, очередь и ошибки](assets/19-qwen-capacity.svg)
 
-```bash
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo get statefulsets,pods,services,resourceclaims
-export QWEN_WORKLOAD=statefulset/REPLACE_QWEN_STATEFULSET
-export QWEN_SERVICE=REPLACE_QWEN_SERVICE
+Пройдите ступени **1, 2, 4, 8, 16, 32, 50** по [нагрузочному профилю](labs/06-tp2.md). Для каждой сохраните TTFT, TPOT, output tokens/s, очередь, ошибки и пики памяти.
 
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo rollout status \
-  "$QWEN_WORKLOAD" --timeout=20m
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs \
-  "$QWEN_WORKLOAD" --all-containers=true --tail=200
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo get resourceclaims -o json |
-  jq -r '.items[] | .metadata.name as $claim |
-    .status.allocation.devices.results[]? |
-    [$claim, .driver, .pool, .device] | @tsv'
-```
-
-Сопоставьте выделенные устройства с заявкой Pod Qwen. Затем проверьте фактический образ, TP=2, контекст, MTP, prefix cache, chunked prefill, CUDA graphs и объём KV-offload в конфигурации и логах движка. Начальные значения и проверка каждого параметра — в [упражнении TP2](labs/06-tp2.md). Опубликованный профиль не заменяет успешный запуск на вашем стенде.
-
-### Получить ответ и проверить MTP
-
-Сначала проверьте API без шлюза:
-
-```bash
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo port-forward \
-  "svc/$QWEN_SERVICE" 18004:8000
-```
-
-В другом терминале введите API-ключ модельного сервиса. Ссылка на его Secret
-находится в `VLLM_API_KEY.valueFrom.secretKeyRef` контейнера Qwen.
-Это не личный VK и не management-ключ Bifrost. Ввод скрыт;
-ключ передаётся `curl` через файловый дескриптор, а не аргумент процесса.
-Затем получите имя модели из API и отправьте короткий запрос:
-
-```bash
-set +x
-printf 'Model API key: ' >&2
-IFS= read -r -s QWEN_API_KEY
-printf '\n' >&2
-QWEN_MODEL=$(curl --fail --silent --show-error --max-time 30 \
-  --header @<(printf 'Authorization: Bearer %s\n' "$QWEN_API_KEY") \
-  http://127.0.0.1:18004/v1/models | jq -er '.data[0].id')
-jq -nc --arg model "$QWEN_MODEL" \
-  '{model:$model,messages:[{role:"user",content:"Объясни различие TP и PP в трёх предложениях."}],max_tokens:1024,stream:true}' |
-  curl --fail-with-body --no-buffer --max-time 180 \
-    --header @<(printf 'Authorization: Bearer %s\n' "$QWEN_API_KEY") \
-    http://127.0.0.1:18004/v1/chat/completions \
-    -H 'Content-Type: application/json' --data-binary @-
-unset QWEN_API_KEY
-```
-
-Проверьте итоговый ответ, а не только токены рассуждения. Если генерация закончилась
-по лимиту до ответа, увеличьте `max_tokens` и повторите запрос.
-
-Затем добавьте Qwen отдельным маршрутом в Bifrost и моделью в прежний Open WebUI. Проверьте тот же запрос и вопрос по существующей базе знаний. Одобренному участнику нужны доступ к модели и личный Virtual Key; административные Kubernetes MCP-инструменты ему не выдаются. Администратор использует отдельное OIDC-подключение с правами MCP: сначала чтение, затем изменение только собственного учебного ресурса. Парсер вызовов инструментов не выдаёт этих прав; [настройка обоих путей доступа](docs/CHAT_AND_ACCESS.md) выполняется отдельно.
-
-![MTP предлагает несколько следующих токенов, основная модель проверяет их; ускорение зависит от принятой длины и стоимости проверки](assets/18-qwen-mtp.svg)
-
-MTP использует дополнительные предсказания выбранной модели для чернового продолжения. TP2 отвечает за распределение вычислений между картами, MTP — за сокращение числа последовательных шагов генерации. Это независимые механизмы. В коротком прогоне проверьте ответ и изменение счётчиков предложенных и принятых токенов. Для измерения выигрыша проведите после занятия парную серию с MTP и без него при одинаковых запросах и остальных параметрах: фиксируйте принятую длину, скорость decode и задержки. Высокий процент принятия без ускорения не считается выигрышем.
-
-### Определить, сколько сессий выдерживает сервис
-
-![Ступени нагрузки от одного до пятидесяти клиентов: приёмлемая ёмкость определяется задержкой, очередью и ошибками, а не только занятостью HBM](assets/19-qwen-capacity.svg)
-
-Окно 256K ограничивает одну историю вместе с ответом. Оно не обещает 50 одновременных историй по 256K. В занятии выполните короткую серию на малой параллельности по [командам нагрузочного теста](labs/06-tp2.md). Полная серия **1, 2, 4, 8, 16, 32, 50** с длинными входами и повторами — продолжение этой работы, не обязательное ожидание в пределах 90 минут. На каждой ступени отдельно смотрите очередь, TTFT, ITL, скорость одного запроса, суммарный поток токенов и ошибки.
-
-Рабочая ёмкость — последняя повторяемая ступень, которая укладывается в выбранные требования к задержке. Запишите эти требования до теста. KV в RAM проверяйте повтором после вытеснения и счётчиками загрузки блоков: свободная оперативная память сама по себе не увеличивает скорость декодирования. Замеры Qwen, MTP и offload сохраняйте отдельно от результатов Gemma.
+Рабочая ёмкость — последняя ступень, удовлетворяющая выбранному времени отклика, а не максимальное число открытых соединений. Окно 256K не обещает 50 одновременных историй по 256K.
 
 <a id="cleanup"></a>
 
 ## Остановка
 
-Сначала выгрузите результаты из временных каталогов Pod. После основного
-маршрута на H100 работает Qwen, а Gemma A/B уже остановлены.
+### 1. Сохранить измерения
 
-Удалите только `hf-platform-qwen` через его InferenceService в Console.
-Если сервис управляется GitOps, удалите его декларацию в Git и отправьте коммит.
-Обычный sync здесь использует `prune: false`: для удаления выберите в Argo CD
-адресный Prune **только InferenceService `hf-platform-qwen`**, проверив diff.
-Namespace, PVC и остальные ресурсы не должны попасть в список удаления.
-Не удаляйте дочерний StatefulSet напрямую:
-контроллер создаст его снова. Дождитесь удаления Pod Qwen и освобождения его заявки.
+Выгрузите результаты из Pod до его удаления: `/runtime` временный. Зафиксируйте commit конфигурации, образ, ревизию модели и условия нагрузки в [шаблоне отчёта](results/REPORT.template.md).
 
-Если остановились на одном из этапов Gemma,
-выключите оставшиеся ручные реплики через Git:
+### 2. Остановить только созданные сервисы
 
-```bash
-yq -i '.replicaCount = 0' "$DEMO_DIR/values/gemma-a.yaml"
-yq -i '.replicaCount = 0' "$DEMO_DIR/values/gemma-b.yaml"
-git add -- "$DEMO_DIR/values/gemma-a.yaml" "$DEMO_DIR/values/gemma-b.yaml"
-git commit -S -s -m "Stop HardFest Gemma workloads"
-git push
-```
+| Ресурс | Как остановить |
+| --- | --- |
+| Ручные Gemma и сервисы A30 | `replicaCount: 0` в активных values, commit/push, sync своего Application |
+| Gemma/Qwen через AI Inference | Удалить свой InferenceService через Console либо адресно через GitOps |
+| Маршруты чата | Отключить ссылки на остановленные Service |
 
-Синхронизируйте коммит по блоку из раздела A/B. Если обе реплики уже выключены,
-повторный коммит не нужен. Для других ручных сервисов повторите действие в их
-values. Если остался `hf-platform-gemma`, остановите его через владеющий InferenceService.
+При `prune: false` удаление файла из Git само по себе не удаляет объект. Для платформенного заказа используйте адресный порядок из лабораторной, не включайте общий prune проекта.
+
+> [!WARNING]
+> Не удаляйте namespace, PVC, модели, GPUClass/GPUPool и чужие заявки.
+> Остановка опыта должна освобождать вычислительные ресурсы, сохраняя веса и данные.
 
 ```bash
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims,pvc
 ```
 
-Проверьте также кластер A30, если выполняли этап MIG/MPS. Namespace, PVC, веса, GPUClass/GPUPool и чужие заявки не удаляются. Освобождение claim и удаление MIG-раздела могут происходить не одновременно — это определяется политикой драйвера.
+Проверьте освобождение заявок H100 и A30, отсутствие новых запросов к отключённым маршрутам и сохранность PVC.
 
 <a id="results"></a>
 
 ## Результаты
 
-Сохраните SHA коммита, параметры vLLM и исходные JSON. В [отчёт](results/REPORT.template.md) отдельно входят Gemma A/B, ручной и платформенный запуск, опыт 128K и возврат KV из RAM, размещение MIG/MPS и Qwen TP2 с проверкой MTP и нагрузки. Нельзя собирать одну таблицу ускорения из разных моделей, входов, окон и числа клиентов.
+| Сравнение | Что должно совпадать |
+| --- | --- |
+| A, B cache, B spec | Веса, окно 64K, вход, выход, конкурентность и условия прогрева |
+| Ручная B и платформенная Gemma | Те же параметры второй итерации и тот же тест |
+| B 64K и B 128K | Остальные настройки; результат обозначен как опыт вместимости |
+| Qwen с MTP и без него | Модель, нагрузка и остальные параметры движка |
+| Ступени конкурентности Qwen | Длины запросов и критерии приемлемого отклика |
 
-Для своего стенда: [подготовка](docs/SETUP.md), [GitOps](docs/GITOPS.md), [метрики](docs/MEASUREMENTS.md), [неполадки](docs/TROUBLESHOOTING.md).
+Таблица скорости без исходных результатов не подтверждает ускорение. Для итогового сравнения выполните не менее трёх серий с отдельного CPU-клиента. Восемь запросов короткого прогона не дают устойчивый p95.
+
+[Методика](docs/MEASUREMENTS.md), [дашборд](docs/OBSERVABILITY.md), [диагностика](docs/TROUBLESHOOTING.md), [источники](docs/SOURCES.md).
 
 [К содержанию](#contents)

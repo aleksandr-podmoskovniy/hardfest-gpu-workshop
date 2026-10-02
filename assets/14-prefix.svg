@@ -65,7 +65,7 @@
 <tspan x="72" dy="0">Даже если сам документ в третьем запросе не изменился.</tspan>
 </text>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="48" y="731" font-size="18" fill="#536278" text-anchor="start" data-max-width="1104">
+<text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
 <tspan x="48" dy="0">На токены влияют шаблон чата, порядок сообщений, даты и пробелы.</tspan>
 </text>
 </svg>

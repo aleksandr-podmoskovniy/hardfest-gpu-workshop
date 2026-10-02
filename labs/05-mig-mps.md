@@ -1,39 +1,31 @@
-# Динамический MIG и MPS на A30
+# Выделить MIG-разделы и разделить их через MPS
 
-На A30 заранее включён MIG mode, но геометрия не преднарезается статическим
-MIG Manager config. GPUClass/GPUPool создаёт DeviceClass; DRA выдаёт заявки
-и формирует MIG-разделы по потребности.
+На A30 проверим две вещи: создание MIG-раздела по DRA-заявке и совместное
+использование раздела несколькими MPS-клиентами. Геометрию формирует драйвер
+по запросу, а не заранее подготовленный конфиг MIG Manager.
 
-Подготовленные исходники: [MIG](../values/embed-mig.yaml) и
-[MPS поверх MIG](../values/embed-mps.yaml). Эти workload по умолчанию выключены.
-Их Application должен указывать на кластер с A30, не автоматически на кластер H100.
+MIG задаёт аппаратную границу памяти и вычислительных ресурсов.
+MPS запускает несколько процессов внутри раздела. Time-slicing чередует
+выполнение, но не выделяет изолированную память.
 
-MIG задаёт аппаратную границу памяти и вычислительных ресурсов. MPS позволяет
-нескольким процессам работать внутри одного раздела; time-slicing чередует
-выполнение, но отдельную память не выделяет. Две заявки одного DeviceClass
-могут попасть на разные разделы: совместный MPS проверяется по одному MIG UUID.
+## Перед началом
 
-## Согласовать класс и квоту
+- [ ] Рабочий каталог — `k8s-config`; [GitOps](../docs/GITOPS.md) подготовлен.
+- [ ] На выделенной A30 заранее включён MIG mode.
+- [ ] GPUClass/GPUPool создаёт DeviceClass; вручную создавать их не требуется.
+- [ ] Определены контекст кластера A30, нода, готовый PVC с эмбеддером.
+- [ ] Чужие заявки на этой карте проверены; изменения не затрагивают их.
 
 ```bash
+export MIG_CONTEXT=REPLACE_A30_CLUSTER_CONTEXT
 kubectl --context "$MIG_CONTEXT" get deviceclasses
 kubectl --context "$MIG_CONTEXT" -n hardfest-demo get resourceclaims
 ```
 
-Замените placeholders созданными контроллером классами для `1g6gb` и
-`2g12gb-mps-percent`, нодой и PVC эмбеддера. Посмотрите их selectors,
-а не угадывайте класс по названию.
+Не считайте, что A30 находится в том же кластере, что H100.
+У Applications эмбеддера должна быть правильная `destination`.
 
-MPS-пример запрашивает sharePercent 25 и задаёт 4 GiB pinned memory limit
-через драйвер `gpu.deckhouse.io`. Эта схема driver-specific: dry-run и фактическое
-выделение обязательны. vLLM получает gpu-memory-utilization 0,25, поскольку CUDA
-показывает полную память MIG, а не только квоту клиента.
-
-## Запуск через GitOps
-
-Используйте тот же чарт и отдельные values; создайте [Application MIG](../argocd/embed-mig.yaml) и [Application MPS](../argocd/embed-mps.yaml). Задайте для каждого собственный site-файл с классом, нодой и PVC.
-Порядок такой же, как для Gemma: diff → dry-run → commit/push → sync.
-Из k8s-config подготовьте привязки и Application:
+## 1. Подготовить привязки A30
 
 ```bash
 for PROFILE in embed-mig embed-mps; do
@@ -42,30 +34,81 @@ for PROFILE in embed-mig embed-mps; do
 done
 ```
 
-Заполните site-файлы, project, source и destination каждого Application.
-Затем включите реплики и проверьте рендер:
+Откройте файлы редактором:
+
+| Файл | Что заполнить |
+| --- | --- |
+| `site/embed-mig.yaml` | Нода A30, созданный контроллером DeviceClass `1g6gb`, PVC и путь эмбеддера |
+| `site/embed-mps.yaml` | Та же площадка, DeviceClass `2g12gb-mps-percent`, PVC и путь |
+| `argo-app/embed-mig.yaml`, `argo-app/embed-mps.yaml` | Git URL, ветка, путь, AppProject и кластер A30 |
+| `values/embed-mig.yaml`, `values/embed-mps.yaml` | `replicaCount: 1` |
+
+Пути в таблице относительны `$DEMO_DIR`. Перед использованием проверьте
+selectors выбранного DeviceClass, а не только его имя:
+
+```bash
+kubectl --context "$MIG_CONTEXT" get deviceclass REPLACE_GENERATED_DEVICECLASS -o yaml
+```
+
+MPS-профиль просит `sharePercent: 25` и pinned memory limit 4 GiB
+через `gpu.deckhouse.io`. Это схема конкретного драйвера.
+У vLLM задано `gpu-memory-utilization: 0.25`: CUDA показывает полную
+память MIG, а не только квоту клиента.
+
+## 2. Проверить и отправить оба профиля
 
 ```bash
 set -o pipefail
 for PROFILE in embed-mig embed-mps; do
-  yq -i '.replicaCount = 1' "$DEMO_DIR/values/$PROFILE.yaml"
   helm template "hf-$PROFILE" "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
     -f "$DEMO_DIR/values/$PROFILE.yaml" -f "$DEMO_DIR/site/$PROFILE.yaml" |
-    kubectl --context "$MIG_CONTEXT" apply --dry-run=server -f - || exit 1
+    kubectl --context "$MIG_CONTEXT" apply --dry-run=server -f - || break
 done
 ```
 
-Отправьте коммит, зарегистрируйте эти два Application и выполните sync по
-[общему порядку](../docs/GITOPS.md#3-зарегистрировать-application-и-выполнить-sync).
-После запуска:
+Продолжайте только после успешной проверки обоих рендеров:
+
+```bash
+git add -- "$DEMO_DIR/values/embed-mig.yaml" "$DEMO_DIR/values/embed-mps.yaml" \
+  "$DEMO_DIR/site/embed-mig.yaml" "$DEMO_DIR/site/embed-mps.yaml" \
+  "$DEMO_DIR/argo-app/embed-mig.yaml" "$DEMO_DIR/argo-app/embed-mps.yaml"
+git diff --cached --check
+git diff --cached
+git commit -S -s -m "Add A30 MIG and MPS workloads"
+git push
+```
+
+Для отдельно зарегистрированных Applications:
+
+```bash
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply \
+  -f "$DEMO_DIR/argo-app/embed-mig.yaml" -f "$DEMO_DIR/argo-app/embed-mps.yaml"
+REVISION=$(git rev-parse HEAD)
+for APP in hardfest-embed-mig hardfest-embed-mps; do
+  kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application "$APP" \
+    --type merge \
+    --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
+done
+```
+
+Если Applications управляются родителем, сначала синхронизируйте его.
+Дождитесь `Succeeded` нужной ревизии, затем:
 
 ```bash
 kubectl --context "$MIG_CONTEXT" -n hardfest-demo get pods,resourceclaims
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get resourceclaims -o yaml
 kubectl --context "$MIG_CONTEXT" -n hardfest-demo logs deployment/hf-embed-mps --tail=100
+```
+
+## 3. Проверить эмбеддер
+
+В отдельном терминале:
+
+```bash
 kubectl --context "$MIG_CONTEXT" -n hardfest-demo port-forward svc/hf-embed-mig 18003:8000
 ```
 
-В другом терминале:
+В основном терминале:
 
 ```bash
 curl --fail --max-time 60 http://127.0.0.1:18003/v1/embeddings \
@@ -73,13 +116,83 @@ curl --fail --max-time 60 http://127.0.0.1:18003/v1/embeddings \
   -d '{"model":"embedding","input":["Динамический MIG","Квоты MPS"]}'
 ```
 
-Проверьте два вектора и реальное выделение в ResourceClaim.
-Для второго клиента MPS подготовьте отдельный профиль и достаточную квоту.
-Проверьте одинаковый MIG UUID у обоих клиентов и ответы обоих API.
+В ответе должны быть два вектора. Аналогично проверьте `hf-embed-mps`,
+переключив port-forward на этот Service.
 
-Сравните одиночную и совместную нагрузку: latency, ошибки, пик памяти.
-25% квоты не равны 25% скорости. Аппаратная граница изоляции — MIG.
+## 4. Проверить совместный MPS
 
-Для освобождения изменяйте replicaCount в values через Git и sync. Проверяйте исчезновение
-заявок и доступную ёмкость. Геометрия может сохраняться согласно политике драйвера;
-это не повод удалять GPUClass, namespace или finalizers.
+Создайте второго клиента отдельно от первого:
+
+```bash
+cp "$DEMO_DIR/values/embed-mps.yaml" "$DEMO_DIR/values/embed-mps-2.yaml"
+cp "$DEMO_DIR/argo-app/embed-mps.yaml" "$DEMO_DIR/argo-app/embed-mps-2.yaml"
+```
+
+В редакторе измените только следующие поля новых файлов:
+
+| Файл | Поле | Значение |
+| --- | --- | --- |
+| `values/embed-mps-2.yaml` | `fullnameOverride` | `hf-embed-mps-2` |
+| `argo-app/embed-mps-2.yaml` | `metadata.name` | `hardfest-embed-mps-2` |
+| Тот же Application | `spec.source.helm.releaseName` | `hf-embed-mps-2` |
+| Тот же Application | Первый элемент `spec.source.helm.valueFiles` | `../../values/embed-mps-2.yaml` |
+
+Второй value file остаётся `../../site/embed-mps.yaml`: нода, DeviceClass
+и веса одинаковы. `replicaCount` нового профиля равен `1`.
+
+```bash
+helm template hf-embed-mps-2 "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
+  -f "$DEMO_DIR/values/embed-mps-2.yaml" -f "$DEMO_DIR/site/embed-mps.yaml" |
+  kubectl --context "$MIG_CONTEXT" apply --dry-run=server -f -
+```
+
+После успешной проверки:
+
+```bash
+git add -- "$DEMO_DIR/values/embed-mps-2.yaml" "$DEMO_DIR/argo-app/embed-mps-2.yaml"
+git diff --cached --check
+git diff --cached
+git commit -S -s -m "Add a second MPS client on A30"
+git push
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply \
+  -f "$DEMO_DIR/argo-app/embed-mps-2.yaml"
+REVISION=$(git rev-parse HEAD)
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application hardfest-embed-mps-2 \
+  --type merge \
+  --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get pods,resourceclaims
+```
+
+Для App-of-Apps регистрируйте новый Application через родителя.
+
+Проверьте оба ResourceClaim и фактические устройства:
+
+| Условие | Что должно наблюдаться |
+| --- | --- |
+| Два клиента делят один раздел | Одинаковый MIG UUID |
+| Оба приложения работоспособны | Оба API возвращают векторы |
+| Квоты применены | Выделение соответствует запросам драйвера |
+| Совместная нагрузка | Записаны latency, ошибки и пик памяти каждого клиента |
+
+Две заявки одного DeviceClass могут попасть на разные разделы — это ещё
+не совместный MPS. Квота 25% также не обещает ровно 25% скорости.
+Аппаратная граница изоляции остаётся на уровне MIG.
+
+## 5. Освободить учебную нагрузку
+
+В редакторе верните `replicaCount: 0` только у созданных в этом упражнении
+профилей. Отправьте коммит и синхронизируйте их Applications тем же способом.
+
+```bash
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get pods,resourceclaims
+```
+
+## Проверка
+
+- [ ] MIG-раздел выделен динамически по заявке, API эмбеддера работает.
+- [ ] MPS-клиенты действительно делят один MIG UUID и соблюдают квоты.
+- [ ] После остановки владельцев исчезли их заявки и освободилась ёмкость.
+
+Геометрия может сохраняться согласно политике драйвера. Не удаляйте ради
+этого GPUClass/GPUPool, namespace, PVC или finalizers.
+Следующий этап — [Qwen TP2 на H100](06-tp2.md).

@@ -11,6 +11,23 @@ SVG = "{http://www.w3.org/2000/svg}"
 
 
 class DiagramConnections(unittest.TestCase):
+    def test_shared_design_and_readable_footnotes(self):
+        for path in (ROOT / "assets").glob("[0-9][0-9]-*.svg"):
+            with self.subTest(file=path.name):
+                root = ET.parse(path).getroot()
+                self.assertEqual(root.attrib["data-design"], "hardfest-v2")
+                self.assertEqual(root.attrib["viewBox"], "0 0 1200 760")
+                self.assertTrue(root.find(SVG + "title").text)
+                self.assertTrue(root.find(SVG + "desc").text)
+                footer = list(root.iter(SVG + "text"))[-1]
+                self.assertEqual(footer.attrib["font-size"], "20")
+                self.assertEqual(footer.attrib["data-max-width"], "1104")
+
+    def test_qwen_gpu_gate_comes_before_launch(self):
+        root = ET.parse(ROOT / "assets" / "17-qwen-transition.svg").getroot()
+        text = " ".join(root.itertext())
+        self.assertLess(text.index("обе H100 свободны"), text.index("Рецепт Qwen"))
+
     def test_ports_follow_card_bounds_with_equal_clearance(self):
         card = Box(40, 80, 240, 120)
         self.assertEqual(card.port("left"), (34, 140))
