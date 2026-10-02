@@ -60,7 +60,7 @@ class Guide(unittest.TestCase):
 
     def test_expanded_context_is_separate_from_ab(self):
         readme = (ROOT / "README.md").read_text()
-        ram = readme.split('id="ram"', 1)[1].split('id="placement"', 1)[0]
+        ram = readme.split('id="ram"', 1)[1].split('id="speculation"', 1)[0]
         self.assertIn("max-model-len: 131072", ram)
         self.assertIn("cpu_bytes_to_use: 34359738368", ram)
         self.assertIn("остановите A через Git", ram)
@@ -118,15 +118,20 @@ class Guide(unittest.TestCase):
         targets = re.findall(r"\]\(#([^)]+)\)", readme)
         self.assertGreaterEqual(len(targets), 10)
         self.assertTrue(set(targets).issubset(anchors))
-        self.assertLess(readme.index('id="platform"'), readme.index('id="ram"'))
-        self.assertLess(readme.index('id="ram"'), readme.index('id="placement"'))
+        stages = ['ab', 'ram', 'speculation', 'platform', 'placement', 'tp2', 'cleanup']
+        positions = [readme.index(f'id="{stage}"') for stage in stages]
+        self.assertEqual(positions, sorted(positions))
+        self.assertEqual(readme.count('<a id="speculation">'), 1)
+        self.assertNotIn('Дополнительно. Черновая генерация', readme)
 
     def test_platform_chapter_describes_recipe_workflow(self):
         readme = (ROOT / "README.md").read_text()
-        chapter = readme.split('id="platform"', 1)[1].split('id="ram"', 1)[0]
+        chapter = readme.split('id="platform"', 1)[1].split('id="placement"', 1)[0]
         lab = (ROOT / "labs/04-deckhouse.md").read_text()
         diagram = (ROOT / "assets/09-platform.svg").read_text()
         self.assertIn("рецепт Gemma 64K", chapter)
+        for setting in ('второй итерации', '32 GiB', '2048', 'assistant', 'первой H100'):
+            self.assertIn(setting, chapter)
         for recipe in ("Gemma 64K", "Gemma 128K с KV в RAM", "Gemma с assistant", "Qwen TP2 с MTP"):
             self.assertIn(recipe, lab)
         for stale in ("не переключатель", "сам по себе их не гарантирует",
@@ -143,8 +148,8 @@ class Guide(unittest.TestCase):
 
     def test_qwen_is_a_required_final_stage_with_operational_checks(self):
         readme = (ROOT / "README.md").read_text()
-        chapter = readme.split('id="tp2"', 1)[1].split('id="speculation"', 1)[0]
-        self.assertRegex(chapter, r"## 7\. Qwen")
+        chapter = readme.split('id="tp2"', 1)[1].split('id="cleanup"', 1)[0]
+        self.assertRegex(chapter, r"## 8\. Qwen через AI Inference")
         self.assertNotIn("бонус", chapter.lower())
         self.assertLess(readme.index('id="tp2"'), readme.index('id="cleanup"'))
         for term in ("AI Inference", "DeviceClass", "tensor-parallel-size: 2",

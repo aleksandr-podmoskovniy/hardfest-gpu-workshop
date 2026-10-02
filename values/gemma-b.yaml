@@ -1,7 +1,7 @@
 # Standalone profile; do not stack B variants.
 fullnameOverride: hf-gemma-b
 replicaCount: 0
-profile: b-tuned
+profile: b-cache
 nodeSelector:
   kubernetes.io/hostname: REPLACE_H100_NODE
 dra:
@@ -17,12 +17,12 @@ modelVolumes:
 resources:
   requests:
     cpu: "4"
-    memory: 24Gi
+    memory: 56Gi
     ephemeral-storage: 4Gi
   limits:
-    memory: 48Gi
+    memory: 80Gi
     ephemeral-storage: 24Gi
-shmSize: 8Gi
+shmSize: 40Gi
 vllm:
   model: /models/gemma
   served-model-name: gemma-4-31b
@@ -44,5 +44,9 @@ vllm:
   enable-prefix-caching: true
   enable-chunked-prefill: true
   max-num-batched-tokens: 4096
-  enforce-eager: false
-  max-cudagraph-capture-size: 32
+  enforce-eager: true
+  kv-transfer-config:
+    kv_connector: OffloadingConnector
+    kv_role: kv_both
+    kv_connector_extra_config:
+      cpu_bytes_to_use: 34359738368

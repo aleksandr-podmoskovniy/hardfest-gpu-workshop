@@ -111,14 +111,14 @@ kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get applications hardfest
 ревизии и посмотрите diff. Если Application управляется родительским GitOps-приложением,
 меняйте его source через родителя, не создавайте второго владельца.
 
-## 4. Включить реплики
+## 4. Начать с базовой реплики
 
 ```bash
 yq -i '.replicaCount = 1' "$DEMO_DIR/values/gemma-a.yaml"
-yq -i '.replicaCount = 1' "$DEMO_DIR/values/gemma-b.yaml"
+yq -i '.replicaCount = 0' "$DEMO_DIR/values/gemma-b.yaml"
 git diff -- "$DEMO_DIR"
 git add -- "$DEMO_DIR/values/gemma-a.yaml" "$DEMO_DIR/values/gemma-b.yaml"
-git commit -S -s -m "Start both Gemma replicas"
+git commit -S -s -m "Start Gemma baseline"
 git push
 ```
 
@@ -127,12 +127,14 @@ git push
 
 ```bash
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo rollout status deployment/hf-gemma-a --timeout=15m
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo rollout status deployment/hf-gemma-b --timeout=15m
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-b --tail=80
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-a --tail=80
 ```
 
 Прежний Ready Pod не подтверждает новый sync. Сверьте ревизию, логи и ответ API.
+Дальше включайте B по [первой итерации](../README.md#ram), а затем переключайте
+её на [вторую](../labs/03-speculation.md). На 128 GiB сначала выключайте A:
+лимиты A + B с offload складываются в 128 GiB без запаса системе.
 
 ## 5. Изменение профиля и откат
 
@@ -146,7 +148,8 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-b --t
 yq -i '.vllm.max-model-len = 131072' "$DEMO_DIR/values/gemma-b.yaml"
 ```
 
-Переход на полный профиль с KV в RAM, включая бюджеты памяти:
+Переход на контрольный профиль 128K с KV в RAM, включая бюджеты памяти
+(в основном `gemma-b.yaml` offload уже включён):
 
 ```bash
 cp "$DEMO_DIR/values/gemma-b-ram.yaml" "$DEMO_DIR/values/gemma-b.yaml"
@@ -163,7 +166,8 @@ git push
 
 Синхронизируйте новый коммит. Application, Deployment и Service B остаются прежними.
 Перед опытом с RAM на VM 128 GiB остановите A.
-Для assistant отдельно подготовьте site-values с обоими PVC/mount; его профиль не содержит CPU KV.
+Для assistant отдельно подготовьте site-values с обоими PVC/mount.
+Его профиль сохраняет CPU KV первой итерации; [переключение site-файла](../labs/03-speculation.md).
 
 При изменении спецификации DRA чарт сам меняет имя ResourceClaimTemplate и ссылку Pod.
 Старая активная заявка не изменяется и не удаляется вручную. При prune=false старый

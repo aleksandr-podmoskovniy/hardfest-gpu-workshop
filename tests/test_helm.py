@@ -40,6 +40,26 @@ class HelmProfiles(unittest.TestCase):
         self.assertEqual(profiles[1]["kv-cache-dtype"], "fp8")
         self.assertTrue(profiles[1]["enable-prefix-caching"])
 
+    def test_second_iteration_keeps_cache_and_adds_compute_optimizations(self):
+        first = yaml.safe_load((ROOT / "values/gemma-b.yaml").read_text())
+        second = yaml.safe_load((ROOT / "values/gemma-b-spec.yaml").read_text())
+        a, b = first["vllm"], second["vllm"]
+        for key in ("model", "max-model-len", "dtype", "kv-cache-dtype",
+                    "attention-backend", "enable-prefix-caching", "kv-transfer-config",
+                    "max-num-seqs", "gpu-memory-utilization"):
+            self.assertEqual(a[key], b[key], key)
+        self.assertTrue(a["enforce-eager"])
+        self.assertNotIn("speculative-config", a)
+        self.assertEqual(a["max-num-batched-tokens"], 4096)
+        self.assertEqual(b["max-num-batched-tokens"], 2048)
+        self.assertFalse(b["enforce-eager"])
+        self.assertEqual(b["speculative-config"], {
+            "method": "mtp", "model": "/models/assistant", "num_speculative_tokens": 1})
+        self.assertEqual(first["resources"], second["resources"])
+        self.assertEqual(first["shmSize"], second["shmSize"])
+        self.assertEqual(a["kv-transfer-config"]["kv_connector_extra_config"]["cpu_bytes_to_use"],
+                         32 * 1024**3)
+
     def test_ram_profile_accounts_for_shared_memory(self):
         actual = checker.render(ROOT / "values/gemma-b-ram.yaml")
         config = yaml.safe_load(actual["ConfigMap"]["data"]["profile.yaml"])

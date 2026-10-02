@@ -9,10 +9,10 @@ AI Inference использует собственный контроллер и
 | Values | Опыт |
 | --- | --- |
 | [gemma-a](../../values/gemma-a.yaml) | 64K, BF16 KV, без prefix cache и CUDA graphs, prefill 4096 |
-| [gemma-b](../../values/gemma-b.yaml) | 64K, FP8 KV, prefix cache и CUDA graphs, prefill 4096 |
+| [gemma-b](../../values/gemma-b.yaml) | Итерация 1: 64K, FP8 KV, prefix cache, CPU KV 32 GiB, prefill 4096, eager |
 | [gemma-b-128k](../../values/gemma-b-128k.yaml) | 128K без CPU KV |
 | [gemma-b-ram](../../values/gemma-b-ram.yaml) | 128K и 32 GiB KV в RAM; request 56 GiB, limit 80 GiB, shm 40 GiB |
-| [gemma-b-spec](../../values/gemma-b-spec.yaml) | Gemma assistant без CPU KV |
+| [gemma-b-spec](../../values/gemma-b-spec.yaml) | Итерация 2: кэши первой, prefill 2048, CUDA graphs и Gemma assistant; 64K |
 | [embed-mig](../../values/embed-mig.yaml) | Один MIG-раздел для эмбеддера |
 | [embed-mps](../../values/embed-mps.yaml) | MPS поверх MIG: sharePercent 25, память 4 GiB |
 | [qwen-tp2](../../values/qwen-tp2.yaml) | Ручной проверочный профиль Qwen на двух H100 |

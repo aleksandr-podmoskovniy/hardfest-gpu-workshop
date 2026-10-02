@@ -182,20 +182,22 @@ def memory():
 
 
 def ab():
-    d = Diagram('04-ab', 'Gemma A — Base / Gemma B — Tune',
-                'Одинаковые веса, версия движка и нагрузка. Меняется конфигурация.')
-    d.rect(48, 160, 1104, 76)
-    for x, label in [(232, 'Контекст 65 536'), (600, 'Вход 32 768'), (968, 'Выход 2 048')]:
-        d.text(x, 208, label, 27, bold=True, anchor='middle')
-    for x, title, fill, color, lines in [
-            (48, 'A / Base', GRAY, MUTED, ['KV: BF16', 'Prefix cache: выключен', 'CUDA graphs: выключены', 'Attention: FlashAttention 4']),
-            (620, 'B / Tune', PALE, BLUE, ['KV: FP8', 'Prefix cache: включён', 'CUDA graphs: включены', 'Attention: Triton'])]:
-        d.card(x, 270, 532, 278, title, (), fill, color)
-        for i, line in enumerate(lines):
-            d.text(x+24, 365+i*46, line, 26)
-    d.band(579, 'У обоих: prefill по 4096 и до 32 последовательностей',
-           'Веса остаются на GPU; KV-offload на этом этапе выключен.', MINT, TEAL)
-    d.footer('A намеренно отключает оптимизации. Это не настройки по умолчанию vLLM 0.30.')
+    d = Diagram('04-ab', 'Две итерации, затем сервис платформы',
+                'Одна Gemma, одинаковые веса. Основные сравнения — при окне 64K.')
+    d.card(48, 160, 336, 300, 'A / Base',
+           ['H100 №1', 'BF16 KV', 'Без prefix cache и offload', 'Без CUDA graphs', 'Prefill: 4096'], GRAY, MUTED)
+    first = d.card(432, 160, 336, 300, 'B / 1. Кэш',
+           ['H100 №2', 'FP8 KV, Triton attention', 'Prefix cache + RAM 32 GiB', 'Без CUDA graphs', 'Prefill: 4096'], MINT, TEAL)
+    second = d.card(816, 160, 336, 300, 'B / 2. Генерация',
+           ['Та же H100 №2', 'Кэши первой итерации', 'Prefill: 2048', 'CUDA graphs', 'Gemma assistant'])
+    d.connect(first, second)
+    d.text(48, 505, 'ПОСЛЕ РУЧНЫХ ОПТИМИЗАЦИЙ', 19, MUTED, True)
+    platform = d.card(48, 536, 528, 132, '3. Gemma через AI Inference',
+                      ['H100 №1, параметры второй итерации'])
+    qwen = d.card(624, 536, 528, 132, '4. Qwen через AI Inference',
+                  ['Обе H100, TP2 и MTP'], LILAC, PURPLE)
+    d.connect(platform, qwen, color=PURPLE)
+    d.footer('На 128 GiB RAM запускаем полные конфигурации последовательно. Для совместного запуска нужен запас.')
     d.save()
 
 

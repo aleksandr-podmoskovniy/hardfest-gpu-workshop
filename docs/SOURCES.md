@@ -6,7 +6,7 @@
 
 - [vLLM 0.30.0: optimization](https://docs.vllm.ai/en/v0.30.0/configuration/optimization/) — планировщик, chunked prefill и настройка памяти.
 - [vLLM 0.30.0: KV offloading](https://docs.vllm.ai/en/v0.30.0/features/kv_offloading_usage/) — выгрузка KV-кэша и объём памяти коннектора.
-- [vLLM 0.30.0: speculative decoding](https://docs.vllm.ai/en/v0.30.0/features/speculative_decoding/) — Gemma assistant через MTP.
+- [vLLM 0.30.0: MTP и Gemma assistant](https://docs.vllm.ai/en/v0.30.0/features/speculative_decoding/mtp/) — метод MTP, отдельные веса assistant и общий KV с основной Gemma.
 - [vLLM 0.30.0: metrics](https://docs.vllm.ai/en/v0.30.0/usage/metrics/) — метрики времени обработки запросов. Имена и метки сверяйте с ответом `/metrics` своего сервера.
 - [vLLM 0.30.0: bench serve](https://docs.vllm.ai/en/v0.30.0/cli/bench/serve/) — официальный нагрузочный клиент.
 - [NVIDIA MIG deployment considerations](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/deployment-considerations.html) — ограничения MIG и MPS.
