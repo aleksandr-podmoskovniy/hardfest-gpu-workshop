@@ -185,7 +185,16 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec "deployment/hf-gemma-$SLO
       --save-result --result-dir /runtime/bench --result-filename "$SERIES.json"
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec "deployment/hf-gemma-$SLOT" -- \
   cat "/runtime/bench/$SERIES.json" > "results/hardfest/$SERIES/result.json"
+jq -e '
+  .failed == 0 and .completed == 8
+  and .total_input_tokens == (8 * 32768)
+  and .total_output_tokens == (8 * 2048)
+' "results/hardfest/$SERIES/result.json"
 ```
+
+`vllm bench` может завершиться с кодом 0 при ошибках запросов или оборванной генерации.
+Проверка JSON выше должна вернуть `true`; иначе серия не годится для сравнения скорости.
+Сохраните отчёт и проверьте логи, перезапуски Pod и ECC до следующей нагрузки.
 
 Это синтетическая пробная серия, не проверка качества и не устойчивый p95. CLI делает предварительный запрос: серию нельзя целиком называть холодной. Здесь клиент расходует CPU/RAM проверяемого Pod; для итогового сравнения вынесите его на одну отдельную CPU-ноду и повторите тест не менее трёх раз в одинаковых условиях. [Методика](labs/01-ab.md).
 
