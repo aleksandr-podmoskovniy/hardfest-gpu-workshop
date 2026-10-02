@@ -18,6 +18,10 @@ requests:
       deviceClassName: {{ .Values.dra.deviceClassName | quote }}
       allocationMode: ExactCount
       count: {{ .Values.dra.count }}
+      {{- with .Values.dra.selectors }}
+      selectors:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.dra.capacity }}
       capacity:
         {{- toYaml . | nindent 8 }}

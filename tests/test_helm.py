@@ -127,6 +127,26 @@ class HelmProfiles(unittest.TestCase):
             self.assertEqual(base["Service"], obj["Service"])
             self.assertEqual(base["Deployment"]["spec"]["selector"], obj["Deployment"]["spec"]["selector"])
 
+    def test_device_selectors_are_optional_and_change_claim_identity(self):
+        before = checker.render(ROOT / "values/gemma-b.yaml")
+        selectors = [{"cel": {"expression": 'device.driver == "gpu.example.com"'}}]
+        after = self.render_override({"dra": {"selectors": selectors}})
+        request = lambda x: x["ResourceClaimTemplate"]["spec"]["spec"]["devices"]["requests"][0]["exactly"]
+        self.assertNotIn("selectors", request(before))
+        self.assertEqual(request(after)["selectors"], selectors)
+        self.assertEqual(request(after)["count"], request(before)["count"])
+        self.assertEqual(request(after)["deviceClassName"], request(before)["deviceClassName"])
+        name = after["ResourceClaimTemplate"]["metadata"]["name"]
+        self.assertNotEqual(name, before["ResourceClaimTemplate"]["metadata"]["name"])
+        self.assertEqual(after["Deployment"]["spec"]["template"]["spec"]["resourceClaims"][0]["resourceClaimTemplateName"], name)
+
+    def test_device_selector_schema_rejects_invalid_shapes(self):
+        for selectors in ({}, [""], [{}], [{"cel": {}}],
+                          [{"cel": {"expression": ""}}],
+                          [{"cel": {"expression": True}}]):
+            with self.subTest(selectors=selectors):
+                self.render_override({"dra": {"selectors": selectors}}, success=False)
+
     def test_rejects_unpinned_image_bad_types_and_unsafe_flags(self):
         for values in ({"image": "vllm/vllm-openai:latest"}, {"replicaCount": 2},
                        {"dra": {"count": 1.5}}, {"vllm": {"enforce-eager": "false"}},

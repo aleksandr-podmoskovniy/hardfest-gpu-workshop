@@ -9,6 +9,7 @@ tolerations: []
 dra:
   deviceClassName: REPLACE_GENERATED_DEVICECLASS
   count: 1
+  selectors: []
   capacity: {}
   config: []
 modelVolumes: []

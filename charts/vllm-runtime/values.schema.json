@@ -76,6 +76,29 @@
         "capacity": {
           "type": "object"
         },
+        "selectors": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["cel"],
+            "properties": {
+              "cel": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["expression"],
+                "properties": {
+                  "expression": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10240
+                  }
+                }
+              }
+            }
+          }
+        },
         "config": {
           "type": "array",
           "items": {

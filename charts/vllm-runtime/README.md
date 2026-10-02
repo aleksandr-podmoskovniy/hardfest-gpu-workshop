@@ -44,6 +44,7 @@ helm template hf-gemma-b charts/vllm-runtime -n hardfest-demo -f values/gemma-b.
 - `replicaCount` — 0 или 1; по умолчанию 0.
 - `image` — образ с digest, не плавающий tag.
 - `dra` — существующий DeviceClass, количество, capacity и driver-specific config.
+- `dra.selectors` — необязательные CEL-фильтры устройств из этого класса, например по UUID для повторяемого теста. Имена атрибутов берутся из ResourceSlice установленного драйвера; отсутствующие атрибуты проверяйте через `has()`.
 - `modelVolumes` — готовые PVC и пути весов; mount только read-only.
 - `resources`, `shmSize` — согласованный бюджет процесса и CPU KV.
 - `nodeSelector`, `tolerations`, `imagePullSecrets` — привязка к площадке.
