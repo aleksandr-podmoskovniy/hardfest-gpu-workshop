@@ -1,0 +1,10 @@
+models:
+  - name: gemma-4-31b
+    repository: google/gemma-4-31B-it
+    revision: 842da3794eaa0b77d5f08bae87a17459d91ff475
+  - name: gemma-4-31b-assistant
+    repository: google/gemma-4-31B-it-assistant
+    revision: 627c5ec1458b9086b841a91e0512fd31fd2fbbf1
+  - name: qwen3-8-flash-next-nvfp4
+    repository: nvidia/Qwen3.8-Flash-Next-NVFP4
+    revision: fc694b54fb0174e0913e6adf86691ef85a4ead47

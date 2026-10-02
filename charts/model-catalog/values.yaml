@@ -1,0 +1,2 @@
+# Empty by default: importing a model downloads and stores its weights.
+models: []

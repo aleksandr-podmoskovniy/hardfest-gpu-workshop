@@ -1,0 +1,23 @@
+{{- $names := dict -}}
+{{- range .Values.models }}
+{{- if hasKey $names .name }}
+{{- fail (printf "duplicate model name: %s" .name) }}
+{{- end }}
+{{- $_ := set $names .name true }}
+---
+apiVersion: ai.deckhouse.io/v1alpha1
+kind: Model
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+    helm.sh/resource-policy: keep
+spec:
+  source:
+    url: {{ printf "https://huggingface.co/%s/tree/%s" .repository .revision | quote }}
+    {{- with .authSecretName }}
+    authSecretRef:
+      name: {{ . | quote }}
+    {{- end }}
+{{- end }}

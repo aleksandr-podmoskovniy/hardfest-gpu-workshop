@@ -1,0 +1,5 @@
+apiVersion: v2
+name: model-catalog
+description: Pinned model artifacts managed by Deckhouse ai-models
+type: application
+version: 0.1.0
