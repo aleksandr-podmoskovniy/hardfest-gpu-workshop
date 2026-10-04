@@ -23,6 +23,8 @@ type ownerAPI struct {
 	creates, coreCalls, deletes     int
 	failPost, hideKeys, failPricing bool
 	failList                        bool
+	quotaStatus                     int
+	quotaPatch                      func(object)
 }
 
 func ownerPolicy(c Config) object {
@@ -131,6 +133,27 @@ func (a *ownerAPI) handler(t *testing.T) http.HandlerFunc {
 			a.prices = append(a.prices, body)
 			w.WriteHeader(201)
 			respond(object{"pricing_override": body})
+		case r.URL.Path == "/api/governance/virtual-keys/quota" && r.Method == "GET":
+			if r.Header.Get("Authorization") != "" || r.Header.Get("x-bf-vk") == "" {
+				t.Error("quota must use only the personal VK credential")
+				w.WriteHeader(401)
+				return
+			}
+			if a.quotaStatus != 0 {
+				w.WriteHeader(a.quotaStatus)
+				return
+			}
+			for _, key := range a.keys {
+				if key["value"] == r.Header.Get("x-bf-vk") {
+					quota := quotaFixture(a.cfg, key)
+					if a.quotaPatch != nil {
+						a.quotaPatch(quota)
+					}
+					respond(quota)
+					return
+				}
+			}
+			w.WriteHeader(401)
 		case strings.HasPrefix(r.URL.Path, "/api/governance/virtual-keys"):
 			a.coreCalls++
 			w.WriteHeader(404) // Reproduce stale DAC visibility, including PUT.
@@ -262,6 +285,7 @@ func TestOwnerLegacyFourteenKeysKeepIdentityAndSpend(t *testing.T) {
 		key["name"] = "Legacy display name " + user.ID
 		key["description"] = b.marker() + user.ID // Legacy description is preserved.
 		key["team_id"] = b.cfg.TeamID
+		key["budgets"], key["rate_limit"] = []object{}, nil // Actual migrated owner DTO.
 		api.keys = append(api.keys, key)
 	}
 	before, _ := json.Marshal(api.keys)

@@ -217,7 +217,7 @@ func (b *Bridge) ensureOwnerKey(ctx context.Context, u User) (credential, error)
 	if _, ok := key["is_active"].(bool); !ok {
 		return credential{}, errors.New("owner key activation state missing")
 	}
-	if err := b.validateOwnerKey(key); err != nil {
+	if err := b.validateOwnerQuota(ctx, key); err != nil {
 		return credential{}, err
 	}
 	if err := b.ensurePricing(ctx, result.ID); err != nil {
@@ -250,5 +250,5 @@ func (b *Bridge) confirmOwnerKey(ctx context.Context, userID string, credential 
 		}
 	}
 	return len(matched) == 1 && matched[0]["is_active"] == true && stringValue(matched[0]["id"]) == credential.ID &&
-		stringValue(matched[0]["value"]) == credential.Value && b.validateOwnerKey(matched[0]) == nil
+		stringValue(matched[0]["value"]) == credential.Value && b.validateOwnerQuota(ctx, matched[0]) == nil
 }
