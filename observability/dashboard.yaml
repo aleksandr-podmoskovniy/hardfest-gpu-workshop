@@ -24,7 +24,7 @@ spec:
           }
         ]
       },
-      "description": "Скорость, очередь, prefill, decode и KV-кэш каждого vLLM-сервиса. Namespace и Service разделяют реплики с одинаковой моделью. GPU-панели показывают устройства выбранных узлов, а не потребление конкретного сервиса. Bifrost измеряется отдельно.",
+      "description": "Метрики одного выбранного кластера: namespace/service разделяют модели и варианты. Inventory остаётся видимым до запуска движка. Для второго кластера откройте его Console и Prometheus. GPU-панели показывают устройства узла, не отдельные MPS-процессы.",
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 1,
@@ -66,10 +66,10 @@ spec:
               "type": "prometheus",
               "uid": "${ds_prometheus}"
             },
-            "definition": "label_values(vllm:cache_config_info,namespace)",
+            "definition": "query_result(max by(namespace,service)(kube_service_labels{label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\"} or label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:cache_config_info))",
             "query": {
-              "qryType": 1,
-              "query": "label_values(vllm:cache_config_info,namespace)",
+              "qryType": 3,
+              "query": "query_result(max by(namespace,service)(kube_service_labels{label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\"} or label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:cache_config_info))",
               "refId": "namespace"
             },
             "hide": 0,
@@ -86,9 +86,9 @@ spec:
               ]
             },
             "options": [],
-            "refresh": 1,
+            "refresh": 2,
             "sort": 1,
-            "regex": "",
+            "regex": "/namespace=\"([^\"]+)\"/",
             "skipUrlSync": false
           },
           {
@@ -99,10 +99,10 @@ spec:
               "type": "prometheus",
               "uid": "${ds_prometheus}"
             },
-            "definition": "label_values(vllm:cache_config_info{namespace=~\"$namespace\"},service)",
+            "definition": "query_result(max by(namespace,service)(kube_service_labels{label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",namespace=~\"$namespace\"} or label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\"}))",
             "query": {
-              "qryType": 1,
-              "query": "label_values(vllm:cache_config_info{namespace=~\"$namespace\"},service)",
+              "qryType": 3,
+              "query": "query_result(max by(namespace,service)(kube_service_labels{label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",namespace=~\"$namespace\"} or label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\"}))",
               "refId": "inference_service"
             },
             "hide": 0,
@@ -119,9 +119,9 @@ spec:
               ]
             },
             "options": [],
-            "refresh": 1,
+            "refresh": 2,
             "sort": 1,
-            "regex": "",
+            "regex": "/service=\"([^\"]+)\"/",
             "skipUrlSync": false
           },
           {
@@ -165,10 +165,10 @@ spec:
               "type": "prometheus",
               "uid": "${ds_prometheus}"
             },
-            "definition": "label_values(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"},pod)",
+            "definition": "query_result(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or label_replace(kube_pod_labels{namespace=~\"$namespace\",label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",label_app_kubernetes_io_name=~\"$inference_service\",label_app_kubernetes_io_name!=\"\"},\"service\",\"$1\",\"label_app_kubernetes_io_name\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))",
             "query": {
-              "qryType": 1,
-              "query": "label_values(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"},pod)",
+              "qryType": 3,
+              "query": "query_result(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or label_replace(kube_pod_labels{namespace=~\"$namespace\",label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",label_app_kubernetes_io_name=~\"$inference_service\",label_app_kubernetes_io_name!=\"\"},\"service\",\"$1\",\"label_app_kubernetes_io_name\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))",
               "refId": "pod"
             },
             "hide": 0,
@@ -185,9 +185,9 @@ spec:
               ]
             },
             "options": [],
-            "refresh": 1,
+            "refresh": 2,
             "sort": 1,
-            "regex": "",
+            "regex": "/pod=\"([^\"]+)\"/",
             "skipUrlSync": false
           },
           {
@@ -198,10 +198,10 @@ spec:
               "type": "prometheus",
               "uid": "${ds_prometheus}"
             },
-            "definition": "label_values(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\"},node)",
+            "definition": "label_values(DCGM_FI_DEV_XID_ERRORS,node)",
             "query": {
               "qryType": 1,
-              "query": "label_values(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\"},node)",
+              "query": "label_values(DCGM_FI_DEV_XID_ERRORS,node)",
               "refId": "node"
             },
             "hide": 0,
@@ -221,20 +221,21 @@ spec:
             "refresh": 1,
             "sort": 1,
             "regex": "",
-            "skipUrlSync": false
+            "skipUrlSync": false,
+            "description": "Узел выбранного кластера. GPU-панели не зависят от готовности модели и показывают всю нагрузку узла."
           },
           {
             "name": "gateway_namespace",
-            "label": "Bifrost namespace",
+            "label": "Gateway namespace",
             "type": "query",
             "datasource": {
               "type": "prometheus",
               "uid": "${ds_prometheus}"
             },
-            "definition": "label_values(bifrost_success_requests_total,namespace)",
+            "definition": "label_values({__name__=~\"bifrost_(success_requests_total|error_requests_total|upstream_requests_total)\"},namespace)",
             "query": {
               "qryType": 1,
-              "query": "label_values(bifrost_success_requests_total,namespace)",
+              "query": "label_values({__name__=~\"bifrost_(success_requests_total|error_requests_total|upstream_requests_total)\"},namespace)",
               "refId": "gateway_namespace"
             },
             "hide": 0,
@@ -258,16 +259,16 @@ spec:
           },
           {
             "name": "gateway_model",
-            "label": "Bifrost model",
+            "label": "Gateway model",
             "type": "query",
             "datasource": {
               "type": "prometheus",
               "uid": "${ds_prometheus}"
             },
-            "definition": "label_values(bifrost_success_requests_total{namespace=~\"$gateway_namespace\"},model)",
+            "definition": "label_values({__name__=~\"bifrost_(success_requests_total|error_requests_total|upstream_requests_total)\",namespace=~\"$gateway_namespace\"},model)",
             "query": {
               "qryType": 1,
-              "query": "label_values(bifrost_success_requests_total{namespace=~\"$gateway_namespace\"},model)",
+              "query": "label_values({__name__=~\"bifrost_(success_requests_total|error_requests_total|upstream_requests_total)\",namespace=~\"$gateway_namespace\"},model)",
               "refId": "gateway_model"
             },
             "hide": 0,
@@ -307,7 +308,7 @@ spec:
       "timezone": "browser",
       "title": "AI Inference / Live performance",
       "uid": "ai-inference-live",
-      "version": 3,
+      "version": 4,
       "weekStart": "",
       "panels": [
         {
@@ -328,7 +329,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "Наличие метрик и результат последнего scrape. UP=1 не означает успешный ответ модели. При отсутствии scrape более часа строка исчезнет.",
+          "description": "UP — все обнаруженные endpoint отдают /metrics. DOWN — хотя бы один endpoint недоступен. NO SCRAPE — цели нет: модель запускается, остановлена или сбор не настроен. Это не результат запроса к модели; намеренно выключенный сервис не объявляется неисправным.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -355,19 +356,28 @@ spec:
                       "color": "green",
                       "index": 1,
                       "text": "UP"
+                    },
+                    "-1": {
+                      "color": "gray",
+                      "index": 2,
+                      "text": "NO SCRAPE"
                     }
                   },
                   "type": "value"
                 }
               ],
               "max": 1,
-              "min": 0,
+              "min": -1,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
+                    "color": "gray",
                     "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 0
                   },
                   {
                     "color": "green",
@@ -423,7 +433,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "max by(namespace,service,pod)(up{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}) and on(namespace,service,pod) max by(namespace,service,pod)(max_over_time(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[1h]))",
+              "expr": "(min by(namespace,service)(up{namespace=~\"$namespace\",service=~\"$inference_service\"}) and on(namespace,service) max by(namespace,service)(kube_service_labels{label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",namespace=~\"$namespace\",service=~\"$inference_service\"} or label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"})) or on(namespace,service) (-1 * max by(namespace,service)(kube_service_labels{label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",namespace=~\"$namespace\",service=~\"$inference_service\"} or label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))",
               "format": "table",
               "instant": true,
               "legendFormat": "{{namespace}} / {{service}}",
@@ -442,14 +452,12 @@ spec:
                 "indexByName": {
                   "namespace": 0,
                   "service": 1,
-                  "pod": 2,
-                  "Value": 3
+                  "Value": 2
                 },
                 "renameByName": {
                   "namespace": "Namespace",
                   "service": "Service",
-                  "pod": "Pod",
-                  "Value": "Scrape UP"
+                  "Value": "Scrape"
                 }
               }
             }
@@ -2145,7 +2153,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "description": "Все видимые DCGM-устройства узлов, выбранных фильтром GPU node. На общем узле сюда входит чужая нагрузка. Выбор Namespace и Service не ограничивает эти GPU-метрики.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2199,7 +2207,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "max(((DCGM_FI_DEV_GPU_UTIL{Hostname=~\"$node\"} <= 100) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
+              "expr": "max((DCGM_FI_DEV_GPU_UTIL{node=~\"$node\"} >= 0) and (DCGM_FI_DEV_GPU_UTIL{node=~\"$node\"} <= 100))",
               "legendFormat": "GPU utilization",
               "range": false,
               "refId": "A",
@@ -2214,7 +2222,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "description": "Все видимые DCGM-устройства узлов, выбранных фильтром GPU node. На общем узле сюда входит чужая нагрузка. Выбор Namespace и Service не ограничивает эти GPU-метрики.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2260,7 +2268,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "max(((DCGM_FI_DEV_POWER_USAGE{Hostname=~\"$node\"} < 1000000000) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
+              "expr": "max((DCGM_FI_DEV_POWER_USAGE{node=~\"$node\"} >= 0) and (DCGM_FI_DEV_POWER_USAGE{node=~\"$node\"} < 1000000000))",
               "legendFormat": "Peak GPU power",
               "range": false,
               "refId": "A",
@@ -2275,7 +2283,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "description": "Все видимые DCGM-устройства узлов, выбранных фильтром GPU node. На общем узле сюда входит чужая нагрузка. Выбор Namespace и Service не ограничивает эти GPU-метрики.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2329,7 +2337,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "max(((DCGM_FI_DEV_GPU_TEMP{Hostname=~\"$node\"} < 1000000000) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
+              "expr": "max((DCGM_FI_DEV_GPU_TEMP{node=~\"$node\"} >= 0) and (DCGM_FI_DEV_GPU_TEMP{node=~\"$node\"} < 1000000000))",
               "legendFormat": "Peak GPU temperature",
               "range": false,
               "refId": "A",
@@ -2344,7 +2352,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "description": "Память физических GPU выбранных узлов: записи с GPU_I_ID исключены. Если экспортёр отдаёт только MIG или не отдаёт FB_USED, данных нет. Это не сумма памяти MPS-процессов.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2391,7 +2399,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(((DCGM_FI_DEV_FB_USED{Hostname=~\"$node\"} < 1000000000) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}))))) * 1024 * 1024",
+              "expr": "sum(max by(node,UUID) ((DCGM_FI_DEV_FB_USED{node=~\"$node\",GPU_I_ID=\"\"} >= 0) and (DCGM_FI_DEV_FB_USED{node=~\"$node\",GPU_I_ID=\"\"} < 1000000000))) * 1024 * 1024",
               "legendFormat": "GPU framebuffer used",
               "range": false,
               "refId": "A",
@@ -2406,7 +2414,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "description": "MIG идентифицируется GPU_I_ID и GPU_I_PROFILE. Метрики физической GPU и MIG различаются; отсутствие GPU_UTIL на MIG не заменяется нулём. Это не атрибуция MPS-процессу.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2473,20 +2481,27 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "max by (Hostname, device) (((DCGM_FI_DEV_GPU_UTIL{Hostname=~\"$node\"} <= 100) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
-              "legendFormat": "{{Hostname}} / {{device}} / engine",
+              "expr": "max by(node,UUID,device,GPU_I_ID,GPU_I_PROFILE) ((DCGM_FI_DEV_GPU_UTIL{node=~\"$node\"} >= 0) and (DCGM_FI_DEV_GPU_UTIL{node=~\"$node\"} <= 100))",
+              "legendFormat": "{{node}} / {{device}} / MIG {{GPU_I_ID}} {{GPU_I_PROFILE}} / util",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "100 * max by (Hostname, device) (((DCGM_FI_PROF_PIPE_TENSOR_ACTIVE{Hostname=~\"$node\"} <= 1) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
-              "legendFormat": "{{Hostname}} / {{device}} / tensor",
+              "expr": "100 * max by(node,UUID,device,GPU_I_ID,GPU_I_PROFILE) ((DCGM_FI_PROF_PIPE_TENSOR_ACTIVE{node=~\"$node\"} >= 0) and (DCGM_FI_PROF_PIPE_TENSOR_ACTIVE{node=~\"$node\"} <= 1))",
+              "legendFormat": "{{node}} / {{device}} / MIG {{GPU_I_ID}} {{GPU_I_PROFILE}} / tensor",
               "range": true,
               "refId": "B"
+            },
+            {
+              "editorMode": "code",
+              "expr": "100 * max by(node,UUID,device,GPU_I_ID,GPU_I_PROFILE) ((DCGM_FI_PROF_GR_ENGINE_ACTIVE{node=~\"$node\"} >= 0) and (DCGM_FI_PROF_GR_ENGINE_ACTIVE{node=~\"$node\"} <= 1))",
+              "legendFormat": "{{node}} / {{device}} / MIG {{GPU_I_ID}} {{GPU_I_PROFILE}} / engine",
+              "range": true,
+              "refId": "C"
             }
           ],
-          "title": "GPU engines",
+          "title": "GPU / MIG engine and tensor activity",
           "type": "timeseries"
         },
         {
@@ -2494,7 +2509,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "description": "Все видимые DCGM-устройства узлов, выбранных фильтром GPU node. На общем узле сюда входит чужая нагрузка. Выбор Namespace и Service не ограничивает эти GPU-метрики.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2642,15 +2657,15 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "max by (Hostname, device) (((DCGM_FI_DEV_POWER_USAGE{Hostname=~\"$node\"} < 1000000000) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
-              "legendFormat": "{{Hostname}} / {{device}} / power",
+              "expr": "max by(node,UUID,device) ((DCGM_FI_DEV_POWER_USAGE{node=~\"$node\"} >= 0) and (DCGM_FI_DEV_POWER_USAGE{node=~\"$node\"} < 1000000000))",
+              "legendFormat": "{{node}} / {{device}} / power",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "max by (Hostname, device) (((DCGM_FI_DEV_GPU_TEMP{Hostname=~\"$node\"} < 1000000000) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))))",
-              "legendFormat": "{{Hostname}} / {{device}} / temperature",
+              "expr": "max by(node,UUID,device) ((DCGM_FI_DEV_GPU_TEMP{node=~\"$node\"} >= 0) and (DCGM_FI_DEV_GPU_TEMP{node=~\"$node\"} < 1000000000))",
+              "legendFormat": "{{node}} / {{device}} / temperature",
               "range": true,
               "refId": "B"
             }
@@ -2663,7 +2678,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "Все видимые DCGM устройства узлов, на которых размещены выбранные vLLM pod. На общем узле сюда входит чужая нагрузка. Фильтр Service не выделяет долю GPU конкретного сервиса.",
+          "description": "GPU-память относится к физическим картам узлов из фильтра GPU node и не изолирует расход сервиса. RAM относится к выбранным Pod с учётом Namespace, Service и Runtime pod. Отсутствующие метрики памяти GPU не заменяются нулём.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2730,14 +2745,14 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "max by (Hostname, device) (((DCGM_FI_DEV_FB_USED{Hostname=~\"$node\"} < 1000000000) and on (node) max by (node) ((max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}))))) * 1024 * 1024",
-              "legendFormat": "{{Hostname}} / {{device}} / GPU",
+              "expr": "max by(node,UUID,device) ((DCGM_FI_DEV_FB_USED{node=~\"$node\",GPU_I_ID=\"\"} >= 0) and (DCGM_FI_DEV_FB_USED{node=~\"$node\",GPU_I_ID=\"\"} < 1000000000)) * 1024 * 1024",
+              "legendFormat": "{{node}} / {{device}} / GPU",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, sum by (namespace,pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))",
+              "expr": "topk($series_limit, sum by (namespace,pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or label_replace(kube_pod_labels{namespace=~\"$namespace\",label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",label_app_kubernetes_io_name=~\"$inference_service\",label_app_kubernetes_io_name!=\"\"},\"service\",\"$1\",\"label_app_kubernetes_io_name\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))))",
               "legendFormat": "{{pod}} / RAM",
               "range": true,
               "refId": "B"
@@ -2831,7 +2846,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, sum by (namespace,pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}[$__rate_interval])) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))",
+              "expr": "topk($series_limit, sum by (namespace,pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}[$__rate_interval])) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or label_replace(kube_pod_labels{namespace=~\"$namespace\",label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",label_app_kubernetes_io_name=~\"$inference_service\",label_app_kubernetes_io_name!=\"\"},\"service\",\"$1\",\"label_app_kubernetes_io_name\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))))",
               "legendFormat": "{{pod}}",
               "range": true,
               "refId": "A"
@@ -2912,7 +2927,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, sum by (namespace,pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))",
+              "expr": "topk($series_limit, sum by (namespace,pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or label_replace(kube_pod_labels{namespace=~\"$namespace\",label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",label_app_kubernetes_io_name=~\"$inference_service\",label_app_kubernetes_io_name!=\"\"},\"service\",\"$1\",\"label_app_kubernetes_io_name\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))))",
               "legendFormat": "{{pod}}",
               "range": true,
               "refId": "A"
@@ -2993,7 +3008,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, sum by (namespace,pod) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\",pod=~\"$pod\"}[$__range])) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})))",
+              "expr": "topk($series_limit, sum by (namespace,pod) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\",pod=~\"$pod\"}[$__range])) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or label_replace(kube_pod_labels{namespace=~\"$namespace\",label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",label_app_kubernetes_io_name=~\"$inference_service\",label_app_kubernetes_io_name!=\"\"},\"service\",\"$1\",\"label_app_kubernetes_io_name\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))))",
               "legendFormat": "{{pod}}",
               "range": true,
               "refId": "A"
@@ -3867,7 +3882,7 @@ spec:
         },
         {
           "id": 220,
-          "title": "Bifrost: отдельные метрики шлюза",
+          "title": "ai-mcp-gateway: отдельные метрики шлюза",
           "type": "row",
           "collapsed": false,
           "gridPos": {
@@ -4116,6 +4131,100 @@ spec:
             }
           ],
           "title": "Gateway: выходные токены/s",
+          "type": "timeseries"
+        },
+        {
+          "id": 230,
+          "type": "row",
+          "title": "Диагностика GPU независимо от состояния движка",
+          "collapsed": false,
+          "panels": [],
+          "gridPos": {
+            "x": 0,
+            "y": 121,
+            "w": 24,
+            "h": 1
+          }
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Последний код Xid драйвера, не счётчик ECC. Ненулевой код требует проверки журнала драйвера и nvidia-smi -q. Ноль после рестарта не доказывает устранение неисправности.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 1,
+              "min": 0,
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 122,
+            "w": 24,
+            "h": 8
+          },
+          "id": 231,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "max by(node,UUID,device,GPU_I_ID,GPU_I_PROFILE) ((DCGM_FI_DEV_XID_ERRORS{node=~\"$node\"} >= 0) and (DCGM_FI_DEV_XID_ERRORS{node=~\"$node\"} < 1000))",
+              "legendFormat": "{{node}} / {{device}} / MIG {{GPU_I_ID}} {{GPU_I_PROFILE}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Last Xid by GPU / MIG",
           "type": "timeseries"
         }
       ]

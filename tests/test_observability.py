@@ -63,3 +63,32 @@ class Observability(unittest.TestCase):
         app = (ROOT / "argocd/observability.yaml").read_text()
         self.assertNotIn("automated:", app)
         self.assertNotIn("finalizers:", app)
+
+    def test_inventory_survives_missing_runtime_metrics(self):
+        variables = {v["name"]: v for v in self.dashboard["templating"]["list"]}
+        for name in ("namespace", "inference_service", "pod"):
+            self.assertIn("kube_pod_labels", variables[name]["definition"])
+            self.assertIn("label_ai_inference_deckhouse_io_managed", variables[name]["definition"])
+        inventory = self.panels[1]
+        self.assertIn("kube_service_labels", inventory["targets"][0]["expr"])
+        self.assertIn("-1 *", inventory["targets"][0]["expr"])
+        mapping = inventory["fieldConfig"]["defaults"]["mappings"][0]["options"]
+        self.assertEqual(mapping["-1"]["text"], "NO SCRAPE")
+        self.assertEqual(mapping["-1"]["color"], "gray")
+
+    def test_gpu_diagnostics_do_not_depend_on_runtime_health(self):
+        for panel_id in (27, 28, 29, 30, 31, 32, 231):
+            for target in self.panels[panel_id]["targets"]:
+                self.assertNotIn("cache_config_info", target["expr"])
+                self.assertIn("$node", target["expr"])
+        for target in self.panels[31]["targets"]:
+            self.assertIn("GPU_I_ID", target["expr"])
+            self.assertIn("GPU_I_PROFILE", target["expr"])
+        self.assertIn("DCGM_FI_PROF_GR_ENGINE_ACTIVE", self.panels[31]["targets"][2]["expr"])
+        self.assertIn("не счётчик ECC", self.panels[231]["description"])
+
+    def test_gateway_is_discoverable_when_only_errors_exist(self):
+        variables = {v["name"]: v for v in self.dashboard["templating"]["list"]}
+        for name in ("gateway_namespace", "gateway_model"):
+            self.assertIn("error_requests_total", variables[name]["definition"])
+            self.assertIn("upstream_requests_total", variables[name]["definition"])
