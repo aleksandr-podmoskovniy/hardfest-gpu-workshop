@@ -28,6 +28,23 @@ class DiagramConnections(unittest.TestCase):
         text = " ".join(root.itertext())
         self.assertLess(text.index("обе H100 свободны"), text.index("Рецепт Qwen"))
 
+    def test_a30_stays_with_webui_and_includes_whisper(self):
+        root = ET.parse(ROOT / "assets" / "01-topology.svg").getroot()
+        nodes = {" ".join(n.itertext()).strip(): n for n in root.iter(SVG + "text")}
+        self.assertIn("КЛАСТЕР WEBUI + A30", nodes)
+        self.assertIn("КЛАСТЕР H100 + ШЛЮЗ", nodes)
+        self.assertLess(float(nodes["A30 / 2 × 2g.12gb"].attrib["x"]),
+                        float(nodes["ai-mcp-gateway"].attrib["x"]))
+        self.assertIn("Whisper large-v3: отдельно", " ".join(root.itertext()))
+
+    def test_a30_target_has_two_partitions_and_three_services(self):
+        root = ET.parse(ROOT / "assets" / "08-mig-mps.svg").getroot()
+        text = " ".join(root.itertext())
+        for label in ("Эмбеддер 4B", "Реранкер 4B", "Whisper large-v3", "три InferenceService"):
+            self.assertIn(label, text)
+        self.assertEqual(text.count("2g.12gb"), 2)
+        self.assertNotIn("1g.6gb", text)
+
     def test_ports_follow_card_bounds_with_equal_clearance(self):
         card = Box(40, 80, 240, 120)
         self.assertEqual(card.port("left"), (34, 140))

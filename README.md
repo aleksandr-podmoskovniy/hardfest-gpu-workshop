@@ -472,8 +472,9 @@ max-model-len: 131072
 ### 1. Проверить классы и существующие заявки
 
 ```bash
-kubectl --context "$GPU_CONTEXT" get deviceclasses
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims
+export MIG_CONTEXT=REPLACE_A30_CLUSTER_CONTEXT
+kubectl --context "$MIG_CONTEXT" get deviceclasses
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get pods,resourceclaims
 ```
 
 ### 2. Разместить сервисы и посмотреть геометрию
@@ -486,6 +487,20 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims
 4. Сопоставить заявку, геометрию и фактическое потребление.
 
 MPS 25% — ограничение активных потоков, не обещание четверти измеренной производительности. Второй MPS-клиент и совместный реранкер требуют отдельного замера; не считаем их проверенными по одному успешному эмбеддеру.
+
+Учебные профили выше показывают механизм выделения. Для постоянной схемы создаём
+три InferenceService с моделями из ai-models в кластере A30:
+
+| Сервис | Модель | Размещение |
+| --- | --- | --- |
+| Эмбеддер | Qwen3 Embedding 4B W4A16 | Общий `2g.12gb`, MPS 46%, лимит 5 GiB |
+| Реранкер | Qwen3 Reranker 4B W4A16 | Тот же MIG UUID, MPS 46%, лимит 5 GiB |
+| Распознавание речи | Whisper large-v3 | Второй `2g.12gb`, без MPS |
+
+Таблица задаёт целевое размещение, а не результат теста. Перед переключением
+шлюза проверяем ответы всех трёх API и одновременную нагрузку на эмбеддер
+и реранкер. В [дашборде A30](docs/OBSERVABILITY.md) сверяем ошибки, задержки
+и активность разделов. Старые сервисы отключаем только после этих проверок.
 
 ![Документ проходит эмбеддер и индекс, поиск возвращает фрагменты, реранкер уточняет порядок, LLM формирует ответ](assets/16-rag.svg)
 

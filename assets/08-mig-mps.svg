@@ -45,46 +45,37 @@
 <text x="48" y="324" font-size="26" fill="#17243b" text-anchor="start" font-weight="700">
 <tspan x="48" dy="0">A30 / 24 GB</tspan>
 </text>
-<rect x="48" y="352" width="264" height="230" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="72" y="394" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="216">
-<tspan x="72" dy="0">1g.6gb</tspan>
+<rect x="48" y="352" width="536" height="244" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="394" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="488">
+<tspan x="72" dy="0">2g.12gb + MPS</tspan>
 </text>
-<text x="72" y="434" font-size="22" fill="#17243b" text-anchor="start" data-max-width="216">
-<tspan x="72" dy="0">Эмбеддер</tspan>
-<tspan x="72" dy="30.799999999999997">Отдельный MIG</tspan>
+<rect x="72" y="429" width="232" height="100" rx="12" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="96" y="465" font-size="24" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="184">
+<tspan x="96" dy="0">Эмбеддер 4B</tspan>
 </text>
-<rect x="332" y="352" width="536" height="230" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="356" y="394" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="488">
-<tspan x="356" dy="0">2g.12gb + MPS</tspan>
+<text x="96" y="499" font-size="20" fill="#17243b" text-anchor="start" data-max-width="184">
+<tspan x="96" dy="0">46% / 5 GiB</tspan>
 </text>
-<rect x="352" y="429" width="238" height="100" rx="12" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="376" y="471" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="190">
-<tspan x="376" dy="0">Клиент 1</tspan>
+<rect x="328" y="429" width="232" height="100" rx="12" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="352" y="465" font-size="24" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="184">
+<tspan x="352" dy="0">Реранкер 4B</tspan>
 </text>
-<text x="376" y="511" font-size="22" fill="#17243b" text-anchor="start" data-max-width="190">
-<tspan x="376" dy="0">Эмбеддер</tspan>
+<text x="352" y="499" font-size="20" fill="#17243b" text-anchor="start" data-max-width="184">
+<tspan x="352" dy="0">46% / 5 GiB</tspan>
 </text>
-<rect x="610" y="429" width="238" height="100" rx="12" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="634" y="471" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="190">
-<tspan x="634" dy="0">Клиент 2</tspan>
+<text x="316" y="568" font-size="23" fill="#7041b8" text-anchor="middle">
+<tspan x="316" dy="0">Один MIG UUID у обоих</tspan>
 </text>
-<text x="634" y="511" font-size="22" fill="#17243b" text-anchor="start" data-max-width="190">
-<tspan x="634" dy="0">Реранкер</tspan>
+<rect x="616" y="352" width="536" height="244" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="640" y="394" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="488">
+<tspan x="640" dy="0">2g.12gb</tspan>
 </text>
-<text x="600" y="561" font-size="23" fill="#7041b8" text-anchor="middle">
-<tspan x="600" dy="0">Один MIG UUID у обоих</tspan>
-</text>
-<rect x="888" y="352" width="264" height="230" rx="12" fill="#eaf7f3" stroke="#087d78" stroke-width="1.5" stroke-dasharray="7 5"/>
-<text x="912" y="394" font-size="25" fill="#087d78" text-anchor="start" font-weight="700">
-<tspan x="912" dy="0">Свободно</tspan>
-</text>
-<text x="912" y="439" font-size="23" fill="#17243b" text-anchor="start">
-<tspan x="912" dy="0">1g из 4</tspan>
-<tspan x="912" dy="32.199999999999996">Для следующей</tspan>
-<tspan x="912" dy="32.199999999999996">заявки</tspan>
+<text x="640" y="434" font-size="22" fill="#17243b" text-anchor="start" data-max-width="488">
+<tspan x="640" dy="0">Whisper large-v3</tspan>
+<tspan x="640" dy="30.799999999999997">Отдельный MIG UUID</tspan>
 </text>
 <text x="48" y="643" font-size="27" fill="#17243b" text-anchor="start" font-weight="700">
-<tspan x="48" dy="0">Завершение Pod → освобождение claim → проверка геометрии</tspan>
+<tspan x="48" dy="0">Две MIG-партиции → три InferenceService</tspan>
 </text>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">

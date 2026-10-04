@@ -117,28 +117,28 @@ class Diagram:
 
 def topology():
     d = Diagram('01-topology', 'Один чат — несколько моделей',
-                'Open WebUI и GPU-сервисы могут работать в разных кластерах.')
-    d.rect(48, 160, 320, 518)
-    d.rect(404, 160, 748, 518, '#ffffff')
-    d.text(72, 194, 'КЛАСТЕР WEBUI', 18, MUTED, True)
-    d.text(428, 194, 'GPU-КЛАСТЕР', 18, MUTED, True)
-    webui = d.card(72, 328, 272, 156, 'Open WebUI', ['Чат и голос', 'Пароль / OIDC'])
-    knowledge = d.card(72, 542, 272, 112, 'Базы знаний', ['Документы и индекс'], MINT, TEAL)
-    gateway = d.card(428, 328, 280, 156, 'ai-mcp-gateway', ['Ключи, квоты и учёт', 'Маршруты моделей'])
+                'WebUI и A30 — в одном кластере; шлюз и H100 — в другом.')
+    d.rect(48, 160, 428, 518)
+    d.rect(516, 160, 636, 518, '#ffffff')
+    d.text(72, 194, 'КЛАСТЕР WEBUI + A30', 18, MUTED, True)
+    d.text(540, 194, 'КЛАСТЕР H100 + ШЛЮЗ', 18, MUTED, True)
+    webui = d.card(72, 216, 380, 130, 'Open WebUI', ['Чат и голос', 'Пароль / OIDC'])
+    knowledge = d.card(72, 396, 380, 110, 'Базы знаний', ['Документы и индекс'], MINT, TEAL)
+    gateway = d.card(540, 216, 588, 130, 'ai-mcp-gateway', ['Ключи, квоты и учёт', 'Маршруты моделей'])
     d.connect(webui, knowledge, ('bottom', 'top'), color=TEAL)
     d.connect(webui, gateway)
-    services = [
-        d.card(800, 214, 328, 92, 'Gemma A — Base', ['H100 №1'], compact=True),
-        d.card(800, 330, 328, 92, 'Gemma B — Tune', ['H100 №2'], compact=True),
-        d.card(800, 446, 328, 92, 'A30 / MIG + MPS', ['Эмбеддер и реранкер'], MINT, TEAL, compact=True),
-        d.card(800, 562, 328, 92, 'Kubernetes MCP', ['Только администратор'], LILAC, PURPLE, compact=True),
-    ]
-    d.connector([gateway.port('right'), (752, 406)], arrow=False)
-    d.connector([(752, 260), (752, 608)], arrow=False)
-    for service, color, dashed in zip(services, (BLUE, BLUE, TEAL, PURPLE), (False, False, False, True)):
-        y = service.port('left')[1]
-        d.connector([(752, y), service.port('left')], color, dashed)
-    d.footer('Gemma сменяется на Qwen. Чат, пользователи и базы знаний остаются.')
+    gemma_a = d.card(540, 414, 258, 108, 'Gemma A — Base', ['H100 №1'], compact=True)
+    gemma_b = d.card(870, 414, 258, 108, 'Gemma B — Tune', ['H100 №2'], compact=True)
+    mcp = d.card(870, 554, 258, 108, 'Kubernetes MCP', ['Администратор'], LILAC, PURPLE, compact=True)
+    a30 = d.card(72, 536, 380, 126, 'A30 / 2 × 2g.12gb',
+                 ['Эмбеддер + реранкер: MPS', 'Whisper large-v3: отдельно'], MINT, TEAL)
+    d.connector([gateway.port('bottom'), (834, 382)], arrow=False)
+    for service in (gemma_a, gemma_b):
+        x = service.port('top')[0]
+        d.connector([(834, 382), (x, 382), service.port('top')])
+    d.connector([(834, 382), (834, 608), mcp.port('left')], PURPLE, dash=True)
+    d.connector([gateway.port('left', .8), (496, 320), (496, 599), a30.port('right')], TEAL)
+    d.footer('Gemma сменяется на Qwen TP2. Чат, пользователи и базы знаний остаются.')
     d.save()
 
 
@@ -289,15 +289,13 @@ def mig():
         if x < 912:
             d.connect(node, Box(x+288, 160, 240, 110))
     d.text(48, 324, 'A30 / 24 GB', 26, bold=True)
-    d.card(48, 352, 264, 230, '1g.6gb', ['Эмбеддер', 'Отдельный MIG'])
-    d.card(332, 352, 536, 230, '2g.12gb + MPS', (), LILAC, PURPLE)
-    d.card(352, 429, 238, 100, 'Клиент 1', ['Эмбеддер'], '#ffffff', PURPLE)
-    d.card(610, 429, 238, 100, 'Клиент 2', ['Реранкер'], '#ffffff', PURPLE)
-    d.text(600, 561, 'Один MIG UUID у обоих', 23, PURPLE, anchor='middle')
-    d.rect(888, 352, 264, 230, MINT, TEAL, dash=True)
-    d.text(912, 394, 'Свободно', 25, TEAL, True)
-    d.text(912, 439, ['1g из 4', 'Для следующей', 'заявки'], 23)
-    d.text(48, 643, 'Завершение Pod → освобождение claim → проверка геометрии', 27, bold=True)
+    d.card(48, 352, 536, 244, '2g.12gb + MPS', (), LILAC, PURPLE)
+    d.card(72, 429, 232, 100, 'Эмбеддер 4B', ['46% / 5 GiB'], '#ffffff', PURPLE, compact=True)
+    d.card(328, 429, 232, 100, 'Реранкер 4B', ['46% / 5 GiB'], '#ffffff', PURPLE, compact=True)
+    d.text(316, 568, 'Один MIG UUID у обоих', 23, PURPLE, anchor='middle')
+    d.card(616, 352, 536, 244, '2g.12gb',
+           ['Whisper large-v3', 'Отдельный MIG UUID'], MINT, TEAL)
+    d.text(48, 643, 'Две MIG-партиции → три InferenceService', 27, bold=True)
     d.footer('Целевая геометрия. MPS ограничивает ресурсы, MIG даёт аппаратную изоляцию.')
     d.save()
 
