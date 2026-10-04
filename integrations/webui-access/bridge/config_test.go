@@ -32,19 +32,27 @@ func TestConfigurationIsNotTiedToModelOrProviderCount(t *testing.T) {
 
 func TestInvalidConfigurationFailsClosed(t *testing.T) {
 	cases := map[string]func(*Config){
-		"model outside policy": func(c *Config) { c.ChatModels = []string{"vllm/private"} },
-		"wildcard keys":        func(c *Config) { c.Providers[0].KeyIDs = []string{"*"} },
-		"wildcard models":      func(c *Config) { c.Providers[0].Models = []string{"*"} },
-		"duplicate provider":   func(c *Config) { c.Providers[1].Provider = "vllm" },
-		"http gateway":         func(c *Config) { c.GatewayURL = "http://gateway.example.com" },
-		"query":                func(c *Config) { c.GatewayURL += "?token=invalid" },
-		"path":                 func(c *Config) { c.GatewayURL += "/v1" },
-		"empty namespace":      func(c *Config) { c.ManagedBy = "" },
-		"mode":                 func(c *Config) { c.ProvisioningMode = "automatic-fallback" },
-		"no budget":            func(c *Config) { c.BudgetUSD = 0 },
-		"zero rpm":             func(c *Config) { c.RequestsPerMinute = 0 },
-		"concurrency":          func(c *Config) { c.MaxConcurrentPerUser = 9 },
-		"duplicate pricing":    func(c *Config) { c.Pricing = []PriceRule{{"a", 1, 2}, {"a", 2, 3}} },
+		"model outside policy":   func(c *Config) { c.ChatModels = []string{"vllm/private"} },
+		"wildcard keys":          func(c *Config) { c.Providers[0].KeyIDs = []string{"*"} },
+		"wildcard models":        func(c *Config) { c.Providers[0].Models = []string{"*"} },
+		"duplicate provider":     func(c *Config) { c.Providers[1].Provider = "vllm" },
+		"http gateway":           func(c *Config) { c.GatewayURL = "http://gateway.example.com" },
+		"query":                  func(c *Config) { c.GatewayURL += "?token=invalid" },
+		"path":                   func(c *Config) { c.GatewayURL += "/v1" },
+		"empty namespace":        func(c *Config) { c.ManagedBy = "" },
+		"mode":                   func(c *Config) { c.ProvisioningMode = "automatic-fallback" },
+		"issuer without profile": func(c *Config) { c.IssuerUserID = "issuer-user-id" },
+		"profile without issuer": func(c *Config) { c.IssuerProfileID = 2 },
+		"issuer path":            func(c *Config) { c.IssuerUserID = "../bad"; c.IssuerProfileID = 2 },
+		"native reserve": func(c *Config) {
+			c.IssuerUserID = "issuer-user-id"
+			c.IssuerProfileID = 2
+			c.ProvisioningMode = "reserve"
+		},
+		"no budget":         func(c *Config) { c.BudgetUSD = 0 },
+		"zero rpm":          func(c *Config) { c.RequestsPerMinute = 0 },
+		"concurrency":       func(c *Config) { c.MaxConcurrentPerUser = 9 },
+		"duplicate pricing": func(c *Config) { c.Pricing = []PriceRule{{"a", 1, 2}, {"a", 2, 3}} },
 	}
 	for name, change := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -61,6 +69,19 @@ func TestInvalidConfigurationFailsClosed(t *testing.T) {
 		if _, err := readConfig(strings.NewReader(body)); err == nil {
 			t.Fatal("accepted legacy or trailing config")
 		}
+	}
+}
+
+func TestNativeIssuanceRequiresExplicitPair(t *testing.T) {
+	c := configured()
+	if c.nativeIssuance() {
+		t.Fatal("legacy installation silently changed mode")
+	}
+	c.IssuerUserID, c.IssuerProfileID = "issuer-user-id", 2
+	raw, _ := json.Marshal(c)
+	got, err := readConfig(strings.NewReader(string(raw)))
+	if err != nil || !got.nativeIssuance() || got.IssuerProfileID != 2 {
+		t.Fatal("native issuer pair did not round-trip")
 	}
 }
 

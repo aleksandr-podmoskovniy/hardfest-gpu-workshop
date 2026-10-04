@@ -101,6 +101,7 @@ func (b *Bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fail(w, 403, "model not allowed")
 		return
 	}
+	removeEmptyToolFields(body)
 	for _, field := range []string{"tools", "functions", "tool_choice", "function_call", "fallbacks", "provider", "key_id", "mcp_tools", "mcp_servers"} {
 		if _, ok = body[field]; ok {
 			fail(w, 403, "request capability not allowed")
@@ -213,16 +214,41 @@ func (b *Bridge) inference(ctx context.Context, id string, key credential, data 
 		if _, err := b.user(ctx, id); err != nil {
 			return resp, nil
 		}
-		var out struct {
-			Key object `json:"virtual_key"`
-		}
-		if err := b.gateway(ctx, "GET", "/api/governance/virtual-keys/"+url.PathEscape(key.ID), nil, &out); err != nil ||
-			out.Key["is_active"] != true || b.keyUserID(out.Key) != id || stringValue(out.Key["id"]) != key.ID ||
-			stringValue(out.Key["value"]) != key.Value || b.validateKey(out.Key) != nil {
+		if !b.confirmKey(ctx, id, key) {
 			return resp, nil
 		}
 		resp.Body.Close()
 	}
+}
+
+// Only no-op representations are removed. Nonempty tools, automatic selection
+// and every gateway/MCP control field still reach the deny list above.
+func removeEmptyToolFields(body object) {
+	for _, name := range []string{"tools", "functions"} {
+		value, exists := body[name]
+		items, array := value.([]any)
+		if exists && (value == nil || (array && len(items) == 0)) {
+			delete(body, name)
+		}
+	}
+	for _, name := range []string{"tool_choice", "function_call"} {
+		value, exists := body[name]
+		if exists && (value == nil || value == "none") {
+			delete(body, name)
+		}
+	}
+}
+
+func (b *Bridge) confirmKey(ctx context.Context, id string, key credential) bool {
+	if b.cfg.nativeIssuance() {
+		return b.confirmOwnerKey(ctx, id, key)
+	}
+	var out struct {
+		Key object `json:"virtual_key"`
+	}
+	return b.gateway(ctx, "GET", "/api/governance/virtual-keys/"+url.PathEscape(key.ID), nil, &out) == nil &&
+		out.Key["is_active"] == true && b.keyUserID(out.Key) == id && stringValue(out.Key["id"]) == key.ID &&
+		stringValue(out.Key["value"]) == key.Value && b.validateKey(out.Key) == nil
 }
 
 type replayBody struct {

@@ -1,6 +1,6 @@
 replicaCount: 0
 name: webui-access
-image: registry.example.com/integrations/webui-access:0.2.1
+image: registry.example.com/integrations/webui-access:0.3.0
 imagePullSecrets: []
 existingSecret: webui-access
 caConfigMap: ""
@@ -11,6 +11,8 @@ config:
   managed_by: REPLACE_WITH_INSTALLATION_ID
   key_name_prefix: Open WebUI
   provisioning_mode: create
+  issuer_user_id: ""
+  issuer_user_access_profile_id: 0
   chat_models: []
   providers: []
   pricing: []

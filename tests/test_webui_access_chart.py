@@ -72,6 +72,32 @@ class WebUIAccessChart(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("allowed_models", result.stderr)
 
+    def test_native_issuer_is_explicit_and_changes_checksum(self):
+        before = self.render()
+        after = self.render("--set", "config.issuer_user_id=issuer-owner-id",
+                            "--set", "config.issuer_user_access_profile_id=7")
+        config = json.loads(after["ConfigMap"]["data"]["config.json"])
+        self.assertEqual(config["issuer_user_id"], "issuer-owner-id")
+        self.assertEqual(config["issuer_user_access_profile_id"], 7)
+        self.assertEqual(after["Deployment"]["spec"]["replicas"], 0)
+        checksum = lambda x: x["Deployment"]["spec"]["template"]["metadata"]["annotations"]["checksum/config"]
+        self.assertNotEqual(checksum(before), checksum(after))
+
+    def test_partial_invalid_or_reserved_native_issuer_is_rejected(self):
+        cases = [
+            ["--set", "config.issuer_user_id=issuer-owner-id"],
+            ["--set", "config.issuer_user_access_profile_id=7"],
+            ["--set", "config.issuer_user_id=../bad", "--set", "config.issuer_user_access_profile_id=7"],
+            ["--set", "config.issuer_user_id=issuer-owner-id", "--set", "config.issuer_user_access_profile_id=-1"],
+            ["--set", "config.issuer_user_id=issuer-owner-id", "--set", "config.issuer_user_access_profile_id=7",
+             "--set", "config.provisioning_mode=reserve"],
+        ]
+        for options in cases:
+            with self.subTest(options=options):
+                result = subprocess.run(["helm", "template", "access", str(CHART), *options],
+                                        capture_output=True, text=True)
+                self.assertNotEqual(result.returncode, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

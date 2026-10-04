@@ -90,6 +90,11 @@ func fixture(t *testing.T, role string) (*Bridge, *int) {
 		if req["user"] != subjectID {
 			t.Error("wrong user attribution")
 		}
+		for _, field := range []string{"tools", "functions", "tool_choice", "function_call", "mcp_tools", "mcp_servers"} {
+			if _, present := req[field]; present {
+				t.Error("tool control forwarded")
+			}
+		}
 		w.Header().Set("Content-Type", "text/event-stream")
 		io.WriteString(w, "data: {\"choices\":[]}\n\ndata: [DONE]\n\n")
 	}))
@@ -125,7 +130,7 @@ func TestParticipantMCPDenied(t *testing.T) {
 	for _, tc := range []struct{ name, path, body string }{
 		{"mcp", "/mcp", `{}`}, {"management", "/api/governance/virtual-keys", `{}`},
 		{"model", "/v1/chat/completions", `{"model":"vllm/other","messages":[]}`},
-		{"tools", "/v1/chat/completions", `{"model":"vllm/a","messages":[],"tools":[]}`},
+		{"tools", "/v1/chat/completions", `{"model":"vllm/a","messages":[],"tools":[{"type":"function"}]}`},
 		{"fallback", "/v1/chat/completions", `{"model":"vllm/a","messages":[],"fallbacks":["other"]}`},
 		{"query", "/v1/chat/completions?key_id=other", `{"model":"vllm/a","messages":[]}`},
 	} {
@@ -135,6 +140,41 @@ func TestParticipantMCPDenied(t *testing.T) {
 			b.ServeHTTP(w, request(b, tc.path, tc.body))
 			if w.Code != 403 || *calls != 0 {
 				t.Fatal("capability escaped")
+			}
+		})
+	}
+}
+
+func TestEmptyWebUIToolFieldsAreRemoved(t *testing.T) {
+	for _, fields := range []string{
+		`"tools":[],"tool_choice":"none"`, `"functions":[],"function_call":"none"`,
+		`"tools":null,"tool_choice":null,"functions":null,"function_call":null`,
+	} {
+		t.Run(fields, func(t *testing.T) {
+			b, calls := fixture(t, "user")
+			w := httptest.NewRecorder()
+			b.ServeHTTP(w, request(b, "/v1/chat/completions", `{"model":"vllm/a","messages":[],`+fields+`}`))
+			if w.Code != 200 || *calls != 1 {
+				t.Fatal("safe empty WebUI tools rejected")
+			}
+		})
+	}
+}
+
+func TestToolNormalizationDoesNotGrantCapabilities(t *testing.T) {
+	for _, fields := range []string{
+		`"tools":{},"tool_choice":"none"`, `"tools":""`, `"tools":[{}]`,
+		`"functions":[{}]`, `"tools":[],"tool_choice":"auto"`,
+		`"tool_choice":{"type":"function","function":{"name":"run"}}`,
+		`"function_call":"auto"`, `"mcp_tools":[]`, `"mcp_servers":null`,
+		`"provider":null`, `"key_id":""`, `"fallbacks":[]`,
+	} {
+		t.Run(fields, func(t *testing.T) {
+			b, calls := fixture(t, "user")
+			w := httptest.NewRecorder()
+			b.ServeHTTP(w, request(b, "/v1/chat/completions", `{"model":"vllm/a","messages":[],`+fields+`}`))
+			if w.Code != 403 || *calls != 0 {
+				t.Fatal("capability escaped normalization")
 			}
 		})
 	}

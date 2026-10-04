@@ -58,6 +58,9 @@ func stringValue(v any) string {
 }
 
 func (b *Bridge) listKeys(ctx context.Context) ([]object, error) {
+	if b.cfg.nativeIssuance() {
+		return b.ownerKeys(ctx)
+	}
 	var keys []object
 	for page := 0; page < 100; page++ {
 		var out struct {
@@ -285,6 +288,9 @@ func (b *Bridge) validateKey(key object) error {
 func (b *Bridge) ensureKey(ctx context.Context, u User) (credential, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	if b.cfg.nativeIssuance() {
+		return b.ensureOwnerKey(ctx, u)
+	}
 	if key, ok := b.keys[u.ID]; ok {
 		return key, nil
 	}

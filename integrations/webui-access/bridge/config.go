@@ -27,6 +27,8 @@ type Config struct {
 	WebUIURL             string           `json:"webui_url"`
 	GatewayURL           string           `json:"gateway_url"`
 	ServiceUserID        string           `json:"service_user_id"`
+	IssuerUserID         string           `json:"issuer_user_id,omitempty"`
+	IssuerProfileID      uint             `json:"issuer_user_access_profile_id,omitempty"`
 	TeamID               string           `json:"team_id,omitempty"`
 	ManagedBy            string           `json:"managed_by"`
 	KeyNamePrefix        string           `json:"key_name_prefix"`
@@ -94,6 +96,11 @@ func (c Config) validate() error {
 	if c.ProvisioningMode != "create" && c.ProvisioningMode != "reserve" {
 		return fmt.Errorf("provisioning_mode must be create or reserve")
 	}
+	if c.IssuerUserID != "" || c.IssuerProfileID != 0 {
+		if !userIDPattern.MatchString(c.IssuerUserID) || c.IssuerProfileID == 0 || c.ProvisioningMode != "create" {
+			return fmt.Errorf("native issuance requires issuer_user_id, positive issuer_user_access_profile_id and create mode")
+		}
+	}
 	if len(c.Providers) == 0 || !explicitList(c.ChatModels) {
 		return fmt.Errorf("providers and chat_models are required")
 	}
@@ -155,9 +162,19 @@ func (b *Bridge) keyUserID(key object) string {
 	if !strings.HasPrefix(desc, b.marker()) {
 		return ""
 	}
-	id, _, _ := strings.Cut(strings.TrimPrefix(desc, b.marker()), ";")
+	id, rest, hasSuffix := strings.Cut(strings.TrimPrefix(desc, b.marker()), ";")
 	if !userIDPattern.MatchString(id) {
 		return ""
 	}
+	if hasSuffix {
+		if !strings.HasPrefix(rest, " name=") || strings.Contains(rest, ";") {
+			return ""
+		}
+		if _, err := url.QueryUnescape(strings.TrimPrefix(rest, " name=")); err != nil {
+			return ""
+		}
+	}
 	return id
 }
+
+func (c Config) nativeIssuance() bool { return c.IssuerUserID != "" && c.IssuerProfileID != 0 }

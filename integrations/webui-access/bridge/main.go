@@ -31,6 +31,7 @@ type Bridge struct {
 	mu                                                sync.Mutex
 	keys                                              map[string]credential
 	createAttempted                                   map[string]bool
+	issued                                            map[string]issuedKey
 	activeMu                                          sync.Mutex
 	activeUsers                                       map[string]int
 	activeTotal                                       int

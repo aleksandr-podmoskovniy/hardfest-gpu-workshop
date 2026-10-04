@@ -53,6 +53,7 @@ func (b *Bridge) reconcile(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	var failures []error
 	for _, k := range keys {
 		id := b.keyUserID(k)
 		if id == "" {
@@ -66,11 +67,12 @@ func (b *Bridge) reconcile(ctx context.Context) error {
 				continue
 			}
 			if err = b.gateway(ctx, "PUT", "/api/governance/virtual-keys/"+url.PathEscape(stringValue(k["id"])), object{"is_active": false}, nil); err != nil {
-				return err
+				// Native child DELETE only unlinks ownership; it is not revocation.
+				// Report the failed core revoke, but do not starve unrelated approvals.
+				failures = append(failures, fmt.Errorf("user %s: key revocation not confirmed: %w", id, err))
 			}
 		}
 	}
-	var failures []error
 	for _, u := range approved {
 		// Recheck immediately before issuance: approval may have changed during the scan.
 		current, err := b.user(ctx, u.ID)

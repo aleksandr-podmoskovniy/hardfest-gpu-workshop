@@ -1,6 +1,11 @@
 {{- if or (lt (int .Values.replicaCount) 0) (gt (int .Values.replicaCount) 1) }}
 {{- fail "webui-access supports zero or one replica; multi-replica key allocation needs a distributed lock" }}
 {{- end }}
+{{- if or .Values.config.issuer_user_id (gt (int (.Values.config.issuer_user_access_profile_id | default 0)) 0) }}
+{{- if or (not .Values.config.issuer_user_id) (le (int (.Values.config.issuer_user_access_profile_id | default 0)) 0) (ne .Values.config.provisioning_mode "create") }}
+{{- fail "native issuance requires issuer_user_id, positive issuer_user_access_profile_id and create mode" }}
+{{- end }}
+{{- end }}
 {{- if eq (int .Values.replicaCount) 1 }}
 {{- if or (not .Values.config.providers) (not .Values.config.chat_models) (contains "REPLACE" (.Values.config | toJson)) }}
 {{- fail "configure explicit providers, chat models and installation identity before starting webui-access" }}
