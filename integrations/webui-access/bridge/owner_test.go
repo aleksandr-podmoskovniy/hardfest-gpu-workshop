@@ -149,7 +149,6 @@ func ownerFixture(t *testing.T) (*Bridge, *ownerAPI) {
 	a := &ownerAPI{cfg: cfg, users: []User{{ID: subjectID, Name: "Example User", Role: "user"}}, keys: []object{}}
 	a.profile = ownerPolicy(cfg)
 	a.profile["id"], a.profile["user_id"], a.profile["is_active"] = cfg.IssuerProfileID, cfg.IssuerUserID, true
-	a.profile["team_id"] = cfg.TeamID
 	for _, field := range []string{"mcp_tool_groups", "mcp_servers", "mcp_tool_overrides"} {
 		a.profile[field] = []object{}
 	}
@@ -295,7 +294,7 @@ func TestOwnerPendingAndFailedRevokeDoNotIssueOrUnlink(t *testing.T) {
 }
 
 func TestOwnerProfileDriftPreventsIssuance(t *testing.T) {
-	for _, field := range []string{"owner", "id", "inactive", "team", "models", "wildcard-keys", "mcp", "budget", "rate"} {
+	for _, field := range []string{"owner", "id", "inactive", "team", "customer", "models", "wildcard-keys", "mcp", "budget", "rate"} {
 		t.Run(field, func(t *testing.T) {
 			b, api := ownerFixture(t)
 			switch field {
@@ -307,6 +306,8 @@ func TestOwnerProfileDriftPreventsIssuance(t *testing.T) {
 				api.profile["is_active"] = false
 			case "team":
 				api.profile["team_id"] = "other-team"
+			case "customer":
+				api.profile["customer_id"] = "unexpected-customer"
 			case "models":
 				api.profile["provider_configs"].([]object)[0]["all_models_allowed"] = true
 			case "wildcard-keys":
@@ -326,7 +327,7 @@ func TestOwnerProfileDriftPreventsIssuance(t *testing.T) {
 }
 
 func TestOwnerKeyPolicyAndMarkerDriftFailClosed(t *testing.T) {
-	for _, field := range []string{"models", "keys", "mcp", "budget", "duplicate", "inactive"} {
+	for _, field := range []string{"models", "keys", "mcp", "budget", "duplicate", "inactive", "team", "customer"} {
 		t.Run(field, func(t *testing.T) {
 			b, api := ownerFixture(t)
 			key := api.key(api.users[0])
@@ -344,11 +345,65 @@ func TestOwnerKeyPolicyAndMarkerDriftFailClosed(t *testing.T) {
 				api.keys = append(api.keys, api.key(api.users[0]))
 			case "inactive":
 				key["is_active"] = false
+			case "team":
+				key["team_id"] = "other-team"
+			case "customer":
+				key["customer_id"] = "unexpected-customer"
 			}
 			if _, err := b.ensureKey(context.Background(), api.users[0]); err == nil || api.creates != 0 || len(b.keys) != 0 {
 				t.Fatal("key drift granted access or rotated key")
 			}
 		})
+	}
+}
+
+func TestNativeTenantFieldsDoNotFabricateAssociation(t *testing.T) {
+	for _, value := range []any{nil, "", "expected-team-id"} {
+		t.Run(fmt.Sprintf("team=%v", value), func(t *testing.T) {
+			b, api := ownerFixture(t)
+			key := api.key(api.users[0])
+			key["team_id"] = value
+			key["customer_id"] = nil
+			before, _ := json.Marshal(key)
+			if err := b.validateOwnerKey(key); err != nil {
+				t.Fatal(err)
+			}
+			after, _ := json.Marshal(key)
+			if string(before) != string(after) {
+				t.Fatal("validation fabricated a tenant field")
+			}
+		})
+	}
+	for _, field := range []string{"team_id", "customer_id"} {
+		for _, value := range []any{true, 17, object{"value": "expected-team-id"}} {
+			t.Run(fmt.Sprintf("%s=%v", field, value), func(t *testing.T) {
+				b, api := ownerFixture(t)
+				key := api.key(api.users[0])
+				key[field] = value
+				if b.validateOwnerKey(key) == nil {
+					t.Fatal("invalid tenant field accepted")
+				}
+			})
+		}
+	}
+}
+
+func TestCoreModeStillRequiresConfiguredTeam(t *testing.T) {
+	b, api := ownerFixture(t)
+	native := api.key(api.users[0])
+	core, err := nativePolicy(native)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, value := range []any{nil, "", "other-team"} {
+		core["team_id"] = value
+		if b.validateKey(core) == nil {
+			t.Fatal("core exact team requirement loosened")
+		}
+	}
+	core["team_id"] = b.cfg.TeamID
+	if err := b.validateKey(core); err != nil {
+		t.Fatal(err)
 	}
 }
 

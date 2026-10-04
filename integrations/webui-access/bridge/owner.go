@@ -99,25 +99,32 @@ func (b *Bridge) verifyIssuerProfile(ctx context.Context) error {
 			return errors.New("issuer profile grants MCP access")
 		}
 	}
-	policy, err := nativePolicy(profile)
-	if err != nil {
-		return err
-	}
-	return b.validateKey(policy)
+	return b.validateOwnerKey(profile)
 }
 
-// verifyIssuerProfile checks the team's profile association separately. The
-// native child DTO can omit key.team_id; this is not a direct VK/team binding.
+// Relational native profiles do not persist team/customer ownership. Validate
+// the same exact limits and access policy without inventing that association.
+// A legacy key's nonempty team must still match; customer scoping is unsupported.
 func (b *Bridge) validateOwnerKey(key object) error {
+	for _, field := range []string{"team_id", "customer_id"} {
+		value, present := key[field]
+		if !present || value == nil {
+			continue
+		}
+		actual, ok := value.(string)
+		expected := ""
+		if field == "team_id" {
+			expected = b.cfg.TeamID
+		}
+		if !ok || (actual != "" && actual != expected) {
+			return errors.New("unexpected native tenant association")
+		}
+	}
 	policy, err := nativePolicy(key)
 	if err != nil {
 		return err
 	}
-	if team := stringValue(policy["team_id"]); team != "" && team != b.cfg.TeamID {
-		return errors.New("key team policy drift")
-	}
-	policy["team_id"] = b.cfg.TeamID
-	return b.validateKey(policy)
+	return b.validateKeyPolicy(policy)
 }
 
 func (b *Bridge) createOwnerKey(ctx context.Context, u User) (object, error) {

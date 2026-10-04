@@ -228,6 +228,10 @@ func (b *Bridge) validateKey(key object) error {
 	if b.cfg.TeamID != "" && stringValue(key["team_id"]) != b.cfg.TeamID {
 		return errors.New("key team policy drift")
 	}
+	return b.validateKeyPolicy(key)
+}
+
+func (b *Bridge) validateKeyPolicy(key object) error {
 	var v struct {
 		Providers []struct {
 			Provider      string   `json:"provider"`
