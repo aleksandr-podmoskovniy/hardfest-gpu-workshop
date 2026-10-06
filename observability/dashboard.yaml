@@ -664,7 +664,7 @@ spec:
                   }
                 ]
               },
-              "unit": "ops"
+              "unit": "suffix:tok/s"
             },
             "overrides": []
           },
@@ -726,7 +726,7 @@ spec:
                   }
                 ]
               },
-              "unit": "ops"
+              "unit": "suffix:tok/s"
             },
             "overrides": []
           },
@@ -1026,7 +1026,7 @@ spec:
               },
               "decimals": 1,
               "min": 0,
-              "unit": "ops"
+              "unit": "suffix:tok/s"
             },
             "overrides": []
           },
@@ -2515,21 +2515,21 @@ spec:
             {
               "editorMode": "code",
               "expr": "max by(node,UUID,device,GPU_I_ID,GPU_I_PROFILE) ((DCGM_FI_DEV_GPU_UTIL{node=~\"$node\"} >= 0) and (DCGM_FI_DEV_GPU_UTIL{node=~\"$node\"} <= 100))",
-              "legendFormat": "{{node}} / {{device}} / MIG {{GPU_I_ID}} {{GPU_I_PROFILE}} / util",
+              "legendFormat": "{{node}} / {{device}} {{GPU_I_ID}} {{GPU_I_PROFILE}} / util",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
               "expr": "100 * max by(node,UUID,device,GPU_I_ID,GPU_I_PROFILE) ((DCGM_FI_PROF_PIPE_TENSOR_ACTIVE{node=~\"$node\"} >= 0) and (DCGM_FI_PROF_PIPE_TENSOR_ACTIVE{node=~\"$node\"} <= 1))",
-              "legendFormat": "{{node}} / {{device}} / MIG {{GPU_I_ID}} {{GPU_I_PROFILE}} / tensor",
+              "legendFormat": "{{node}} / {{device}} {{GPU_I_ID}} {{GPU_I_PROFILE}} / tensor",
               "range": true,
               "refId": "B"
             },
             {
               "editorMode": "code",
               "expr": "100 * max by(node,UUID,device,GPU_I_ID,GPU_I_PROFILE) ((DCGM_FI_PROF_GR_ENGINE_ACTIVE{node=~\"$node\"} >= 0) and (DCGM_FI_PROF_GR_ENGINE_ACTIVE{node=~\"$node\"} <= 1))",
-              "legendFormat": "{{node}} / {{device}} / MIG {{GPU_I_ID}} {{GPU_I_PROFILE}} / engine",
+              "legendFormat": "{{node}} / {{device}} {{GPU_I_ID}} {{GPU_I_PROFILE}} / engine",
               "range": true,
               "refId": "C"
             }
@@ -3999,7 +3999,7 @@ spec:
             {
               "editorMode": "code",
               "expr": "max by(node,UUID,device,GPU_I_ID,GPU_I_PROFILE) ((DCGM_FI_DEV_XID_ERRORS{node=~\"$node\"} >= 0) and (DCGM_FI_DEV_XID_ERRORS{node=~\"$node\"} < 1000))",
-              "legendFormat": "{{node}} / {{device}} / MIG {{GPU_I_ID}} {{GPU_I_PROFILE}}",
+              "legendFormat": "{{node}} / {{device}} {{GPU_I_ID}} {{GPU_I_PROFILE}}",
               "range": true,
               "refId": "A"
             }

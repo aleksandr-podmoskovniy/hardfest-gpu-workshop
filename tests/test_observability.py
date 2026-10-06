@@ -9,6 +9,12 @@ from check_manifests import render
 
 
 class Observability(unittest.TestCase):
+    def test_token_units_and_whole_gpu_legends_are_unambiguous(self):
+        text = (ROOT / "observability/dashboard.yaml").read_text()
+        self.assertNotIn('"unit": "ops"', text)
+        self.assertGreaterEqual(text.count('"unit": "suffix:tok/s"'), 3)
+        self.assertNotIn('/ MIG {{GPU_I_ID}}', text)
+
     def test_native_connector_directions_and_units_are_preserved(self):
         text = (ROOT / "observability/dashboard.yaml").read_text()
         self.assertIn("vllm:kv_offload_total_bytes_total", text)

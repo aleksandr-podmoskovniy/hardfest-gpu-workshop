@@ -83,23 +83,21 @@ kubectl --context "$GPU_CONTEXT" describe node "$GPU_NODE"
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo top pods
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get events --sort-by=.lastTimestamp
 
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec deployment/hf-gemma-b -- \
-  cat /proc/meminfo
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec deployment/hf-gemma-b -- \
-  cat /sys/fs/cgroup/memory.current /sys/fs/cgroup/memory.stat /sys/fs/cgroup/memory.events
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec deployment/hf-gemma-b -- \
-  df -h /dev/shm
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo describe pod REPLACE_RUNTIME_POD
 ```
 
 | Что смотреть | Для чего |
 | --- | --- |
 | Allocatable и requests в `describe node` | Проверить возможность размещения Pod |
-| MemAvailable в `/proc/meminfo` | Оценить запас RAM узла, не лимит Pod |
-| `memory.current`, anon, file, shmem в cgroup | Разделить расход процесса, файловых страниц и shared memory |
-| `memory.events`, события Kubernetes | Найти OOM и проблемы запуска |
-| `df -h /dev/shm` | Сопоставить вместимость tmpfs и его использование |
+| `node_memory_MemAvailable_bytes` | Оценить запас RAM узла, не лимит Pod |
+| `container_memory_working_set_bytes`, `container_memory_rss`, `container_memory_cache` | Сопоставить working set, память процесса и файловый кеш; эти значения не складываются |
+| Last State / OOMKilled и события Kubernetes | Найти OOM и проблемы запуска |
+| `emptyDir.medium: Memory` и `sizeLimit` в Pod | Проверить заданную вместимость shared memory, не её текущую занятость |
 
-Проверка cgroup рассчитана на v2. Фиксируйте показатели на пиках загрузки
+Метрики смотрите на дашборде или в Prometheus. Runtime может быть distroless:
+наличие `cat`, `df` и shell внутри него не требуется. Детальный разбор cgroup
+делается отдельно на узле с административным доступом. Фиксируйте показатели на пиках загрузки
 и нагрузки; один снимок `kubectl top` их не заменяет.
 
 В опыте вытеснения CPU-кэш должен сохранять данные, которые уже не помещаются
@@ -125,11 +123,15 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec deployment/hf-gemma-b -- 
 
 | Вход + выход | BF16, 2 байта | FP8, 1 байт |
 | --- | ---: | ---: |
+| Всего 16 384 | 2,03125 GiB | 1,015625 GiB |
+| Всего 65 536 | 5,78125 GiB | 2,890625 GiB |
+| Всего 131 072 | 10,78125 GiB | 5,390625 GiB |
 | 131 072 + 2 048 | 10,9375 GiB | 5,46875 GiB |
 | Всего 262 144 | 20,78125 GiB | 10,390625 GiB |
 
-Формула реализована в [калькуляторе проекта](../scripts/kv_math.py).
-Для прохождения мастер-класса достаточно схемы и таблицы выше.
+Вывод формулы и расчёт через `awk` находятся прямо в [основном сценарии](../README.md#memory).
+[Калькулятор проекта](../scripts/kv_math.py) используется для регрессионных тестов
+арифметики, а не как обязательный инструмент участника.
 
 В таблице — полезные данные активного KV при сохранении только локального окна.
 В расчёт не входят выравнивание блоков, устройство гибридного пула, временные
@@ -140,6 +142,101 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec deployment/hf-gemma-b -- 
 > Во время вычисления рабочий KV должен помещаться в GPU-пул.
 
 Для восьми независимых историй по 133 120 токенов даже FP8 даёт 43,75 GiB активного KV. Его нужно сопоставить с реальным GPU KV-пулом после весов, буферов и графов. RAM-кэш не превращает эту память в дополнительную HBM для вычислений. [Как работает OffloadingConnector](https://docs.vllm.ai/en/v0.31.0/features/kv_offloading_usage/).
+
+## RTX: KV Gemma E2B и длинная история
+
+Параметры относятся к текстовому декодеру
+[Gemma E2B, revision 3e22461](https://huggingface.co/google/gemma-4-E2B-it/blob/3e22461f65e89153144f8adb70e3b8c2cc9845a7/config.json).
+Слоёв 35, из них последние 20 разделяют KV с более ранними. Среди первых 15 —
+3 full и 12 sliding. Собственная KV-голова одна; размерность 512 у full и 256
+у sliding, локальное окно 512. `num_attention_heads=8` в расчёт размера KV
+не подставляется. Механизм sharing реализован в
+[Gemma4Attention](https://github.com/vllm-project/vllm/blob/v0.31.0/vllm/model_executor/models/gemma4.py#L473),
+выбор размерностей — в [gemma4_layer_config](https://github.com/vllm-project/vllm/blob/v0.31.0/vllm/transformers_utils/configs/gemma4.py).
+
+Для одной истории: `2 × b × (3 × 512 × S + 12 × 256 × min(S, 512))` байт.
+BF16 при 4K: full 24 MiB + sliding 6 MiB = 30 MiB.
+
+| Всего токенов, включая ответ | BF16, 2 байта | FP8, 1 байт | Две независимые истории, FP8 |
+| --- | ---: | ---: | ---: |
+| 4 096 | 30 MiB | 15 MiB | 30 MiB |
+| 8 192 | 54 MiB | 27 MiB | 54 MiB |
+| 65 536 | 390 MiB | 195 MiB | 390 MiB |
+| 131 072 | 774 MiB | 387 MiB | 774 MiB |
+
+Расчёт полезного KV основной модели показывает, почему длинный контекст стоит
+проверять даже на 16 GiB. Но нельзя вычесть эти MiB из VRAM и объявить оставшееся
+место свободным: нужны веса, KV и рабочие буферы assistant, резерв движка.
+При TP2 KV не всегда делится пополам: одна KV-голова E2B реплицируется на ranks.
+В нашем опыте E2B работает на одной карте, а Qwen TP2 считается по своей архитектуре.
+
+<a id="verify-kv"></a>
+## От формулы к логам и графикам
+
+Три разных величины нельзя подменять друг другом:
+
+| Величина | Что она означает | Как проверить |
+| --- | --- | --- |
+| Полезные KV истории | Сохранённые K/V по архитектурной формуле | Параметры модели, фактическая длина, точность KV |
+| Выделенный GPU KV-пул | Блоки, доступные движку, включая пока свободные | Стартовый лог vLLM; отдельно смотреть использованную долю |
+| Вся память GPU | Веса, пул, буферы, graphs и другие процессы | Показатели GPU и логи memory profiling |
+
+У hybrid allocator разные размеры блоков и группы слоёв. Возможны округление
+и padding; они не обязаны давать один и тот же коэффициент для всех моделей.
+[Реализация vLLM 0.31](https://github.com/vllm-project/vllm/blob/v0.31.0/vllm/v1/core/kv_cache_utils.py#L1265).
+Формула `min(S,W)` описывает полезное состояние истории, не пик admission/prefill:
+там учитываются ещё обрабатываемые и дополнительно удерживаемые токены.
+[SlidingWindowSpec](https://github.com/vllm-project/vllm/blob/v0.31.0/vllm/v1/kv_cache_interface.py#L793).
+
+**1. Установите, что запущено.** Выберите Pod нужного сервиса, не контроллера.
+`NS=hardfest-rtx` для RTX; `hardfest-demo` для основного стенда.
+
+```bash
+export NS=hardfest-rtx
+kubectl --context "$GPU_CONTEXT" -n "$NS" get pods
+export POD=REPLACE_RUNTIME_POD
+kubectl --context "$GPU_CONTEXT" -n "$NS" get pod "$POD" \
+  -o jsonpath='{range .spec.containers[*]}{.name}{"\t"}{.image}{"\n"}{.command}{"\n"}{.args}{"\n"}{end}'
+export CONTAINER=REPLACE_RUNTIME_CONTAINER
+kubectl --context "$GPU_CONTEXT" -n "$NS" logs "$POD" -c "$CONTAINER" --tail=-1
+```
+
+У ручного Helm-профиля аргументы ссылаются на YAML в ConfigMap.
+Узнайте имя из Pod, затем прочитайте профиль через Kubernetes API:
+
+```bash
+kubectl --context "$GPU_CONTEXT" -n "$NS" get pod "$POD" \
+  -o jsonpath='{range .spec.volumes[*]}{.name}{"\t"}{.configMap.name}{"\n"}{end}'
+export PROFILE_CONFIGMAP=REPLACE_PROFILE_CONFIGMAP
+kubectl --context "$GPU_CONTEXT" -n "$NS" get configmap "$PROFILE_CONFIGMAP" \
+  -o go-template='{{index .data "profile.yaml"}}'
+```
+
+Сопоставьте ConfigMap с volumeMount `/etc/vllm` и checksum аннотацией Pod.
+Фактическое принятие параметров проверьте в startup-логах. Для AI Inference сопоставьте
+заказ, рассчитанный план и аргументы runtime. Зафиксируйте `max-model-len`,
+`max-num-seqs`, `max-num-batched-tokens`, `kv-cache-dtype`, offload и speculative config.
+
+**2. Выпишите результаты memory profiling.** Найдите сообщения о загрузке весов,
+`Available KV cache memory`, `GPU KV cache size` и `Maximum concurrency`.
+Последнее — оценка движка для указанной длины, не измеренная пропускная способность.
+Для TP2 сохраняйте данные каждого rank; не складывайте две карты в одну прозрачную VRAM.
+
+**3. Подайте известную нагрузку.** Сначала один запрос, затем два независимых,
+затем тот же префикс повторно. В benchmark сохраните фактические входные и
+выходные токены: заданный `max-model-len` не означает, что каждый запрос такой длины.
+
+На [дашборде](OBSERVABILITY.md) выберите тот же namespace/service и интервал.
+Сопоставьте `vllm:kv_cache_usage_perc`, очередь, preemption, prefix hits и
+CPU→GPU bytes. Занятость пула — доля, не GiB из формулы. Если пул выделен заранее,
+свободная VRAM в `nvidia-smi` может почти не измениться при новом запросе.
+После завершения запроса prefix cache может удерживать его блоки для reuse.
+
+**4. Объясните расхождение.** Проверьте длины, тип KV, shared layers, rounding,
+состояние prefix cache, дополнительные KV speculative decoding и пик prefill.
+Не подгоняйте формулу под занятую память. Длинный контекст принимается только
+после полного длинного запроса без OOM/рестартов; краткий ответ при лимите 128K
+доказывает доступность API, но не обработку 128K.
 
 ## Qwen TP2 после Gemma
 

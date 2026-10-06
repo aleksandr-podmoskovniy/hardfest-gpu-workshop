@@ -1,0 +1,137 @@
+{
+  "date": "2026-10-06",
+  "scope": "disposable local-password participant; no existing accounts or chats changed",
+  "signup_in_browser": true,
+  "pending_before_approval": true,
+  "personal_virtual_key_created_after_approval": true,
+  "key_creation_latency_seconds_approx": 9,
+  "configured_policy": {
+    "budget_usd": 500,
+    "reset": "24h",
+    "requests_per_minute": 10,
+    "tokens_per_minute": 200000,
+    "mcp_grants": false,
+    "input_usd_per_million": 10,
+    "output_usd_per_million": 20
+  },
+  "chat": {
+    "models": [
+      "Gemma A — Base",
+      "Gemma B — Tune"
+    ],
+    "http_status": 200,
+    "streaming": true,
+    "saved_after_reload": true,
+    "each_checked_answer_tokens": {
+      "input": 35,
+      "output": 67
+    }
+  },
+  "rag": {
+    "checked_at_utc": "2026-10-06T20:37:40.108Z",
+    "document": "self-authored fictional Polaris maintenance procedure",
+    "file_upload_and_processing_http_status": 200,
+    "expected_fact": "САПФИР-742; Thursday 03:10–03:25 UTC",
+    "answer": "Кодовое имя окна обслуживания Polaris — САПФИР-742. Работы разрешены по четвергам с 03:10 до 03:25 UTC",
+    "source_visible": true,
+    "embedding_success_counter_before_after": [
+      218,
+      247
+    ],
+    "reranker_success_counter_before_after": [
+      83,
+      142
+    ],
+    "counter_scope": "service-wide; background tasks and other users may also contribute"
+  },
+  "speech": {
+    "path": "participant WebUI transcription endpoint to Whisper",
+    "http_status": 200,
+    "source": "synthetic Russian WAV, not microphone capture",
+    "expected": "Объясни, почему длинная история переписки занимает память видеокарты. Ответь двумя предложениями.",
+    "actual": "Объясни, почему длинная история переписки занимает память видеокарты. Ответ двумя предложениями.",
+    "exact_transcription": false,
+    "microphone_permission_tested": false
+  },
+  "ha_budget": {
+    "passed": false,
+    "sample_requests": 3,
+    "sample_tokens": {
+      "input": 661,
+      "output": 143
+    },
+    "log_cost_usd": 0.00947,
+    "virtual_key_current_usage_usd": 0.00309,
+    "note": "Per-request tariff matches; shared budget counter does not match the sum of requests. Global HA enforcement is not certified.",
+    "final_sample": {
+      "requests": 12,
+      "input_tokens": 123604,
+      "output_tokens": 603,
+      "log_cost_usd": 1.2481000000000002,
+      "virtual_key_current_usage_usd": 0.00866
+    }
+  },
+  "public_oidc_grafana_login_tested": false,
+  "administrator_mcp_mutation_tested": false,
+  "qwen_nodecache": {
+    "same_participant_and_virtual_key": true,
+    "stream_http_status": 200,
+    "persisted_after_reload": true,
+    "details": "rtx5060-qwen-nodecache-20261006.json"
+  },
+  "policy": {
+    "checked_at": "2026-10-06T21:17:55.242Z",
+    "scope": "controlled service-contract test using a signed five-minute assertion for our disposable user; not a browser MCP login",
+    "allowed": {
+      "status": 200,
+      "has_answer": true
+    },
+    "tools": {
+      "status": 403,
+      "error": "request capability not allowed",
+      "has_answer": false
+    },
+    "other_model": {
+      "status": 403,
+      "error": "model not allowed",
+      "has_answer": false
+    },
+    "mcp_endpoint": {
+      "status": 403,
+      "error": "endpoint is not enabled",
+      "has_answer": false
+    },
+    "previous_signed_assertion_after_pending": {
+      "status": 403,
+      "error": "user not approved or identity service unavailable",
+      "has_answer": false
+    },
+    "browser_after_pending": {
+      "status": 401,
+      "body": "{\"detail\":\"You do not have permission to access this resource. Please contact your administrator for assistance.\"}"
+    }
+  },
+  "cleanup": {
+    "test_user_deleted": true,
+    "test_document_deleted": {
+      "message": "File deleted successfully"
+    },
+    "personal_test_key_deleted": true,
+    "other_users_and_keys_untouched": true,
+    "gateway_audit_logs_preserved": true,
+    "recovery": "User and VK deleted; recreating gives new IDs. Fictional test document retained locally."
+  },
+  "dashboard": {
+    "checked_at_utc": "2026-10-06T21:19:50.493Z",
+    "title": "AI Inference / Service performance",
+    "namespace": "hardfest-rtx",
+    "rendered_services": [
+      "rtx-gemma-base",
+      "rtx-gemma-tune",
+      "rtx-qwen35-tp2"
+    ],
+    "access": "authorized loopback auth-proxy; public OIDC not tested",
+    "native_offload_and_mtp_charts_visible": true,
+    "unused_simple_cpu_backend_no_data_expected": true
+  }
+}

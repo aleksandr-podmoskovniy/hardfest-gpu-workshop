@@ -359,6 +359,66 @@ def gemma_formula():
     d.save()
 
 
+def kv_derivation():
+    d = Diagram('25-kv-derivation', 'От одного токена — к памяти сервиса',
+                'Сначала одинаковые full-attention слои, независимые истории и один GPU.')
+    for y, title, formula, note, fill, color in [
+            (160, '1 ТОКЕН / 1 СЛОЙ', '2 × Hkv × D × b',
+             'K и V; Hkv голов; D элементов в голове; b байт на элемент.', PALE, BLUE),
+            (325, '1 ИСТОРИЯ / L СЛОЁВ', '2 × S × L × Hkv × D × b',
+             'S = токены входа + уже сгенерированный ответ.', MINT, TEAL),
+            (490, 'B НЕЗАВИСИМЫХ ИСТОРИЙ', 'Mkv = 2 × B × S × L × Hkv × D × b',
+             'Результат в байтах. MiB: ÷ 2²⁰. GiB: ÷ 2³⁰.', LILAC, PURPLE)]:
+        d.rect(48, y, 1104, 148, fill)
+        d.text(72, y+30, title, 19, color, True, width=1056)
+        d.text(600, y+85, formula, 39, color, True, 'middle', width=1056)
+        d.text(600, y+122, note, 21, anchor='middle', width=1056)
+    d.text(48, 676, 'Gemma: складываем разные типы слоёв; общий KV не считаем повторно.', 22, width=1104)
+    d.footer('Это полезные K/V, не веса, не буферы prefill и не весь заранее выделенный KV-пул.')
+    d.save()
+
+
+def rtx_kv_formula():
+    d = Diagram('26-rtx-kv', 'Gemma E2B: считаем KV для 4K',
+                '35 слоёв; последние 20 переиспользуют KV. Свой кеш: 3 full + 12 sliding.')
+    d.rect(48, 160, 1104, 96, PALE)
+    d.text(600, 222, 'KV(S) = 2 × b × [ G(S) + L(S) ]', 43, BLUE, True, 'middle', width=1056)
+    for x, title, formula, result, color, fill in [
+            (48, 'G / вся история', '3 × 1 × 512 × 4096', 'BF16: 24 MiB', BLUE, PALE),
+            (620, 'L / окно 512', '12 × 1 × 256 × 512', 'BF16: 6 MiB', TEAL, MINT)]:
+        d.card(x, 288, 532, 156, title, (), fill, color)
+        d.text(x+266, 376, formula, 32, bold=True, anchor='middle', width=484)
+        d.text(x+266, 415, result, 24, color, anchor='middle', width=484)
+    for x, title, result, both, fill, color in [
+            (48, 'BF16 / b = 2', '30 MiB', 'Две независимые истории: 60 MiB', PALE, BLUE),
+            (620, 'FP8 / b = 1', '15 MiB', 'Две независимые истории: 30 MiB', MINT, TEAL)]:
+        d.card(x, 480, 532, 156, title, (), fill, color)
+        d.text(x+266, 577, result, 46, color, True, 'middle', width=484)
+        d.text(x+266, 614, both, 22, anchor='middle', width=484)
+    d.text(48, 676, 'Hkv = 1, а не 8 query-голов. Веса BF16 и точность KV задаются отдельно.', 22, width=1104)
+    d.footer('Полезные KV при S = 4096. Реальный пул: блоки, padding и резерв; проверяем логи vLLM.')
+    d.save()
+
+
+def rtx_long_context():
+    d = Diagram('27-rtx-long-context', 'Gemma: от контрольного 4K к 128K',
+                'Полезные KV одной истории E2B. Окно включает и вход, и ответ.')
+    for x, label in [(72, 'ДЛИНА ИСТОРИИ'), (492, 'BF16'), (968, 'FP8')]:
+        d.text(x, 192, label, 21, MUTED, True, 'start' if x == 72 else 'middle')
+    for y, length, bf16, fp8 in [(220, '4K / A и B', '30 MiB', '15 MiB'),
+            (324, '64K / B', '390 MiB', '195 MiB'), (428, '128K / B', '774 MiB', '387 MiB')]:
+        d.rect(48, y, 1104, 82)
+        d.rect(784, y, 368, 82, MINT, MINT)
+        d.text(72, y+54, length, 31, bold=True, width=380)
+        d.text(492, y+54, bf16, 35, bold=True, anchor='middle')
+        d.text(968, y+54, fp8, 35, TEAL, True, 'middle')
+    d.card(48, 548, 1104, 132, 'Проверка длинным входом',
+           ['64K: вход 57 344 + ответ 512; 128K: вход 122 880 + ответ 512.',
+            'Фиксируем реальные токены, TTFT, KV usage, preemption и пик памяти.'], PALE, BLUE)
+    d.footer('Числа — расчёт, не замер. Нужны ещё память assistant, блоки пула и буферы prefill.')
+    d.save()
+
+
 def gitops():
     d = Diagram('12-gitops', 'Helm в Git, доставка через Argo CD',
                 'Редактируем values, отправляем коммит и применяем его через Argo CD.')
@@ -587,7 +647,8 @@ def rtx_platform():
 BUILDERS = (topology, latency, memory, ab, offload, scheduler, speculation, mig,
             platform, tp2, gemma_formula, gitops, attention, prefixes, rag,
             qwen_transition, qwen_mtp, qwen_capacity, rtx_sequence,
-            rtx_topology, rtx_memory, rtx_platform, rtx_tp2)
+            rtx_topology, rtx_memory, rtx_platform, rtx_tp2, kv_derivation,
+            rtx_kv_formula, rtx_long_context)
 
 if __name__ == '__main__':
     for build in BUILDERS:

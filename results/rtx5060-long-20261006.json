@@ -1,0 +1,346 @@
+{
+  "date": "2026-10-06",
+  "runtime": {
+    "vllm": "0.31.0",
+    "digest": "sha256:f7cb9820c7e92eb78a4b3f60033e240c87a16bf99117471aba347fdd69eaca2d"
+  },
+  "hardware": {
+    "gpu": "2 x RTX 5060 Ti 16 GiB",
+    "placement": "one exclusive GPU per service"
+  },
+  "delivery": {
+    "backend": "ai-models NodeCache",
+    "source_note": "Live Models used unversioned HF source URLs. The resolved revisions and immutable delivered digests below are recorded from status; public catalog examples pin source revisions.",
+    "node_cache_gib": 200,
+    "models": [
+      {
+        "name": "rtx-gemma-e2b",
+        "revision": "3e22461f65e89153144f8adb70e3b8c2cc9845a7",
+        "digest": "sha256:951b9777a68de856841019bdca048564ccd1bfff5ce84347da1fde19d285a7d8"
+      },
+      {
+        "name": "rtx-gemma-e2b-assistant",
+        "revision": "2d874ef7d29f9a30599a1e4b3c1cbc9595f005df",
+        "digest": "sha256:b9c786c764b3cdbc225207c65d423e553ec8b4d25db780b236dd6618d9fd9d14"
+      }
+    ]
+  },
+  "profile": {
+    "base": "values/rtx/gemma-spec.yaml",
+    "changes": {
+      "max-model-len": [
+        65536,
+        131072
+      ],
+      "gpu-memory-utilization": 0.95
+    },
+    "kv_dtype": "fp8",
+    "cpu_kv_gib": 4,
+    "max_num_seqs": 2,
+    "chunk_tokens": 512,
+    "speculative_tokens": 1,
+    "container_memory_limit_gib": 18
+  },
+  "workload": {
+    "endpoint": "/v1/completions",
+    "client": "vllm bench serve inside the tested runtime Pod",
+    "random_range_ratio": 0,
+    "output_tokens_per_request": 512,
+    "ignore_eos": true,
+    "temperature": 0,
+    "ready_check_timeout_sec": 0,
+    "num_warmups": 0
+  },
+  "caveats": [
+    "Synthetic inputs test capacity, not comprehension.",
+    "No server cache reset between the single and concurrent series; seed changes from 73 to 88.",
+    "These results do not isolate the benefit of CPU offload or speculative decoding.",
+    "The first 64K launch at GPU memory utilization 0.90 failed KV capacity validation (0.20 GiB required, 0.19 GiB available). Accepted runs use 0.95.",
+    "Gemma A remained idle on the other GPU. Each accepted Pod had zero restarts.",
+    "Startup and compilation excluded from benchmark duration; end-start also includes client/tokenizer setup."
+  ],
+  "runs": [
+    {
+      "label": "gemma-64k",
+      "max_model_len": 65536,
+      "max_concurrency": 1,
+      "seed": 73,
+      "start": "2026-10-06T20:42:20.539Z",
+      "end": "2026-10-06T20:43:10.300Z",
+      "cache_state": "not-reset; prior smoke may exist",
+      "result": {
+        "date": "20261006-204308",
+        "endpoint_type": "vllm",
+        "backend": "vllm",
+        "label": null,
+        "model_id": "rtx-gemma-tune",
+        "tokenizer_id": "/data/modelcache/models/rtx-gemma-e2b",
+        "num_prompts": 1,
+        "request_rate": "inf",
+        "burstiness": 1,
+        "max_concurrency": 1,
+        "duration": 22.533002550713718,
+        "completed": 1,
+        "failed": 0,
+        "total_input_tokens": 57344,
+        "total_output_tokens": 512,
+        "request_throughput": 0.044379349700483024,
+        "request_goodput": null,
+        "output_throughput": 22.72222704664731,
+        "total_token_throughput": 2567.611656271146,
+        "latencies": [
+          22.53155340719968
+        ],
+        "queue_times": [
+          0.00009649386629462242
+        ],
+        "max_output_tokens_per_s": 27,
+        "max_concurrent_requests": 1,
+        "rtfx": 0,
+        "spec_decode_acceptance_rate": 99.609375,
+        "spec_decode_acceptance_length": 1.99609375,
+        "spec_decode_num_drafts": 256,
+        "spec_decode_draft_tokens": 256,
+        "spec_decode_accepted_tokens": 255,
+        "spec_decode_per_position_acceptance_rates": [
+          0.99609375
+        ],
+        "mean_ttft_ms": 12818.241635337472,
+        "median_ttft_ms": 12818.241635337472,
+        "std_ttft_ms": 0,
+        "p95_ttft_ms": 12818.241635337472,
+        "p99_ttft_ms": 12818.241635337472,
+        "mean_tpot_ms": 19.008437909710782,
+        "median_tpot_ms": 19.008437909710782,
+        "std_tpot_ms": 0,
+        "p95_tpot_ms": 19.008437909710782,
+        "p99_tpot_ms": 19.008437909710782,
+        "mean_itl_ms": 38.09141871318513,
+        "median_itl_ms": 38.34358882158995,
+        "std_itl_ms": 3.2776194811133137,
+        "p95_itl_ms": 39.583000307902694,
+        "p99_itl_ms": 40.13913294300437
+      }
+    },
+    {
+      "label": "gemma-64k-concurrent",
+      "max_model_len": 65536,
+      "max_concurrency": 2,
+      "seed": 88,
+      "start": "2026-10-06T20:43:52.152Z",
+      "end": "2026-10-06T20:45:13.272Z",
+      "cache_state": "not-reset; prior smoke may exist",
+      "result": {
+        "date": "20261006-204510",
+        "endpoint_type": "vllm",
+        "backend": "vllm",
+        "label": null,
+        "model_id": "rtx-gemma-tune",
+        "tokenizer_id": "/data/modelcache/models/rtx-gemma-e2b",
+        "num_prompts": 2,
+        "request_rate": "inf",
+        "burstiness": 1,
+        "max_concurrency": 2,
+        "duration": 51.88580224616453,
+        "completed": 2,
+        "failed": 0,
+        "total_input_tokens": 114688,
+        "total_output_tokens": 1024,
+        "request_throughput": 0.0385461901602927,
+        "request_goodput": null,
+        "output_throughput": 19.73564936206986,
+        "total_token_throughput": 2230.1283779138944,
+        "latencies": [
+          38.76416811160743,
+          51.88223198382184
+        ],
+        "queue_times": [
+          0.00009315414354205132,
+          0.0027992678806185722
+        ],
+        "max_output_tokens_per_s": 13,
+        "max_concurrent_requests": 2,
+        "rtfx": 0,
+        "spec_decode_acceptance_rate": 99.61013645224172,
+        "spec_decode_acceptance_length": 1.996101364522417,
+        "spec_decode_num_drafts": 513,
+        "spec_decode_draft_tokens": 513,
+        "spec_decode_accepted_tokens": 511,
+        "spec_decode_per_position_acceptance_rates": [
+          0.9961013645224172
+        ],
+        "mean_ttft_ms": 18451.790729770437,
+        "median_ttft_ms": 18451.790729770437,
+        "std_ttft_ms": 6187.178441090509,
+        "p95_ttft_ms": 24020.25132675189,
+        "p99_ttft_ms": 24515.225602039132,
+        "mean_tpot_ms": 52.585928215154986,
+        "median_tpot_ms": 52.585928215154986,
+        "std_tpot_ms": 0.7276976419113359,
+        "p95_tpot_ms": 53.24085609287519,
+        "p99_tpot_ms": 53.2990719042281,
+        "mean_itl_ms": 440.51490685154425,
+        "median_itl_ms": 111.34541360661387,
+        "std_itl_ms": 1626.8334104259613,
+        "p95_itl_ms": 1483.3681477699324,
+        "p99_itl_ms": 8441.23165205121
+      }
+    },
+    {
+      "label": "gemma-128k",
+      "max_model_len": 131072,
+      "max_concurrency": 1,
+      "seed": 73,
+      "start": "2026-10-06T20:53:28.078Z",
+      "end": "2026-10-06T20:54:57.693Z",
+      "cache_state": "not-reset; prior smoke may exist",
+      "result": {
+        "date": "20261006-205454",
+        "endpoint_type": "vllm",
+        "backend": "vllm",
+        "label": null,
+        "model_id": "rtx-gemma-tune",
+        "tokenizer_id": "/data/modelcache/models/rtx-gemma-e2b",
+        "num_prompts": 1,
+        "request_rate": "inf",
+        "burstiness": 1,
+        "max_concurrency": 1,
+        "duration": 59.41620147973299,
+        "completed": 1,
+        "failed": 0,
+        "total_input_tokens": 122880,
+        "total_output_tokens": 512,
+        "request_throughput": 0.01683042629948504,
+        "request_goodput": null,
+        "output_throughput": 8.61717826533634,
+        "total_token_throughput": 2076.739961946058,
+        "latencies": [
+          59.414199917111546
+        ],
+        "queue_times": [
+          0.00009294366464018822
+        ],
+        "max_output_tokens_per_s": 15,
+        "max_concurrent_requests": 1,
+        "rtfx": 0,
+        "spec_decode_acceptance_rate": 97.68339768339769,
+        "spec_decode_acceptance_length": 1.9768339768339769,
+        "spec_decode_num_drafts": 259,
+        "spec_decode_draft_tokens": 259,
+        "spec_decode_accepted_tokens": 253,
+        "spec_decode_per_position_acceptance_rates": [
+          0.9768339768339769
+        ],
+        "mean_ttft_ms": 42404.60862638429,
+        "median_ttft_ms": 42404.60862638429,
+        "std_ttft_ms": 0,
+        "p95_ttft_ms": 42404.60862638429,
+        "p99_ttft_ms": 42404.60862638429,
+        "mean_tpot_ms": 33.286871410425164,
+        "median_tpot_ms": 33.286871410425164,
+        "std_tpot_ms": 0,
+        "p95_tpot_ms": 33.286871410425164,
+        "p99_tpot_ms": 33.286871410425164,
+        "mean_itl_ms": 66.44371597940335,
+        "median_itl_ms": 66.75578886643052,
+        "std_itl_ms": 4.519067641645829,
+        "p95_itl_ms": 68.79767728969455,
+        "p99_itl_ms": 69.13480644579977
+      }
+    },
+    {
+      "label": "gemma-128k-concurrent",
+      "max_model_len": 131072,
+      "max_concurrency": 2,
+      "seed": 88,
+      "start": "2026-10-06T20:54:58.300Z",
+      "end": "2026-10-06T20:57:12.239Z",
+      "cache_state": "not-reset; prior smoke may exist",
+      "result": {
+        "date": "20261006-205709",
+        "endpoint_type": "vllm",
+        "backend": "vllm",
+        "label": null,
+        "model_id": "rtx-gemma-tune",
+        "tokenizer_id": "/data/modelcache/models/rtx-gemma-e2b",
+        "num_prompts": 2,
+        "request_rate": "inf",
+        "burstiness": 1,
+        "max_concurrency": 2,
+        "duration": 102.4183210330084,
+        "completed": 2,
+        "failed": 0,
+        "total_input_tokens": 245760,
+        "total_output_tokens": 1024,
+        "request_throughput": 0.01952775616537807,
+        "request_goodput": null,
+        "output_throughput": 9.998211156673571,
+        "total_token_throughput": 2409.5688887583306,
+        "latencies": [
+          88.17763605481014,
+          102.40851794090122
+        ],
+        "queue_times": [
+          0.00011219503358006477,
+          0.0055923848412930965
+        ],
+        "max_output_tokens_per_s": 30,
+        "max_concurrent_requests": 2,
+        "rtfx": 0,
+        "spec_decode_acceptance_rate": 88.92988929889299,
+        "spec_decode_acceptance_length": 1.8892988929889298,
+        "spec_decode_num_drafts": 542,
+        "spec_decode_draft_tokens": 542,
+        "spec_decode_accepted_tokens": 482,
+        "spec_decode_per_position_acceptance_rates": [
+          0.8892988929889298
+        ],
+        "mean_ttft_ms": 63722.296038875356,
+        "median_ttft_ms": 63722.296038875356,
+        "std_ttft_ms": 21704.367742175236,
+        "p95_ttft_ms": 83256.22700683307,
+        "p99_ttft_ms": 84992.57642620709,
+        "mean_tpot_ms": 61.782350213268735,
+        "median_tpot_ms": 61.782350213268735,
+        "std_tpot_ms": 28.54975890240645,
+        "p95_tpot_ms": 87.47713322543454,
+        "p99_tpot_ms": 89.76111393762706,
+        "mean_itl_ms": 117.58205198875353,
+        "median_itl_ms": 68.01404105499387,
+        "std_itl_ms": 72.02728400549542,
+        "p95_itl_ms": 267.4689763225615,
+        "p99_itl_ms": 292.2706698067486
+      }
+    }
+  ],
+  "webui": {
+    "time": "2026-10-06T21:03:37.810Z",
+    "plain_prompt_tokens": 120610,
+    "records": 4681,
+    "no_rag": true,
+    "expected": "COPPER-ORCHID-742",
+    "duration_ms": 42291,
+    "request": {
+      "model": "vllm/rtx-gemma-tune",
+      "background_tasks": {
+        "title_generation": false,
+        "tags_generation": false,
+        "follow_up_generation": false
+      },
+      "files": 0
+    },
+    "answer": {
+      "done": true,
+      "content": "COPPER-ORCHID-742",
+      "usage": {
+        "prompt_tokens": 120619,
+        "completion_tokens": 11,
+        "completion_tokens_details": {},
+        "total_tokens": 120630,
+        "input_tokens": 120619,
+        "output_tokens": 11
+      }
+    },
+    "client_note": "The multiline paste exceeded the browser automation deadline before sending. Accepted request used a single text block and disabled title, tag and follow-up background requests for this disposable participant only."
+  }
+}

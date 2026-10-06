@@ -10,6 +10,71 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class RTXProfiles(unittest.TestCase):
+    def test_catalog_qwen_acceptance_does_not_claim_long_context(self):
+        report = json.loads((ROOT / "results/rtx5060-qwen-nodecache-20261006.json").read_text())
+        self.assertEqual(report["inference_service"]["model"]["src"], "ai-models")
+        self.assertEqual(report["delivery"], "ai-models NodeCache")
+        self.assertEqual(len({d["device"] for d in report["devices"]}), 2)
+        args = report["pod"]["arguments"]
+        self.assertEqual(args[args.index("--tensor-parallel-size") + 1], "2")
+        self.assertEqual(args[args.index("--max-model-len") + 1], "8192")
+        self.assertEqual(report["pod"]["restarts"], [0])
+        self.assertEqual(len(report["results"]), 3)
+        for row in report["results"]:
+            result = row["result"]
+            self.assertEqual((result["completed"], result["failed"]), (8, 0))
+            self.assertEqual(result["total_input_tokens"], 16384)
+            self.assertEqual(result["total_output_tokens"], 1024)
+        self.assertEqual(report["webui"]["stream_http_status"], 200)
+        self.assertTrue(report["webui"]["personal_virtual_key_reused"])
+        self.assertTrue(report["webui"]["persisted_after_reload"])
+
+    def test_long_context_results_match_actual_load_and_reservation(self):
+        report = json.loads((ROOT / "results/rtx5060-long-20261006.json").read_text())
+        self.assertEqual(report["profile"]["changes"]["gpu-memory-utilization"], 0.95)
+        self.assertEqual(len(report["runs"]), 4)
+        for run in report["runs"]:
+            result = run["result"]
+            count = run["max_concurrency"]
+            length = 57344 if run["max_model_len"] == 65536 else 122880
+            self.assertEqual((result["completed"], result["failed"]), (count, 0))
+            self.assertEqual(result["total_input_tokens"], count * length)
+            self.assertEqual(result["total_output_tokens"], count * 512)
+            self.assertAlmostEqual(result["output_throughput"], count * 512 / result["duration"])
+        self.assertIn("gpu-memory-utilization: 0.95", (ROOT / "RTX5060.md").read_text())
+        ui = report["webui"]
+        self.assertEqual(ui["answer"]["usage"]["prompt_tokens"], 120619)
+        self.assertEqual(ui["answer"]["content"], ui["expected"])
+        self.assertEqual(ui["request"]["files"], 0)
+
+    def test_nodecache_results_and_diagnostic_are_separate(self):
+        report = json.loads((ROOT / "results/rtx5060-nodecache-20261006.json").read_text())
+        self.assertEqual(report["delivery"]["backend"], "ai-models NodeCache")
+        self.assertEqual(report["load"]["num_warmups"], 0)
+        for profile in report["profiles"]:
+            self.assertEqual(profile["gpu_memory_utilization"], 0.9)
+            self.assertEqual(profile["max_model_len"], 4096)
+            self.assertEqual(len(profile["results"]), 3)
+            for result in profile["results"]:
+                self.assertEqual((result["completed"], result["failed"]), (8, 0))
+                self.assertEqual(result["total_input_tokens"], 16384)
+                self.assertEqual(result["total_output_tokens"], 1024)
+                self.assertAlmostEqual(result["output_throughput"], 1024 / result["duration"])
+        diagnostic = json.loads((ROOT / "results/rtx5060-offload-20261006.json").read_text())
+        self.assertTrue(diagnostic["not_performance_comparison"])
+        self.assertIn("268435456", diagnostic["profile"])
+        self.assertIn('transfer_type="CPU_to_GPU"} 0.0', diagnostic["before_replay"])
+        self.assertIn('transfer_type="CPU_to_GPU"} 1.0518528e+07', diagnostic["after_replay"])
+
+    def test_distroless_benchmark_results_are_returned_on_stdout(self):
+        for name in ("RTX5060.md", "labs/rtx5060.md", "labs/01-ab.md"):
+            text = (ROOT / name).read_text()
+            self.assertIn("--result-dir /dev --result-filename stdout", text)
+            self.assertIn("--num-warmups 0", text)
+        memory = (ROOT / "docs/MEMORY_BUDGET.md").read_text()
+        self.assertNotIn("-- cat", memory)
+        self.assertIn('get configmap "$PROFILE_CONFIGMAP"', memory)
+
     def test_measured_raw_files_and_image_are_explicit(self):
         summary = json.loads((ROOT / "results/rtx5060-gemma-20261006.json").read_text())
         for row in summary["base"] + summary["tune"]:
