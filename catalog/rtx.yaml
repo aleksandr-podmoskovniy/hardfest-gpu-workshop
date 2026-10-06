@@ -1,0 +1,12 @@
+# Catalog revisions selected on 2026-10-06. Import is not a GPU launch.
+# These pins do not retroactively pin the earlier direct-HF benchmark.
+models:
+  - name: rtx-gemma-e2b
+    repository: google/gemma-4-E2B-it
+    revision: 3e22461f65e89153144f8adb70e3b8c2cc9845a7
+  - name: rtx-gemma-e2b-assistant
+    repository: google/gemma-4-E2B-it-assistant
+    revision: 2d874ef7d29f9a30599a1e4b3c1cbc9595f005df
+  - name: rtx-qwen35-9b
+    repository: Qwen/Qwen3.5-9B
+    revision: c202236235762e1c871ad0ccb60c8ee5ba337b9a

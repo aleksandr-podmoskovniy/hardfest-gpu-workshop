@@ -1,5 +1,6 @@
 import subprocess
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -23,8 +24,7 @@ class RTXProfiles(unittest.TestCase):
         result = subprocess.run(["helm", "template", "rtx", str(ROOT / "charts/vllm-runtime"),
             "-f", str(ROOT / "values/rtx/gemma-base.yaml"),
             "--set", "replicaCount=1", "--set", "dra.deviceClassName=rtx",
-            "--set", "nodeSelector.kubernetes\\.io/hostname=rtx-node",
-            "--set", "modelVolumes[0].claimName=gemma"], capture_output=True, text=True)
+            "--set", "nodeSelector.kubernetes\\.io/hostname=rtx-node"], capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("replace site placeholders in image", result.stderr)
 
@@ -45,7 +45,9 @@ class RTXProfiles(unittest.TestCase):
             self.assertEqual(profile["dra"]["count"], 1)
             self.assertEqual(profile["vllm"]["max-model-len"], 4096)
             self.assertEqual(profile["vllm"]["dtype"], "bfloat16")
-            self.assertEqual(profile["vllm"]["model"], "/models/model")
+            self.assertEqual(profile["vllm"]["model"], "/data/modelcache/models/rtx-gemma-e2b")
+            self.assertEqual(profile["modelVolumes"], [])
+            self.assertIn("rtx-gemma-e2b", profile["modelRefs"])
         a, cache, spec = [p["vllm"] for p in profiles]
         for flag in ("enable-prefix-caching", "enable-chunked-prefill"):
             self.assertTrue(a['no-' + flag])
@@ -60,12 +62,13 @@ class RTXProfiles(unittest.TestCase):
         self.assertTrue(spec["enable-chunked-prefill"])
         self.assertFalse(spec["enforce-eager"])
         self.assertEqual(spec["speculative-config"]["method"], "mtp")
-        self.assertEqual(profiles[2]["modelVolumes"][1]["subPath"],
-                         ".assistant/2d874ef7d29f9a30599a1e4b3c1cbc9595f005df")
+        self.assertIn("rtx-gemma-e2b-assistant", profiles[2]["modelRefs"])
+        self.assertEqual(spec["speculative-config"]["model"],
+                         "/data/modelcache/models/rtx-gemma-e2b-assistant")
 
-    def test_hf_orders_are_disabled_by_default_and_render_when_bound(self):
-        for name, repo in (("rtx-gemma", "google/gemma-4-E2B-it"),
-                           ("rtx-qwen", "Qwen/Qwen3.5-9B")):
+    def test_catalog_orders_are_disabled_by_default_and_render_when_bound(self):
+        for name, ref in (("rtx-gemma", "rtx-gemma-e2b"),
+                          ("rtx-qwen", "rtx-qwen35-9b")):
             command = ["helm", "template", name, str(ROOT / "charts/inference-service"),
                        "-n", "rtx", "-f", str(ROOT / "platform" / (name + ".yaml"))]
             result = subprocess.run(command, capture_output=True, text=True)
@@ -77,7 +80,57 @@ class RTXProfiles(unittest.TestCase):
                 capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             model = yaml.safe_load(result.stdout)["spec"]["model"]
-            self.assertEqual(model, {"src": "HuggingFace", "ref": {"name": repo}})
+            self.assertEqual(model, {"src": "ai-models", "ref": {"kind": "Model", "name": ref}})
+
+    def test_rtx_catalog_is_pinned_and_matches_consumers(self):
+        result = subprocess.run(["helm", "template", "rtx-models", str(ROOT / "charts/model-catalog"),
+            "-n", "hardfest-rtx", "-f", str(ROOT / "catalog/rtx.yaml")], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        models = {d["metadata"]["name"]: d for d in yaml.safe_load_all(result.stdout)}
+        self.assertEqual(set(models), {"rtx-gemma-e2b", "rtx-gemma-e2b-assistant", "rtx-qwen35-9b"})
+        for model in models.values():
+            self.assertEqual(model["kind"], "Model")
+            self.assertEqual(model["metadata"]["namespace"], "hardfest-rtx")
+            self.assertRegex(model["spec"]["source"]["url"], r"/tree/[a-f0-9]{40}$")
+        app = yaml.safe_load((ROOT / "argocd/rtx/rtx-models.yaml").read_text())["spec"]["source"]
+        self.assertTrue(app["path"].endswith("charts/model-catalog"))
+        self.assertEqual(app["helm"]["valueFiles"], ["../../catalog/rtx.yaml"])
+
+    def test_manual_profiles_render_ai_models_delivery_annotations(self):
+        for name, expected in (("gemma-base", "rtx-gemma-e2b"), ("gemma-cache", "rtx-gemma-e2b"),
+                               ("gemma-spec", "rtx-gemma-e2b,rtx-gemma-e2b-assistant")):
+            result = subprocess.run(["helm", "template", "rtx", str(ROOT / "charts/vllm-runtime"),
+                "-f", str(ROOT / "values/rtx" / (name + ".yaml"))], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            deployment = next(d for d in yaml.safe_load_all(result.stdout) if d["kind"] == "Deployment")
+            self.assertEqual(deployment["metadata"]["annotations"]["ai.deckhouse.io/model"], expected)
+
+    def test_full_rtx_guide_has_ordered_stages_and_working_lab_anchors(self):
+        guide = (ROOT / "RTX5060.md").read_text()
+        lab = (ROOT / "labs/rtx5060.md").read_text()
+        self.assertIn("(RTX5060.md)", (ROOT / "README.md").read_text())
+        stages = ["topology", "setup", "monitoring", "latency", "memory", "ab", "ram",
+                  "speculation", "platform", "placement", "tp2", "cleanup", "results"]
+        positions = [guide.index(f'id="{name}"') for name in stages]
+        self.assertEqual(positions, sorted(positions))
+        for target in re.findall(r"\]\(#([^)]+)\)", guide):
+            self.assertIn(f'<a id="{target}"></a>', guide)
+        for target in re.findall(r"labs/rtx5060.md#([^)]*)", guide):
+            self.assertIn(f'<a id="{target}"></a>', lab)
+        self.assertGreaterEqual(len(re.findall(r"!\[.+?\]\(assets/", guide)), 10)
+        for term in ("ai-models", "InferenceService", "16 GiB", "assistant", "TP2", "MTP",
+                     "NodeCache", "ещё", "Прям", "Hugging Face"):
+            self.assertIn(term.lower(), (guide + lab).lower())
+        self.assertNotIn("·", guide)
+
+    def test_catalog_chat_examples_use_served_model_names(self):
+        lab = (ROOT / "labs/rtx5060.md").read_text()
+        for name in ("rtx-gemma-e2b", "rtx-qwen35-9b"):
+            self.assertIn('"model":"' + name + '"', lab)
+        for old in ("google/gemma-4-E2B-it", "Qwen/Qwen3.5-9B"):
+            self.assertNotIn('"model":"' + old + '"', lab)
+        self.assertIn("18001/v1/models", lab)
+        self.assertIn("18003/v1/models", lab)
 
     def test_preload_is_inert_and_refuses_unbound_images(self):
         command = ["helm", "template", "rtx", str(ROOT / "charts/model-preload"),

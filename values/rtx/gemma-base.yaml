@@ -8,11 +8,8 @@ tolerations: []
 dra:
   deviceClassName: REPLACE_GENERATED_RTX_DEVICECLASS
   count: 1
-modelVolumes:
-  - name: gemma
-    claimName: REPLACE_GEMMA_PVC
-    mountPath: /models/model
-    subPath: "."
+modelVolumes: []
+modelRefs: [rtx-gemma-e2b]
 resources:
   requests:
     cpu: "2"
@@ -24,7 +21,7 @@ resources:
 runtimeSize: 6Gi
 shmSize: 2Gi
 vllm:
-  model: /models/model
+  model: /data/modelcache/models/rtx-gemma-e2b
   served-model-name: rtx-gemma-base
   host: 0.0.0.0
   port: 8000

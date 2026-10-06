@@ -8,15 +8,8 @@ tolerations: []
 dra:
   deviceClassName: REPLACE_GENERATED_RTX_DEVICECLASS
   count: 1
-modelVolumes:
-  - name: gemma
-    claimName: REPLACE_GEMMA_PVC
-    mountPath: /models/model
-    subPath: "."
-  - name: assistant
-    claimName: REPLACE_GEMMA_PVC
-    mountPath: /models/assistant
-    subPath: ".assistant/2d874ef7d29f9a30599a1e4b3c1cbc9595f005df"
+modelVolumes: []
+modelRefs: [rtx-gemma-e2b, rtx-gemma-e2b-assistant]
 resources:
   requests:
     cpu: "2"
@@ -28,7 +21,7 @@ resources:
 runtimeSize: 6Gi
 shmSize: 6Gi
 vllm:
-  model: /models/model
+  model: /data/modelcache/models/rtx-gemma-e2b
   served-model-name: rtx-gemma-tune
   host: 0.0.0.0
   port: 8000
@@ -46,7 +39,7 @@ vllm:
   max-cudagraph-capture-size: 4
   speculative-config:
     method: mtp
-    model: /models/assistant
+    model: /data/modelcache/models/rtx-gemma-e2b-assistant
     num_speculative_tokens: 1
   kv-cache-dtype: fp8
   attention-backend: TRITON_ATTN

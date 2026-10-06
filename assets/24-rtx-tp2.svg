@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
+<title id="title">TP2: две карты, один экземпляр модели</title><desc id="desc">Два процесса совместно вычисляют один ответ и обмениваются промежуточными результатами.</desc>
+<defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
+<rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
+<text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
+<tspan x="70" dy="0">TP2: две карты, один экземпляр модели</tspan>
+</text>
+<text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Два процесса совместно вычисляют один ответ и обмениваются промежуточными результатами.</tspan>
+</text>
+<path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="48" y="170" width="1104" height="350" rx="12" fill="#ffffff" stroke="#1554dc" stroke-width="1.5"/>
+<text x="72" y="212" font-size="20" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="72" dy="0">ОДНА НОДА / ОДИН POD / ОДИН API</tspan>
+</text>
+<rect x="72" y="254" width="384" height="208" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="96" y="296" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="336">
+<tspan x="96" dy="0">RTX 5060 Ti / rank 0</tspan>
+</text>
+<text x="96" y="336" font-size="22" fill="#17243b" text-anchor="start" data-max-width="336">
+<tspan x="96" dy="0">Часть весов</tspan>
+<tspan x="96" dy="30.799999999999997">Локальные состояния</tspan>
+<tspan x="96" dy="30.799999999999997">Вычисления</tspan>
+</text>
+<rect x="744" y="254" width="384" height="208" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="768" y="296" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="336">
+<tspan x="768" dy="0">RTX 5060 Ti / rank 1</tspan>
+</text>
+<text x="768" y="336" font-size="22" fill="#17243b" text-anchor="start" data-max-width="336">
+<tspan x="768" dy="0">Часть весов</tspan>
+<tspan x="768" dy="30.799999999999997">Локальные состояния</tspan>
+<tspan x="768" dy="30.799999999999997">Вычисления</tspan>
+</text>
+<text x="600" y="315" font-size="24" fill="#1554dc" text-anchor="middle" font-weight="700">
+<tspan x="600" dy="0">NCCL</tspan>
+</text>
+<path d="M462 358.0 L738 358.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M738 410.0 L462 410.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<text x="600" y="491" font-size="23" fill="#17243b" text-anchor="middle">
+<tspan x="600" dy="0">DRA выделяет два устройства; vLLM распределяет модель.</tspan>
+</text>
+<rect x="48" y="565" width="1104" height="100" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="607" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="1056">
+<tspan x="72" dy="0">TP2 не равно двум репликам</tspan>
+</text>
+<text x="72" y="647" font-size="22" fill="#17243b" text-anchor="start" data-max-width="1056">
+<tspan x="72" dy="0">Обе GPU участвуют в одном запросе. VRAM не становится прозрачным общим пулом.</tspan>
+</text>
+<path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">PP делит слои по стадиям. TP делит тензоры внутри слоёв.</tspan>
+</text>
+</svg>

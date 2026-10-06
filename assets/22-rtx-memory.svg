@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
+<title id="title">16 GiB: не только веса</title><desc id="desc">Для сравнения Gemma A/B сохраняем одинаковые окно и параллельность.</desc>
+<defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
+<rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
+<text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
+<tspan x="70" dy="0">16 GiB: не только веса</tspan>
+</text>
+<text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Для сравнения Gemma A/B сохраняем одинаковые окно и параллельность.</tspan>
+</text>
+<path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="48" y="162" width="1104" height="150" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="600" y="206" font-size="19" fill="#1554dc" text-anchor="middle" font-weight="700">
+<tspan x="600" dy="0">БЮДЖЕТ GPU KV</tspan>
+</text>
+<text x="600" y="263" font-size="35" fill="#17243b" text-anchor="middle" font-weight="700" data-max-width="1032">
+<tspan x="600" dy="0">VRAM × доля − веса − служебная память</tspan>
+</text>
+<rect x="48" y="350" width="528" height="187" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="392" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="480">
+<tspan x="72" dy="0">Gemma 4 E2B</tspan>
+</text>
+<text x="72" y="432" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
+<tspan x="72" dy="0">1 GPU на сервис</tspan>
+<tspan x="72" dy="30.799999999999997">BF16-веса / окно 4K</tspan>
+<tspan x="72" dy="30.799999999999997">A и B: по 2 последовательности</tspan>
+</text>
+<rect x="624" y="350" width="528" height="187" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="648" y="392" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="480">
+<tspan x="648" dy="0">Qwen3.5-9B</tspan>
+</text>
+<text x="648" y="432" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
+<tspan x="648" dy="0">2 GPU на один сервис</tspan>
+<tspan x="648" dy="30.799999999999997">BF16-веса + MTP: ≈17,13 GiB</tspan>
+<tspan x="648" dy="30.799999999999997">TP2 / окно 8K</tspan>
+</text>
+<rect x="48" y="572" width="1104" height="108" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="614" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="1056">
+<tspan x="72" dy="0">RAM: отдельный бюджет CPU KV</tspan>
+</text>
+<text x="72" y="654" font-size="22" fill="#17243b" text-anchor="start" data-max-width="1056">
+<tspan x="72" dy="0">4 GiB в конфигурации кеша. Это не выгрузка весов и не добавочная VRAM.</tspan>
+</text>
+<path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Размер checkpoint на диске ≠ память процесса. NVLink и MIG у RTX здесь нет.</tspan>
+</text>
+</svg>

@@ -85,7 +85,7 @@ class Guide(unittest.TestCase):
             self.assertIn(term, gitops)
 
     def test_participant_commands_need_no_json_yaml_cli_or_python_wrapper(self):
-        paths = [ROOT / "README.md", ROOT / "docs/GITOPS.md", ROOT / "docs/SETUP.md",
+        paths = [ROOT / "README.md", ROOT / "RTX5060.md", ROOT / "docs/GITOPS.md", ROOT / "docs/SETUP.md",
                  ROOT / "catalog/README.md"] + list((ROOT / "labs").glob("*.md"))
         for path in paths:
             shell = "\n".join(re.findall(r"```(?:bash|sh)\n(.*?)```", path.read_text(), re.S))
@@ -121,7 +121,7 @@ class Guide(unittest.TestCase):
             self.assertNotIn("finalizers:", path.read_text())
 
     def test_participant_docs_do_not_contain_speaker_directions(self):
-        paths = [ROOT / "README.md", ROOT / "WORKSHOP.md"]
+        paths = [ROOT / "README.md", ROOT / "RTX5060.md", ROOT / "WORKSHOP.md"]
         paths += list((ROOT / "labs").glob("*.md"))
         paths += list((ROOT / "docs").glob("*.md"))
         forbidden = re.compile(
@@ -251,8 +251,8 @@ class Guide(unittest.TestCase):
 
     def test_all_theory_diagrams_are_local_svg_without_external_content(self):
         diagrams = list((ROOT / "assets").glob("[0-9][0-9]-*.svg"))
-        self.assertEqual(len(diagrams), 19)
-        docs = "\n".join(path.read_text() for path in [ROOT / "README.md"] +
+        self.assertEqual(len(diagrams), 23)
+        docs = "\n".join(path.read_text() for path in [ROOT / "README.md", ROOT / "RTX5060.md"] +
                          list((ROOT / "docs").rglob("*.md")) +
                          list((ROOT / "labs").glob("*.md")))
         for path in diagrams:

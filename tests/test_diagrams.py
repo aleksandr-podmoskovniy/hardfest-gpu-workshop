@@ -45,6 +45,19 @@ class DiagramConnections(unittest.TestCase):
         self.assertEqual(text.count("2g.12gb"), 2)
         self.assertNotIn("1g.6gb", text)
 
+    def test_rtx_diagrams_do_not_inherit_h100_memory_or_interconnect(self):
+        topology = " ".join(ET.parse(ROOT / "assets/21-rtx-topology.svg").getroot().itertext())
+        self.assertIn("КЛАСТЕР RTX 5060 Ti + ШЛЮЗ", topology)
+        self.assertIn("КЛАСТЕР WEBUI + A30", topology)
+        tp2 = " ".join(ET.parse(ROOT / "assets/24-rtx-tp2.svg").getroot().itertext())
+        self.assertIn("RTX 5060 Ti / rank 0", tp2)
+        self.assertIn("RTX 5060 Ti / rank 1", tp2)
+        for wrong in ("NVLink", "H100", "HBM"):
+            self.assertNotIn(wrong, tp2)
+        budget = " ".join(ET.parse(ROOT / "assets/22-rtx-memory.svg").getroot().itertext())
+        for term in ("16 GiB", "4K", "8K", "17,13 GiB", "4 GiB"):
+            self.assertIn(term, budget)
+
     def test_ports_follow_card_bounds_with_equal_clearance(self):
         card = Box(40, 80, 240, 120)
         self.assertEqual(card.port("left"), (34, 140))

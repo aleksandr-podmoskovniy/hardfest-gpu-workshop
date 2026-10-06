@@ -8,11 +8,11 @@ spec:
   source:
     repoURL: https://gitlab.example.com/team/k8s-config.git
     targetRevision: hardfest-rtx
-    path: argo-projects/gpu-cluster/hardfest-rtx/charts/model-preload
+    path: argo-projects/gpu-cluster/hardfest-rtx/charts/model-catalog
     helm:
       releaseName: rtx-models
       valueFiles:
-        - ../../values/models.yaml
+        - ../../catalog/rtx.yaml
   destination:
     name: gpu-cluster
     namespace: hardfest-rtx

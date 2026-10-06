@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
+<title id="title">Каталог и сервис — одна цепочка</title><desc id="desc">Целевой путь RTX: ai-models → InferenceService → GPU → ответ в чате.</desc>
+<defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
+<rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
+<text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
+<tspan x="70" dy="0">Каталог и сервис — одна цепочка</tspan>
+</text>
+<text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Целевой путь RTX: ai-models → InferenceService → GPU → ответ в чате.</tspan>
+</text>
+<path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="48" y="175" width="320" height="136" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="211" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="272">
+<tspan x="72" dy="0">1. Model</tspan>
+</text>
+<text x="72" y="245" font-size="20" fill="#17243b" text-anchor="start" data-max-width="272">
+<tspan x="72" dy="0">Источник + revision</tspan>
+<tspan x="72" dy="28.0">Артефакт + digest</tspan>
+</text>
+<rect x="440" y="175" width="320" height="136" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="464" y="211" font-size="24" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="272">
+<tspan x="464" dy="0">2. Доставка</tspan>
+</text>
+<text x="464" y="245" font-size="20" fill="#17243b" text-anchor="start" data-max-width="272">
+<tspan x="464" dy="0">На нужную RTX-ноду</tspan>
+<tspan x="464" dy="28.0">Проверенный mount</tspan>
+</text>
+<rect x="832" y="175" width="320" height="136" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="856" y="211" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="272">
+<tspan x="856" dy="0">3. Runtime</tspan>
+</text>
+<text x="856" y="245" font-size="20" fill="#17243b" text-anchor="start" data-max-width="272">
+<tspan x="856" dy="0">vLLM + локальные веса</tspan>
+<tspan x="856" dy="28.0">Ответ API и MTP</tspan>
+</text>
+<path d="M374 243.0 L434 243.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M766 243.0 L826 243.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="48" y="394" width="320" height="136" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="430" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="272">
+<tspan x="72" dy="0">InferenceService</tspan>
+</text>
+<text x="72" y="464" font-size="20" fill="#17243b" text-anchor="start" data-max-width="272">
+<tspan x="72" dy="0">model.src: ai-models</tspan>
+<tspan x="72" dy="28.0">ref: Model</tspan>
+</text>
+<rect x="440" y="394" width="320" height="136" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="464" y="430" font-size="24" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="272">
+<tspan x="464" dy="0">Рецепт + DRA</tspan>
+</text>
+<text x="464" y="464" font-size="20" fill="#17243b" text-anchor="start" data-max-width="272">
+<tspan x="464" dy="0">Gemma: 1 карта</tspan>
+<tspan x="464" dy="28.0">Qwen TP2: 2 карты</tspan>
+</text>
+<rect x="832" y="394" width="320" height="136" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="856" y="430" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="272">
+<tspan x="856" dy="0">ai-mcp-gateway</tspan>
+</text>
+<text x="856" y="464" font-size="20" fill="#17243b" text-anchor="start" data-max-width="272">
+<tspan x="856" dy="0">Личный VK → WebUI</tspan>
+<tspan x="856" dy="28.0">Метрики и учёт</tspan>
+</text>
+<path d="M374 462.0 L434 462.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M766 462.0 L788.0 462.0 Q796 462 796.0 454.0 L796.0 291.8 Q796 283.8 804.0 283.8 L826 283.8" fill="none" stroke="#7041b8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-7041b8)" data-connector="true"/>
+<path d="M992.0 317 L992.0 388" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="48" y="577" width="1104" height="100" rx="12" fill="#fff5e4" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="72" y="610" font-size="24" fill="#946017" text-anchor="start" font-weight="700" data-max-width="1056">
+<tspan x="72" dy="0">Перед запуском: два независимых условия</tspan>
+</text>
+<text x="72" y="646" font-size="22" fill="#17243b" text-anchor="start" data-max-width="1056">
+<tspan x="72" dy="0">Доставка на RTX; для Gemma — ещё поддержка отдельного assistant.</tspan>
+</text>
+<path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Каталог Ready ≠ сервис Ready. Предыдущий HF/PVC-прогон не проверяет эту цепочку.</tspan>
+</text>
+</svg>

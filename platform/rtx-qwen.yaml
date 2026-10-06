@@ -5,10 +5,10 @@ order:
     inferenceServiceClassName: REPLACE_RTX_PAIR_CLASS
     launchStrategy: Throughput
     model:
-      src: HuggingFace
+      src: ai-models
       ref:
-        kind: null
-        name: Qwen/Qwen3.5-9B
+        kind: Model
+        name: rtx-qwen35-9b
     resources:
       accelerator:
         deviceClasses: [REPLACE_GENERATED_RTX_DEVICECLASS]

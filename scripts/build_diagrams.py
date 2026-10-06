@@ -115,20 +115,20 @@ class Diagram:
         (ROOT / "assets" / f"{self.name}.svg").write_text("\n".join(self.parts + ['</svg>']) + '\n')
 
 
-def topology():
-    d = Diagram('01-topology', 'Один чат — несколько моделей',
-                'WebUI и A30 — в одном кластере; шлюз и H100 — в другом.')
+def topology(name='01-topology', gpu='H100'):
+    d = Diagram(name, 'Один чат — несколько моделей',
+                f'WebUI и A30 — в одном кластере; шлюз и {gpu} — в другом.')
     d.rect(48, 160, 428, 518)
     d.rect(516, 160, 636, 518, '#ffffff')
     d.text(72, 194, 'КЛАСТЕР WEBUI + A30', 18, MUTED, True)
-    d.text(540, 194, 'КЛАСТЕР H100 + ШЛЮЗ', 18, MUTED, True)
+    d.text(540, 194, f'КЛАСТЕР {gpu} + ШЛЮЗ', 18, MUTED, True)
     webui = d.card(72, 216, 380, 130, 'Open WebUI', ['Чат и голос', 'Пароль / OIDC'])
     knowledge = d.card(72, 396, 380, 110, 'Базы знаний', ['Документы и индекс'], MINT, TEAL)
     gateway = d.card(540, 216, 588, 130, 'ai-mcp-gateway', ['Ключи, квоты и учёт', 'Маршруты моделей'])
     d.connect(webui, knowledge, ('bottom', 'top'), color=TEAL)
     d.connect(webui, gateway)
-    gemma_a = d.card(540, 414, 258, 108, 'Gemma A — Base', ['H100 №1'], compact=True)
-    gemma_b = d.card(870, 414, 258, 108, 'Gemma B — Tune', ['H100 №2'], compact=True)
+    gemma_a = d.card(540, 414, 258, 108, 'Gemma A — Base', [f'{gpu} №1'], compact=True)
+    gemma_b = d.card(870, 414, 258, 108, 'Gemma B — Tune', [f'{gpu} №2'], compact=True)
     mcp = d.card(870, 554, 258, 108, 'Kubernetes MCP', ['Администратор'], LILAC, PURPLE, compact=True)
     a30 = d.card(72, 536, 380, 126, 'A30 / 2 × 2g.12gb',
                  ['Эмбеддер + реранкер: MPS', 'Whisper large-v3: отдельно'], MINT, TEAL)
@@ -324,19 +324,19 @@ def platform():
     d.save()
 
 
-def tp2():
-    d = Diagram('10-tp2', 'TP2: две карты, один экземпляр модели',
+def tp2(name='10-tp2', gpu='H100', interconnect='NVLink / NCCL', memory='HBM'):
+    d = Diagram(name, 'TP2: две карты, один экземпляр модели',
                 'Два процесса совместно вычисляют один ответ и обмениваются промежуточными результатами.')
     d.rect(48, 170, 1104, 350, '#ffffff', BLUE)
     d.text(72, 212, 'ОДНА НОДА / ОДИН POD / ОДИН API', 20, BLUE, True)
-    first = d.card(72, 254, 384, 208, 'H100 / rank 0', ['Часть весов', 'Локальные состояния', 'Вычисления'])
-    second = d.card(744, 254, 384, 208, 'H100 / rank 1', ['Часть весов', 'Локальные состояния', 'Вычисления'])
-    d.text(600, 315, 'NVLink / NCCL', 24, BLUE, True, 'middle')
+    first = d.card(72, 254, 384, 208, f'{gpu} / rank 0', ['Часть весов', 'Локальные состояния', 'Вычисления'])
+    second = d.card(744, 254, 384, 208, f'{gpu} / rank 1', ['Часть весов', 'Локальные состояния', 'Вычисления'])
+    d.text(600, 315, interconnect, 24, BLUE, True, 'middle')
     d.connector([first.port('right', .5), second.port('left', .5)])
     d.connector([second.port('left', .75), first.port('right', .75)])
     d.text(600, 491, 'DRA выделяет два устройства; vLLM распределяет модель.', 23, anchor='middle')
     d.band(565, 'TP2 не равно двум репликам',
-           'Обе GPU участвуют в одном запросе. HBM не становится прозрачным общим пулом.', MINT, TEAL)
+           f'Обе GPU участвуют в одном запросе. {memory} не становится прозрачным общим пулом.', MINT, TEAL)
     d.footer('PP делит слои по стадиям. TP делит тензоры внутри слоёв.')
     d.save()
 
@@ -533,9 +533,61 @@ def rtx_sequence():
     d.save()
 
 
+def rtx_topology():
+    topology('21-rtx-topology', 'RTX 5060 Ti')
+
+
+def rtx_tp2():
+    tp2('24-rtx-tp2', 'RTX 5060 Ti', 'NCCL', 'VRAM')
+
+
+def rtx_memory():
+    d = Diagram('22-rtx-memory', '16 GiB: не только веса',
+                'Для сравнения Gemma A/B сохраняем одинаковые окно и параллельность.')
+    d.rect(48, 162, 1104, 150, PALE)
+    d.text(600, 206, 'БЮДЖЕТ GPU KV', 19, BLUE, True, 'middle')
+    d.text(600, 263, 'VRAM × доля − веса − служебная память', 35, INK, True, 'middle', width=1032)
+    for x, title, body, fill, color in [
+            (48, 'Gemma 4 E2B', ['1 GPU на сервис', 'BF16-веса / окно 4K', 'A и B: по 2 последовательности'], PALE, BLUE),
+            (624, 'Qwen3.5-9B', ['2 GPU на один сервис', 'BF16-веса + MTP: ≈17,13 GiB', 'TP2 / окно 8K'], LILAC, PURPLE)]:
+        d.card(x, 350, 528, 187, title, body, fill, color)
+    d.card(48, 572, 1104, 108, 'RAM: отдельный бюджет CPU KV',
+           ['4 GiB в конфигурации кеша. Это не выгрузка весов и не добавочная VRAM.'], MINT, TEAL)
+    d.footer('Размер checkpoint на диске ≠ память процесса. NVLink и MIG у RTX здесь нет.')
+    d.save()
+
+
+def rtx_platform():
+    d = Diagram('23-rtx-platform', 'Каталог и сервис — одна цепочка',
+                'Целевой путь RTX: ai-models → InferenceService → GPU → ответ в чате.')
+    model = d.card(48, 175, 320, 136, '1. Model',
+                   ['Источник + revision', 'Артефакт + digest'], compact=True)
+    delivery = d.card(440, 175, 320, 136, '2. Доставка',
+                      ['На нужную RTX-ноду', 'Проверенный mount'], MINT, TEAL, compact=True)
+    runtime = d.card(832, 175, 320, 136, '3. Runtime',
+                     ['vLLM + локальные веса', 'Ответ API и MTP'], compact=True)
+    d.connect(model, delivery)
+    d.connect(delivery, runtime)
+    order = d.card(48, 394, 320, 136, 'InferenceService',
+                   ['model.src: ai-models', 'ref: Model'], compact=True)
+    plan = d.card(440, 394, 320, 136, 'Рецепт + DRA',
+                  ['Gemma: 1 карта', 'Qwen TP2: 2 карты'], LILAC, PURPLE, compact=True)
+    ui = d.card(832, 394, 320, 136, 'ai-mcp-gateway',
+                ['Личный VK → WebUI', 'Метрики и учёт'], compact=True)
+    d.connect(order, plan)
+    d.connector([plan.port('right'), (796, 462), (796, 283.8), runtime.port('left', .8)], PURPLE)
+    d.connect(runtime, ui, ('bottom', 'top'))
+    d.rect(48, 577, 1104, 100, SAND)
+    d.text(72, 610, 'Перед запуском: два независимых условия', 24, AMBER, True, width=1056)
+    d.text(72, 646, 'Доставка на RTX; для Gemma — ещё поддержка отдельного assistant.', 22, width=1056)
+    d.footer('Каталог Ready ≠ сервис Ready. Предыдущий HF/PVC-прогон не проверяет эту цепочку.')
+    d.save()
+
+
 BUILDERS = (topology, latency, memory, ab, offload, scheduler, speculation, mig,
             platform, tp2, gemma_formula, gitops, attention, prefixes, rag,
-            qwen_transition, qwen_mtp, qwen_capacity, rtx_sequence)
+            qwen_transition, qwen_mtp, qwen_capacity, rtx_sequence,
+            rtx_topology, rtx_memory, rtx_platform, rtx_tp2)
 
 if __name__ == '__main__':
     for build in BUILDERS:
