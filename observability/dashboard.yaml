@@ -4439,6 +4439,157 @@ spec:
               "range": true
             }
           ]
+        },
+        {
+          "id": 260,
+          "type": "row",
+          "title": "KV-offload: переносы OffloadingConnector",
+          "collapsed": false,
+          "panels": [],
+          "gridPos": {
+            "x": 0,
+            "y": 147,
+            "w": 24,
+            "h": 1
+          }
+        },
+        {
+          "id": 261,
+          "type": "timeseries",
+          "title": "KV: GPU ↔ RAM, bytes/s",
+          "description": "Фактические передачи native OffloadingConnector. CPU_to_GPU — возврат KV из RAM; GPU_to_CPU — запись. Метрика отсутствует при другом backend; ноль не подставляется.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 148,
+            "w": 8,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "unit": "Bps",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "editorMode": "code",
+              "expr": "sum by(namespace,service,transfer_type)(rate(vllm:kv_offload_total_bytes_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval]))",
+              "legendFormat": "{{namespace}} / {{service}} / {{transfer_type}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 262,
+          "type": "timeseries",
+          "title": "KV: объём передач в скользящем окне",
+          "description": "В каждой точке: байты за предшествующее окно длиной в выбранный диапазон времени, с поправкой на сброс счётчика. Это не объём занятой RAM и не размер всех сохранённых префиксов.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "gridPos": {
+            "x": 8,
+            "y": 148,
+            "w": 8,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "unit": "bytes",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "editorMode": "code",
+              "expr": "sum by(namespace,service,transfer_type)(increase(vllm:kv_offload_total_bytes_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__range]))",
+              "legendFormat": "{{namespace}} / {{service}} / {{transfer_type}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 263,
+          "type": "timeseries",
+          "title": "CPU KV: доля закреплённого кеша",
+          "description": "Часть CPU-кеша, закреплённая активными передачами. Не общая занятость кеша: idle=0 не означает, что сохранённых KV нет.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "gridPos": {
+            "x": 16,
+            "y": 148,
+            "w": 8,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "unit": "percentunit",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "editorMode": "code",
+              "expr": "max by(namespace,service)(vllm:kv_offload_cpu_cache_usage_perc{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"})",
+              "legendFormat": "{{namespace}} / {{service}}",
+              "range": true
+            }
+          ]
         }
       ]
     }

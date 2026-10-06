@@ -1,0 +1,114 @@
+{
+  "measured": "2026-10-06",
+  "hardware": "2 x RTX 5060 Ti 16 GiB; one GPU per replica",
+  "runtime": "vLLM 0.31.0-c4115ebf (AI Inference payload)",
+  "model": "google/gemma-4-E2B-it",
+  "workload": {
+    "seed": 42,
+    "inputTokens": 2048,
+    "outputTokens": 128,
+    "requests": 8,
+    "concurrency": 2,
+    "ignoreEos": true,
+    "temperature": 0
+  },
+  "caveats": [
+    "Three sequential runs per endpoint inside its Pod; repeated prompts warm prefix cache.",
+    "This measures the combined profile, not isolated MTP speedup.",
+    "Synthetic serving benchmark; not a cold-start result or quality comparison."
+  ],
+  "base": [
+    {
+      "file": "rtx5060-20261006/base-2.json",
+      "duration": 34.07229932025075,
+      "completed": 8,
+      "failed": 0,
+      "total_input_tokens": 16384,
+      "total_output_tokens": 1024,
+      "output_throughput": 30.053739267058777,
+      "mean_ttft_ms": 340.07429488701746,
+      "median_ttft_ms": 341.45814971998334,
+      "p99_ttft_ms": 449.0393545664847,
+      "mean_tpot_ms": 64.3860710859042,
+      "median_tpot_ms": 64.32352822061304,
+      "p99_tpot_ms": 66.65805524105103
+    },
+    {
+      "file": "rtx5060-20261006/base-3.json",
+      "duration": 34.36020590318367,
+      "completed": 8,
+      "failed": 0,
+      "total_input_tokens": 16384,
+      "total_output_tokens": 1024,
+      "output_throughput": 29.801916871083726,
+      "mean_ttft_ms": 342.2800052212551,
+      "median_ttft_ms": 343.03931589238346,
+      "p99_ttft_ms": 452.5489479582757,
+      "mean_tpot_ms": 64.93882932031057,
+      "median_tpot_ms": 64.87759925227054,
+      "p99_tpot_ms": 69.65620725620977
+    },
+    {
+      "file": "rtx5060-20261006/base-4.json",
+      "duration": 34.255268417764455,
+      "completed": 8,
+      "failed": 0,
+      "total_input_tokens": 16384,
+      "total_output_tokens": 1024,
+      "output_throughput": 29.893211972876074,
+      "mean_ttft_ms": 342.5233308807947,
+      "median_ttft_ms": 344.1655545029789,
+      "p99_ttft_ms": 456.5876148082316,
+      "mean_tpot_ms": 64.72667868021787,
+      "median_tpot_ms": 64.73553006713256,
+      "p99_tpot_ms": 66.13884000848304
+    }
+  ],
+  "tune": [
+    {
+      "file": "rtx5060-20261006/tune-2.json",
+      "duration": 6.347277746070176,
+      "completed": 8,
+      "failed": 0,
+      "total_input_tokens": 16384,
+      "total_output_tokens": 1024,
+      "output_throughput": 161.3290044907826,
+      "mean_ttft_ms": 307.982744066976,
+      "median_ttft_ms": 286.34931496344507,
+      "p99_ttft_ms": 446.8291763495654,
+      "mean_tpot_ms": 9.355977677197497,
+      "median_tpot_ms": 8.441570522923639,
+      "p99_tpot_ms": 12.103404970472956
+    },
+    {
+      "file": "rtx5060-20261006/tune-3.json",
+      "duration": 5.042603278066963,
+      "completed": 8,
+      "failed": 0,
+      "total_input_tokens": 16384,
+      "total_output_tokens": 1024,
+      "output_throughput": 203.06971291077676,
+      "mean_ttft_ms": 94.62770749814808,
+      "median_ttft_ms": 80.7321835309267,
+      "p99_ttft_ms": 132.15956250205636,
+      "mean_tpot_ms": 8.78734224316422,
+      "median_tpot_ms": 8.407424134385632,
+      "p99_tpot_ms": 11.09581247060083
+    },
+    {
+      "file": "rtx5060-20261006/tune-4.json",
+      "duration": 5.029405442066491,
+      "completed": 8,
+      "failed": 0,
+      "total_input_tokens": 16384,
+      "total_output_tokens": 1024,
+      "output_throughput": 203.6025951368234,
+      "mean_ttft_ms": 93.201179348398,
+      "median_ttft_ms": 85.89690527878702,
+      "p99_ttft_ms": 132.29591880925,
+      "mean_tpot_ms": 8.771152997767098,
+      "median_tpot_ms": 8.407608219092404,
+      "p99_tpot_ms": 11.189801730068885
+    }
+  ]
+}

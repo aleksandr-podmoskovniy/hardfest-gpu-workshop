@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rtx-qwen35-tp2
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://gitlab.example.com/team/k8s-config.git
+    targetRevision: hardfest-rtx
+    path: argo-projects/gpu-cluster/hardfest-rtx/charts/inference-service
+    helm:
+      releaseName: rtx-qwen35-tp2
+      valueFiles:
+        - ../../platform/rtx-qwen.yaml
+  destination:
+    name: gpu-cluster
+    namespace: hardfest-rtx
+  syncPolicy:
+    syncOptions: [CreateNamespace=false, ServerSideApply=true]

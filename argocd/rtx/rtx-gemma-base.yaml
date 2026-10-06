@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rtx-gemma-base
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://gitlab.example.com/team/k8s-config.git
+    targetRevision: hardfest-rtx
+    path: argo-projects/gpu-cluster/hardfest-rtx/charts/vllm-runtime
+    helm:
+      releaseName: rtx-gemma-base
+      valueFiles:
+        - ../../values/gemma-base.yaml
+  destination:
+    name: gpu-cluster
+    namespace: hardfest-rtx
+  syncPolicy:
+    syncOptions: [CreateNamespace=false, ServerSideApply=true]

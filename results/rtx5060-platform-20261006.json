@@ -1,0 +1,63 @@
+{
+  "measured": "2026-10-06",
+  "kind": "functional acceptance; not a Qwen performance benchmark",
+  "hardware": "2 x NVIDIA GeForce RTX 5060 Ti 16 GiB",
+  "runtime": "vLLM 0.31.0-c4115ebf (AI Inference payload)",
+  "inferenceSourceCommit": "7e3d99983db06776dc76b74318a7c0a1181766ca",
+  "storage": "Ordinary RWO PVCs on one node; not ai-models NodeCache",
+  "gemma": {
+    "model": "google/gemma-4-E2B-it",
+    "assistant": "google/gemma-4-E2B-it-assistant",
+    "assistantRevision": "2d874ef7d29f9a30599a1e4b3c1cbc9595f005df",
+    "readyConditions": "6/6 True",
+    "liveTest": "TestLiveRTXCompactMTP passed before and after Pod restart",
+    "cacheReplayTest": "TestLiveRTXAssistantCacheReplay passed",
+    "webUI": "Stream completed; stored answer survived page reload",
+    "finalState": "Stopped for Qwen TP2; PVC retained"
+  },
+  "qwen": {
+    "model": "Qwen/Qwen3.5-9B",
+    "readyConditions": "6/6 True",
+    "allocatedDistinctGPUs": 2,
+    "tensorParallelSize": 2,
+    "dtype": "bfloat16",
+    "quantization": null,
+    "weightOffload": false,
+    "maxModelLen": 8192,
+    "maxNumSeqs": 2,
+    "speculativeMethod": "mtp (qwen3_next_mtp compatibility name)",
+    "numSpeculativeTokens": 1,
+    "cpuKVGiB": 4,
+    "liveTest": "TestLiveRTXCompactMTP passed: ordinary and streaming responses, two-device claim, increasing accepted-token counter",
+    "functionalCounters": {
+      "acceptedDraftTokens": 210,
+      "proposedDraftTokens": 280,
+      "repeatedPromptTokens": 2106,
+      "gpuPrefixHits": 1056,
+      "gpuToCPUBytes": 110297088,
+      "cpuToGPUBytes": 0
+    },
+    "gatewayStreaming": {"testedReplicas": 3, "http200": 3, "completeStreams": 3},
+    "webUI": {"displayName": "Qwen 9B — TP2", "streamCompleted": true, "persistedAfterReload": true, "promptTokens": 38, "completionTokens": 79},
+    "prometheusUp": 1,
+    "finalState": "Running"
+  },
+  "participantFlow": {
+    "freshBrowserRegistration": true,
+    "pendingHasNoVK": true,
+    "adminApprovalCreatesOnePersonalVK": true,
+    "budgetUSDPer24Hours": 500,
+    "mcpAllowed": false,
+    "inputUSDPerMillion": 10,
+    "outputUSDPerMillion": 20,
+    "gatewayLogSnapshot": {"requests": 12, "successPercent": 100, "promptTokens": 2061, "completionTokens": 637, "costUSD": 0.03335, "directCacheHits": 0, "semanticCacheHits": 0}
+  },
+  "limitations": [
+    "The Qwen counters prove mechanisms ran, not that MTP improves speed.",
+    "Qwen CPU-to-GPU KV recovery after eviction was not separately tested; Gemma has a separate eviction check.",
+    "Primary HuggingFace model revisions are not pinned by this delivery path.",
+    "Dashboard configuration and Prometheus queries checked; authenticated Grafana browser rendering not checked.",
+    "A known last-writer-wins defect in the persisted HA budget counter remains unresolved. Global cross-replica spending-limit enforcement is not verified; this run proves VK attribution and tariff calculation, not that guarantee.",
+    "RTX results do not validate H100, NVLink, MIG or MPS."
+  ]
+}

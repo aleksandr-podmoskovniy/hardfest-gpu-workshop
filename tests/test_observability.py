@@ -9,6 +9,15 @@ from check_manifests import render
 
 
 class Observability(unittest.TestCase):
+    def test_native_connector_directions_and_units_are_preserved(self):
+        text = (ROOT / "observability/dashboard.yaml").read_text()
+        self.assertIn("vllm:kv_offload_total_bytes_total", text)
+        self.assertIn("sum by(namespace,service,transfer_type)", text)
+        self.assertIn('"unit": "Bps"', text)
+        self.assertIn('"unit": "bytes"', text)
+        self.assertIn("CPU_to_GPU", text)
+        self.assertIn("vllm:kv_offload_cpu_cache_usage_perc", text)
+
     @classmethod
     def setUpClass(cls):
         raw = (ROOT / "observability/dashboard.yaml").read_text()

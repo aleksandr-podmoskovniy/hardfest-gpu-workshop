@@ -1,0 +1,14 @@
+order:
+  enabled: false
+  name: rtx-qwen35-tp2
+  spec:
+    inferenceServiceClassName: REPLACE_RTX_PAIR_CLASS
+    launchStrategy: Throughput
+    model:
+      src: HuggingFace
+      ref:
+        kind: null
+        name: Qwen/Qwen3.5-9B
+    resources:
+      accelerator:
+        deviceClasses: [REPLACE_GENERATED_RTX_DEVICECLASS]

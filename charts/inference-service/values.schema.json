@@ -52,13 +52,12 @@
               ],
               "properties": {
                 "src": {
-                  "const": "ai-models"
+                  "enum": ["ai-models", "HuggingFace"]
                 },
                 "ref": {
                   "type": "object",
                   "additionalProperties": false,
                   "required": [
-                    "kind",
                     "name"
                   ],
                   "properties": {
@@ -78,7 +77,14 @@
                     }
                   }
                 }
-              }
+              },
+              "allOf": [
+                {
+                  "if": {"properties": {"src": {"const": "ai-models"}}},
+                  "then": {"properties": {"ref": {"required": ["kind"]}}},
+                  "else": {"properties": {"ref": {"not": {"anyOf": [{"required": ["kind"]}, {"required": ["namespace"]}]}}}}
+                }
+              ]
             },
             "resources": {
               "type": "object",

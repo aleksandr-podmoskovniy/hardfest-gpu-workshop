@@ -1,0 +1,10 @@
+# No storage or Jobs are created until explicitly enabled.
+enabled: false
+generation: v1
+image: REPLACE_MODEL_FETCH_IMAGE
+imagePullSecrets: []
+storageClassName: REPLACE_STORAGE_CLASS
+nodeSelector: {}
+tolerations: []
+hfTokenSecret: ""
+models: []

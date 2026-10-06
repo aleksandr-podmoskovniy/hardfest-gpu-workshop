@@ -510,9 +510,32 @@ def qwen_capacity():
     d.save()
 
 
+def rtx_sequence():
+    d = Diagram('20-rtx-sequence', 'Тот же опыт — две RTX 5060 Ti',
+                'Меняем размер моделей и кеша. Порядок оптимизаций остаётся прежним.')
+    a = d.card(48, 180, 320, 158, '1. Gemma A',
+               ['E2B / BF16 / 4K', 'Строгий baseline'], compact=True)
+    cache = d.card(440, 180, 320, 158, '2. Gemma B: кеш',
+                   ['Prefix cache + FP8 KV', 'KV → RAM: 4 GiB'], MINT, TEAL, compact=True)
+    spec = d.card(832, 180, 320, 158, '3. Gemma B: decode',
+                  ['Chunked prefill', 'Assistant + graphs'], LILAC, PURPLE, compact=True)
+    d.connect(a, cache)
+    d.connect(cache, spec)
+    platform = d.card(48, 424, 480, 164, '4. Gemma → AI Inference',
+                      ['Освобождаем первую карту', 'B остаётся на второй'], compact=True)
+    qwen = d.card(672, 424, 480, 164, '5. Qwen → AI Inference',
+                  ['Qwen3.5-9B / BF16 / TP2', 'Встроенный MTP / 8K'], LILAC, PURPLE, compact=True)
+    d.connector([spec.port('bottom'), (992, 380), (288, 380), platform.port('top')])
+    d.connect(platform, qwen)
+    d.text(48, 652, '2 × 16 GiB, общий чат, ai-mcp-gateway и дашборд',
+           24, BLUE, True, width=1104)
+    d.footer('RAG и Whisper остаются на A30. TP2 на RTX не означает наличие NVLink.')
+    d.save()
+
+
 BUILDERS = (topology, latency, memory, ab, offload, scheduler, speculation, mig,
             platform, tp2, gemma_formula, gitops, attention, prefixes, rag,
-            qwen_transition, qwen_mtp, qwen_capacity)
+            qwen_transition, qwen_mtp, qwen_capacity, rtx_sequence)
 
 if __name__ == '__main__':
     for build in BUILDERS:

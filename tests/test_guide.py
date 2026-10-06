@@ -251,7 +251,7 @@ class Guide(unittest.TestCase):
 
     def test_all_theory_diagrams_are_local_svg_without_external_content(self):
         diagrams = list((ROOT / "assets").glob("[0-9][0-9]-*.svg"))
-        self.assertEqual(len(diagrams), 18)
+        self.assertEqual(len(diagrams), 19)
         docs = "\n".join(path.read_text() for path in [ROOT / "README.md"] +
                          list((ROOT / "docs").rglob("*.md")) +
                          list((ROOT / "labs").glob("*.md")))

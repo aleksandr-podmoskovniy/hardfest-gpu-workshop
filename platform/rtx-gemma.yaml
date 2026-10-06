@@ -1,0 +1,14 @@
+order:
+  enabled: false
+  name: rtx-gemma-platform
+  spec:
+    inferenceServiceClassName: REPLACE_RTX_SINGLE_CLASS
+    launchStrategy: Throughput
+    model:
+      src: HuggingFace
+      ref:
+        kind: null
+        name: google/gemma-4-E2B-it
+    resources:
+      accelerator:
+        deviceClasses: [REPLACE_GENERATED_RTX_DEVICECLASS]

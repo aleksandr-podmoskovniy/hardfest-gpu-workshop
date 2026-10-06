@@ -97,7 +97,7 @@ config:
 {{- end -}}
 {{- end -}}
 {{- end -}}
-{{- range $key := list "dra" "modelVolumes" "modelRefs" "nodeSelector" "vllm" -}}
+{{- range $key := list "image" "dra" "modelVolumes" "modelRefs" "nodeSelector" "vllm" -}}
 {{- if contains "REPLACE_" (toJson (index $.Values $key)) -}}
 {{- fail (printf "replace site placeholders in %s before enabling replicas" $key) -}}
 {{- end -}}

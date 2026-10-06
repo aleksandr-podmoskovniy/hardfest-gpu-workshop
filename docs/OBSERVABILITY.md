@@ -235,6 +235,27 @@ GPU-панели показывают все DCGM-устройства выбр�
 
 ### KV-offload и speculative decoding
 
+Ряд **KV-offload: переносы OffloadingConnector** предназначен для native
+connector, в том числе профиля `VLLM_USE_SIMPLE_KV_OFFLOAD=0` на RTX.
+Он не требует включения Simple CPU backend.
+
+| Метрика native connector | Что показывает |
+| --- | --- |
+| `kv_offload_total_bytes_total{transfer_type="GPU_to_CPU"}` | Переданные в RAM байты |
+| `kv_offload_total_bytes_total{transfer_type="CPU_to_GPU"}` | Возвращённые на GPU байты |
+| `kv_offload_cpu_cache_usage_perc` | Доля кеша, закреплённая активными передачами |
+
+Все имена имеют префикс `vllm:`. Дашборд показывает bytes/s и объём за выбранное
+окно раздельно по направлению. Ноль pinned usage не означает пустой RAM-кеш;
+счётчик записей без чтений не доказывает повторное использование CPU KV.
+
+Для ручных RTX-сервисов добавьте `hardfest-rtx` в `namespaceSelector.matchNames`
+существующего ServiceMonitor и разрешите ему доступ к runtime в этом namespace
+через NetworkPolicy. Для платформенных сервисов AI Inference создаёт собственный
+ServiceMonitor: проверьте его наличие и `up=1` в Prometheus.
+Проверьте selector наблюдения за namespace и labels Service. Второй ServiceMonitor
+для тех же endpoints создавать не нужно: это может удвоить scrape.
+
 Панели **KV-offload: блоки CPU-кеша (если включён)** используют метрики
 Simple CPU backend vLLM 0.31. Они подходят любой модели с этим backend,
 а не только Qwen. Если backend не включён или runtime не экспортирует

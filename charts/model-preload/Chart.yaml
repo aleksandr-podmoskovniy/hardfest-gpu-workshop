@@ -1,0 +1,5 @@
+apiVersion: v2
+name: model-preload
+description: Prepare model PVCs without allocating GPUs
+type: application
+version: 0.1.0

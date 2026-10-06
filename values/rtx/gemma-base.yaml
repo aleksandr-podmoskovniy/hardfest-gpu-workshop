@@ -1,0 +1,48 @@
+fullnameOverride: rtx-gemma-base
+replicaCount: 0
+image: REPLACE_RUNTIME_IMAGE@sha256:f7cb9820c7e92eb78a4b3f60033e240c87a16bf99117471aba347fdd69eaca2d
+profile: gemma-base-4k
+nodeSelector:
+  kubernetes.io/hostname: REPLACE_RTX_NODE
+tolerations: []
+dra:
+  deviceClassName: REPLACE_GENERATED_RTX_DEVICECLASS
+  count: 1
+modelVolumes:
+  - name: gemma
+    claimName: REPLACE_GEMMA_PVC
+    mountPath: /models/model
+    subPath: "."
+resources:
+  requests:
+    cpu: "2"
+    memory: 12Gi
+    ephemeral-storage: 1Gi
+  limits:
+    memory: 18Gi
+    ephemeral-storage: 8Gi
+runtimeSize: 6Gi
+shmSize: 2Gi
+vllm:
+  model: /models/model
+  served-model-name: rtx-gemma-base
+  host: 0.0.0.0
+  port: 8000
+  dtype: bfloat16
+  language-model-only: true
+  safetensors-load-strategy: lazy
+  tensor-parallel-size: 1
+  max-model-len: 4096
+  max-num-seqs: 2
+  gpu-memory-utilization: 0.9
+  enforce-eager: true
+  no-enable-prefix-caching: true
+  no-enable-chunked-prefill: true
+  max-num-batched-tokens: 4096
+  kv-cache-dtype: auto
+  reasoning-parser: gemma4
+  tool-call-parser: gemma4
+  enable-auto-tool-choice: true
+  generation-config: vllm
+networkPolicy:
+  extraIngress: []
