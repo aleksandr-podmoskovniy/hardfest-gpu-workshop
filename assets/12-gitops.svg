@@ -43,9 +43,9 @@
 <tspan x="648" dy="0">GPU-кластер</tspan>
 </text>
 <text x="648" y="506" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
-<tspan x="648" dy="0">ConfigMap с параметрами vLLM</tspan>
-<tspan x="648" dy="30.799999999999997">Deployment + DRA-заявка</tspan>
-<tspan x="648" dy="30.799999999999997">Service + NetworkPolicy</tspan>
+<tspan x="648" dy="0">Ручной runtime или InferenceService</tspan>
+<tspan x="648" dy="30.799999999999997">DRA-заявка → Pod</tspan>
+<tspan x="648" dy="30.799999999999997">Service → ответ модели</tspan>
 </text>
 <path d="M582 244.0 L618 244.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
 <path d="M888.0 334 L888.0 368.0 Q888 376 880.0 376.0 L320.0 376.0 Q312 376 312.0 384.0 L312.0 418" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
@@ -55,6 +55,6 @@
 </text>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">В примерах replicaCount: 0, autosync выключен. Секреты хранятся вне Git.</tspan>
+<tspan x="48" dy="0">Публичные workloads выключены, autosync нет. Секреты хранятся вне Git.</tspan>
 </text>
 </svg>

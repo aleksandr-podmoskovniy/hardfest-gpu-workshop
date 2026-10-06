@@ -50,6 +50,14 @@ config:
 {{- fail "vllm must listen on 0.0.0.0:8000 for Service and probes" -}}
 {{- end -}}
 {{- $names := dict -}}
+{{- if and (not (empty .Values.modelRefs)) (not (empty .Values.modelVolumes)) -}}
+{{- fail "choose modelRefs (ai-models) or modelVolumes (PVC), not both" -}}
+{{- end -}}
+{{- range $flag := list "enable-prefix-caching" "enable-chunked-prefill" -}}
+{{- if and (hasKey $.Values.vllm $flag) (hasKey $.Values.vllm (printf "no-%s" $flag)) -}}
+{{- fail (printf "conflicting positive and negative flag: %s" $flag) -}}
+{{- end -}}
+{{- end -}}
 {{- range .Values.modelVolumes -}}
 {{- if or (hasPrefix "/" .subPath) (has ".." (splitList "/" .subPath)) -}}
 {{- fail "modelVolumes.subPath must stay inside the model PVC" -}}
@@ -60,8 +68,8 @@ config:
 {{- $_ := set $names .name true -}}
 {{- end -}}
 {{- if gt (int .Values.replicaCount) 0 -}}
-{{- if or (empty .Values.modelVolumes) (empty .Values.nodeSelector) -}}
-{{- fail "running workloads require modelVolumes and a nodeSelector" -}}
+{{- if or (and (empty .Values.modelVolumes) (empty .Values.modelRefs)) (empty .Values.nodeSelector) -}}
+{{- fail "running workloads require modelRefs or modelVolumes and a nodeSelector" -}}
 {{- end -}}
 {{- $paths := list .Values.vllm.model -}}
 {{- with index .Values.vllm "speculative-config" -}}
@@ -73,17 +81,23 @@ config:
 {{- $path := . -}}
 {{- if hasPrefix "/" $path -}}
 {{- $mounted := false -}}
+{{- range $.Values.modelRefs -}}
+{{- $root := printf "/data/modelcache/models/%s" . -}}
+{{- if or (eq $path $root) (hasPrefix (printf "%s/" $root) $path) -}}
+{{- $mounted = true -}}
+{{- end -}}
+{{- end -}}
 {{- range $.Values.modelVolumes -}}
 {{- if or (eq $path .mountPath) (hasPrefix (printf "%s/" .mountPath) $path) -}}
 {{- $mounted = true -}}
 {{- end -}}
 {{- end -}}
 {{- if not $mounted -}}
-{{- fail (printf "model path %s has no modelVolumes mount" $path) -}}
+{{- fail (printf "model path %s has no modelVolumes mount or matching modelRefs entry" $path) -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
-{{- range $key := list "dra" "modelVolumes" "nodeSelector" "vllm" -}}
+{{- range $key := list "dra" "modelVolumes" "modelRefs" "nodeSelector" "vllm" -}}
 {{- if contains "REPLACE_" (toJson (index $.Values $key)) -}}
 {{- fail (printf "replace site placeholders in %s before enabling replicas" $key) -}}
 {{- end -}}

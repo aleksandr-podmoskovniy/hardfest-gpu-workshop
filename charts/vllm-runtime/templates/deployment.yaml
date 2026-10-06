@@ -3,6 +3,10 @@ kind: Deployment
 metadata:
   name: {{ include "vllm.name" . }}
   namespace: {{ .Release.Namespace }}
+  {{- with .Values.modelRefs }}
+  annotations:
+    ai.deckhouse.io/model: {{ join "," . | quote }}
+  {{- end }}
   labels:
     {{- include "vllm.labels" . | nindent 4 }}
 spec:

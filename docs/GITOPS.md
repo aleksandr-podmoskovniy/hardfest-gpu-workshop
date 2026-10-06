@@ -22,6 +22,8 @@ Helm здесь рендерит YAML; отдельного Helm release нет.
 ```bash
 export ARGO_CONTEXT=management
 export GPU_CONTEXT=gpu-cluster
+export MIG_CONTEXT=a30-cluster
+export A30_DIR=argo-projects/a30-cluster/hardfest-demo
 export ARGO_NAMESPACE=argocd
 export DEMO_DIR=argo-projects/gpu-cluster/hardfest-demo
 set -o pipefail
@@ -44,8 +46,8 @@ git switch -c hardfest-demo
 mkdir -p "$DEMO_DIR/charts" "$DEMO_DIR/values" "$DEMO_DIR/site" "$DEMO_DIR/argo-app"
 cp -R ../hardfest-gpu-workshop/charts/vllm-runtime "$DEMO_DIR/charts/"
 cp ../hardfest-gpu-workshop/values/*.yaml "$DEMO_DIR/values/"
-cp ../hardfest-gpu-workshop/examples/site-gemma.yaml "$DEMO_DIR/site/gemma.yaml"
-cp ../hardfest-gpu-workshop/examples/site-gemma-assistant.yaml "$DEMO_DIR/site/gemma-assistant.yaml"
+cp ../hardfest-gpu-workshop/examples/site-gemma-catalog.yaml "$DEMO_DIR/site/gemma.yaml"
+cp ../hardfest-gpu-workshop/examples/site-gemma-assistant-catalog.yaml "$DEMO_DIR/site/gemma-assistant.yaml"
 cp ../hardfest-gpu-workshop/argocd/gemma-a.yaml "$DEMO_DIR/argo-app/"
 cp ../hardfest-gpu-workshop/argocd/gemma-b.yaml "$DEMO_DIR/argo-app/"
 ```
@@ -60,8 +62,8 @@ cp ../hardfest-gpu-workshop/argocd/gemma-b.yaml "$DEMO_DIR/argo-app/"
 
 | Файл относительно `$DEMO_DIR` | Что заменить | Как проверить |
 | --- | --- | --- |
-| `site/gemma.yaml` | Ноду, DeviceClass, PVC, subPath | `get nodes,deviceclasses` и `get pvc` |
-| `site/gemma-assistant.yaml` | Те же поля и отдельный mount assistant | Оба каталога весов доступны Pod |
+| `site/gemma.yaml` | Ноду, DeviceClass, имя Model и путь cache | `get nodes,deviceclasses` и готовность Model на ноде |
+| `site/gemma-assistant.yaml` | Те же поля и оба modelRefs, включая assistant | Оба каталога весов доступны Pod |
 | `site/*.yaml` | Tolerations и ingress от шлюза/мониторинга | Сверить taints и сетевые политики площадки |
 | `argo-app/gemma-a.yaml`, `argo-app/gemma-b.yaml` | `repoURL`, `targetRevision`, `project`, `source.path`, `destination` | Git доступен Argo, проект разрешает destination |
 
@@ -80,10 +82,15 @@ helm:
     - ../../site/gemma.yaml
 ```
 
-В `site/` находятся только привязки площадки. Не добавляйте туда `replicaCount`,
-`vllm`, `resources` или `shmSize`: они перекроют учебный профиль.
-Используйте **один полный профиль и один site-файл**. Списки Helm заменяет
-целиком, поэтому для assistant site-файл содержит оба mount.
+В `site/` находятся привязки площадки. Не добавляйте туда `replicaCount`,
+параметры производительности, `resources` или `shmSize`: они перекроют профиль.
+Допустимые переопределения `vllm` здесь — только пути `model` и
+`speculative-config.model`. Используйте **один полный профиль и один site-файл**.
+Списки Helm заменяет целиком: assistant site содержит оба `modelRefs`.
+
+Вариант с заранее подготовленным PVC остаётся в `examples/site-gemma.yaml`
+и `examples/site-gemma-assistant.yaml`. Выберите один источник весов:
+`modelRefs` (ai-models) или `modelVolumes` (PVC), не оба сразу.
 
 Все профили пока оставьте с `replicaCount: 0`. Autosync и общий prune не включайте.
 
@@ -174,10 +181,10 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-a --t
 
 Итерации B используют тот же `gemma-b.yaml`, Application и Service.
 Для переключения замените **профиль целиком**, а не накладывайте один вариант на другой.
-Например, отдельный опыт с контекстом 128K и CPU KV:
+Например, вторая итерация с chunked prefill и assistant:
 
 ```bash
-cp "$DEMO_DIR/values/gemma-b-ram.yaml" "$DEMO_DIR/values/gemma-b.yaml"
+cp "$DEMO_DIR/values/gemma-b-spec.yaml" "$DEMO_DIR/values/gemma-b.yaml"
 ```
 
 Затем в редакторе установите `replicaCount: 1` в `gemma-b.yaml`, проверьте бюджет
@@ -203,51 +210,82 @@ sync конкретного commit → Ready и запрос API**.
 
 ```bash
 git log --oneline -5 -- "$DEMO_DIR"
-git revert --no-edit YOUR_PROFILE_COMMIT
+git revert -S -s --no-edit YOUR_PROFILE_COMMIT
 git push
 ```
 
 Синхронизируйте новый commit по шагу 5. Источник состояния — Git;
 `helm rollback` здесь не используется. Не удаляйте PVC и модели при откате.
 
-## 9. Подготовить Application для AI Inference
+## 9. Подготовить Helm-заказы AI Inference
 
-Заказами платформы управляет отдельный `hardfest-platform`. Он читает обычные
-YAML из `platform/`, не рендерит runtime-чарт и не владеет его Deployment.
-Для этого используется [directory-режим Argo CD](https://argo-cd.readthedocs.io/en/stable/user-guide/directory/).
+Отдельный чарт `inference-service` создаёт только заказ InferenceService.
+Runtime, Model, GPUClass и дочерние StatefulSet/Deployment он не создаёт.
+Gemma и Qwen получают отдельные Applications; три сервиса A30 — тоже отдельные.
+
+Для нового каталога H100:
 
 ```bash
-export PLATFORM_APP=hardfest-platform
 mkdir -p "$DEMO_DIR/platform"
-touch "$DEMO_DIR/platform/.gitkeep"
-cp ../hardfest-gpu-workshop/argocd/platform.yaml "$DEMO_DIR/argo-app/platform.yaml"
+cp -R ../hardfest-gpu-workshop/charts/inference-service "$DEMO_DIR/charts/"
+cp ../hardfest-gpu-workshop/platform/gemma.yaml "$DEMO_DIR/platform/"
+cp ../hardfest-gpu-workshop/platform/qwen.yaml "$DEMO_DIR/platform/"
+cp ../hardfest-gpu-workshop/argocd/gemma-platform.yaml "$DEMO_DIR/argo-app/"
+cp ../hardfest-gpu-workshop/argocd/qwen-platform.yaml "$DEMO_DIR/argo-app/"
 ```
 
-В `$DEMO_DIR/argo-app/platform.yaml` замените те же `repoURL`, ветку, проект
-и destination, что у ручных Application. `source.path` должен указывать на
-`$DEMO_DIR/platform`; вместо переменной в YAML впишите полный путь в репозитории.
-Пока каталог содержит только `.gitkeep`: заказов и GPU-нагрузки ещё нет.
+Для нового каталога A30:
 
 ```bash
-kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply --dry-run=server \
-  -f "$DEMO_DIR/argo-app/platform.yaml"
-git add -- "$DEMO_DIR/argo-app/platform.yaml" "$DEMO_DIR/platform/.gitkeep"
-git diff --cached --check
-git diff --cached
-git commit -S -s -m "Prepare AI Inference GitOps application"
-git push
-kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply \
-  -f "$DEMO_DIR/argo-app/platform.yaml"
-kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get application "$PLATFORM_APP"
+mkdir -p "$A30_DIR/charts" "$A30_DIR/platform" "$A30_DIR/argo-app"
+cp -R ../hardfest-gpu-workshop/charts/inference-service "$A30_DIR/charts/"
+for SERVICE in embedding reranker whisper; do
+  cp "../hardfest-gpu-workshop/platform/$SERVICE.yaml" "$A30_DIR/platform/"
+  cp "../hardfest-gpu-workshop/argocd/$SERVICE-platform.yaml" "$A30_DIR/argo-app/"
+done
 ```
 
-Если Application принадлежит родительскому GitOps-приложению, вместо последнего
-`apply` доставьте его через родителя. Autosync и общий prune не включайте.
+В каждом Application заполните репозиторий, ветку, проект и destination.
+`source.path` заканчивается на `charts/inference-service`;
+`valueFiles` содержит только `../../platform/ИМЯ.yaml`.
+В каждом values укажите существующие Model, InferenceServiceClass и DeviceClass.
+Пока сохраняйте `order.enabled: false`. Пустой render выключенного заказа
+не проверяет его поля в Kubernetes: server dry-run выполняется при включении.
 
-Файл `platform/gemma.yaml` появится в [лабораторной Gemma](../labs/04-deckhouse.md),
-`platform/qwen.yaml` — в [лабораторной Qwen](../labs/06-tp2.md). Там приведены
-проверка заказа, commit и sync нужной ревизии. В `platform/` не помещайте
-дочерние StatefulSet/Deployment: ими управляет контроллер AI Inference.
+Отправьте файлы отдельным подписанным commit и зарегистрируйте Applications
+через родительский Application либо по шагу 5.
+При обновлении существующего стенда не копируйте файлы поверх своих привязок.
+
+После включения конкретного заказа:
+
+```bash
+helm lint "$DEMO_DIR/charts/inference-service" --strict -f "$DEMO_DIR/platform/gemma.yaml"
+helm template hf-platform-gemma "$DEMO_DIR/charts/inference-service" \
+  -n hardfest-demo -f "$DEMO_DIR/platform/gemma.yaml" |
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f -
+```
+
+Дальше commit/push и sync `hardfest-gemma-platform` по шагу 5.
+Для Qwen — `hardfest-qwen-platform`. Для A30 меняются каталог,
+целевой контекст и Application. Поле `recipeName` не изобретаем:
+рецепт выбирается платформой по модели, оборудованию и стратегии.
+
+## Остановка
+
+У ручного профиля задайте `replicaCount: 0`, отправьте и синхронизируйте commit.
+У платформенного заказа установите `order.enabled: false` и отправьте commit.
+Теперь в desired state нет InferenceService, но обычный sync с `prune: false`
+**не удалит** работающий заказ.
+
+В Argo откройте **его отдельный Application**, обновите diff до этого commit.
+Убедитесь, что на удаление показан только нужный InferenceService.
+Выполните выборочный sync этого ресурса с Prune. Не выбирайте Force,
+Replace или общий prune проекта. Если diff содержит Model, PVC или
+чужие ресурсы — остановитесь и разберите ownership.
+
+Дождитесь удаления заказа и принадлежащих ему Pod. Проверьте освобождение
+ResourceClaim и GPU. Удаление Application без finalizer не заменяет эту процедуру.
+Диски, модели и каталог весов сохраняются.
 
 ## Секреты и публичные файлы
 

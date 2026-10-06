@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hardfest-whisper-platform
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://gitlab.example.com/team/k8s-config.git
+    targetRevision: hardfest-demo
+    path: argo-projects/a30-cluster/hardfest-demo/charts/inference-service
+    helm:
+      releaseName: hf-whisper
+      valueFiles:
+        - ../../platform/whisper.yaml
+  destination:
+    name: a30-cluster
+    namespace: hardfest-demo
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true

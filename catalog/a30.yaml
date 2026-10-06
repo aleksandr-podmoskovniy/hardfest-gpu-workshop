@@ -1,0 +1,10 @@
+models:
+  - name: qwen3-embedding-4b-w4a16
+    repository: boboliu/Qwen3-Embedding-4B-W4A16-G128
+    revision: 9da6cb71a6870e7400988f01ad95d326e8c98097
+  - name: qwen3-reranker-4b-w4a16
+    repository: dolfsai/Qwen3-Reranker-4B-seq-cls-vllm-W4A16
+    revision: 852d766dbca2f5eef4ee4616ad7b3cf0d039ed11
+  - name: whisper-large-v3
+    repository: openai/whisper-large-v3
+    revision: 06f233fe06e710322aca913c1bc4249a0d71fce1

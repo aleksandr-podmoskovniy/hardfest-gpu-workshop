@@ -20,15 +20,13 @@ H100**. Для одновременного запуска нужен больш
 | Режим | requests RAM | limits RAM | /dev/shm | CPU requests |
 | --- | ---: | ---: | ---: | ---: |
 | A | 24 GiB | 48 GiB | 8 GiB | 4 |
-| B, контрольный профиль 128K без offload | 24 GiB | 48 GiB | 8 GiB | 4 |
-| B, итерации 1 и 2, 64K и CPU KV 32 GiB | 56 GiB | 80 GiB | 40 GiB | 4 |
+| B, итерации 1 и 2, 16K и CPU KV 32 GiB | 56 GiB | 80 GiB | 40 GiB | 4 |
 | B, опыт 128K и CPU KV 32 GiB | 56 GiB | 80 GiB | 40 GiB | 4 |
 
 ### Какие профили можно разместить вместе
 
 | Одновременный запуск | Сумма requests / limits | Решение |
 | --- | --- | --- |
-| A + контрольная B без offload | 48 / 96 GiB | На узле 128 GiB остаётся арифметический запас 32 GiB; проверить остальных потребителей |
 | A + B с offload | Limits: 48 + 80 = 128 GiB | На узле 128 GiB запускать последовательно |
 | Ручная B + платформенная Gemma с теми же настройками | 112 / 160 GiB | Для параллельного сравнения планировать минимум 192 GiB RAM |
 
@@ -60,14 +58,14 @@ Kubernetes и соседние Pod. Это план размещения, не �
 в память, файловые страницы могут освобождаться. Поэтому лимит 48 GiB меньше
 размера файлов, но загрузка требует проверки пиков cgroup и OOM.
 Сначала загружайте A и проверяйте ответ, затем B.
-[Загрузчик vLLM 0.30.0](https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/model_loader/weight_utils.py#L800).
+[Загрузчик vLLM 0.31.0](https://github.com/vllm-project/vllm/blob/v0.31.0/vllm/model_executor/model_loader/weight_utils.py#L800).
 
 ### Как учитывать shared memory
 
 CPU KV размещается в mmap-файле в `/dev/shm`. Для 32 GiB кэша выделен tmpfs
 40 GiB: 32 GiB плюс 8 GiB служебного запаса. Это вместимость tmpfs, не
 немедленное выделение 40 GiB. Использованные страницы входят в лимит контейнера.
-[SharedOffloadRegion](https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/v1/kv_offload/cpu/shared_offload_region.py#L64).
+[SharedOffloadRegion](https://github.com/vllm-project/vllm/blob/v0.31.0/vllm/v1/kv_offload/cpu/shared_offload_region.py#L64).
 
 > [!IMPORTANT]
 > Не складывайте 32 GiB KV и 40 GiB `/dev/shm` как два отдельных расхода.
@@ -123,7 +121,7 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec deployment/hf-gemma-b -- 
 
 ![Формула KV Gemma с отдельными слагаемыми для полного и локального внимания](../assets/11-gemma-kv.svg)
 
-Двойка означает K и V. Флаг `attention_k_eq_v` в checkpoint не позволяет убрать её: выбранная реализация vLLM сохраняет оба тензора. [Обработка Gemma в vLLM](https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/models/gemma4.py#L513).
+Двойка означает K и V. Флаг `attention_k_eq_v` в checkpoint не позволяет убрать её: выбранная реализация vLLM сохраняет оба тензора. [Обработка Gemma в vLLM](https://github.com/vllm-project/vllm/blob/v0.31.0/vllm/model_executor/models/gemma4.py#L513).
 
 | Вход + выход | BF16, 2 байта | FP8, 1 байт |
 | --- | ---: | ---: |
@@ -141,7 +139,7 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec deployment/hf-gemma-b -- 
 > Деление RAM на число из таблицы не даёт гарантированного числа сессий.
 > Во время вычисления рабочий KV должен помещаться в GPU-пул.
 
-Для восьми независимых историй по 133 120 токенов даже FP8 даёт 43,75 GiB активного KV. Его нужно сопоставить с реальным GPU KV-пулом после весов, буферов и графов. RAM-кэш не превращает эту память в дополнительную HBM для вычислений. [Как работает OffloadingConnector](https://docs.vllm.ai/en/v0.30.0/features/kv_offloading_usage/).
+Для восьми независимых историй по 133 120 токенов даже FP8 даёт 43,75 GiB активного KV. Его нужно сопоставить с реальным GPU KV-пулом после весов, буферов и графов. RAM-кэш не превращает эту память в дополнительную HBM для вычислений. [Как работает OffloadingConnector](https://docs.vllm.ai/en/v0.31.0/features/kv_offloading_usage/).
 
 ## Qwen TP2 после Gemma
 
@@ -155,18 +153,18 @@ Qwen занимает обе H100 одним сервисом. Перед зап
 | --- | ---: | --- |
 | CPU request | 12 | Сопоставить с allocatable и заявками остальных Pod |
 | RAM request / limit | 80 / 104 GiB | План размещения и верхняя граница контейнера, не замер |
-| CPU KV | 16 GiB | Общий бюджет offload для TP2, не 16 GiB на каждую карту |
-| `/dev/shm` | 24 GiB | Вместимость tmpfs: KV плюс 8 GiB служебного запаса |
+| CPU KV | 16 GiB | Общий бюджет сервера; при TP2 по 8 GiB на rank |
+| `/dev/shm` | 24 GiB | Лимит tmpfs; фактический тип размещения CPU KV проверить в выбранном backend |
 | Safetensors на диске | 123,57 GiB | 132 680 249 378 байт из `models.lock.json`, не размер постоянной копии в RAM |
 
 ### CPU KV общий для двух карт
 
-В vLLM 0.30.0 размер CPU-пула считается с учётом всех TP ranks. Поэтому
+В vLLM 0.31.0 размер CPU-пула считается с учётом всех TP ranks. Поэтому
 `cpu_bytes_to_use: 17179869184` не надо умножать на два.
 Использованные страницы shared memory уже входят в 104 GiB; прибавлять к этому
 лимиту ещё 16 GiB кэша и 24 GiB tmpfs нельзя.
-[Расчёт CPU-пула](https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/v1/kv_offload/cpu/spec.py#L97),
-[общая mmap-область](https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/v1/kv_offload/cpu/shared_offload_region.py#L64).
+[Расчёт CPU-пула](https://github.com/vllm-project/vllm/blob/v0.31.0/vllm/v1/kv_offload/cpu/spec.py#L97),
+[общая mmap-область](https://github.com/vllm-project/vllm/blob/v0.31.0/vllm/v1/kv_offload/cpu/shared_offload_region.py#L64).
 
 ### Запас RAM и загрузка
 

@@ -1,0 +1,15 @@
+order:
+  enabled: false
+  name: hf-platform-gemma
+  spec:
+    inferenceServiceClassName: REPLACE_H100_INFERENCE_CLASS
+    launchStrategy: Throughput
+    model:
+      src: ai-models
+      ref:
+        kind: Model
+        name: gemma-4-31b
+    resources:
+      accelerator:
+        deviceClasses:
+          - REPLACE_GENERATED_H100_DEVICECLASS

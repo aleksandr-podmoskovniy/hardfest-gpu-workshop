@@ -1,15 +1,15 @@
 {
   "schema": 1,
   "runtime": {
-    "version": "0.30.0",
+    "version": "0.31.0",
     "platform": "linux/amd64",
-    "image": "vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40"
+    "image": "vllm/vllm-openai@sha256:c1c9f6fd5c109ba7f0546a59f5b2f15fb87f64c77782e90a27b648b42a8e67c3"
   },
   "validation": {
-    "artifact_files_checked": true,
+    "artifact_files_checked": false,
     "full_weight_hashes_checked": false,
     "cuda_launch_verified": false,
-    "note": "Imported evidence: file headers, tensor offsets and index references, not inference."
+    "note": "Pinned artifact metadata; this lock is not a record of a completed CUDA or end-to-end run."
   },
   "models": {
     "gemma": {
@@ -31,21 +31,21 @@
       "runtime_verified": false
     },
     "embedding": {
-      "repository": "Qwen/Qwen3-Embedding-0.6B",
-      "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
-      "safetensors_bytes": 1191586416,
+      "repository": "boboliu/Qwen3-Embedding-4B-W4A16-G128",
+      "revision": "9da6cb71a6870e7400988f01ad95d326e8c98097",
+      "safetensors_bytes": 2650452048,
       "runtime_verified": false
     },
     "reranker": {
-      "repository": "Qwen/Qwen3-Reranker-0.6B",
-      "revision": "e61197ed45024b0ed8a2d74b80b4d909f1255473",
-      "safetensors_bytes": 1191588280,
+      "repository": "dolfsai/Qwen3-Reranker-4B-seq-cls-vllm-W4A16",
+      "revision": "852d766dbca2f5eef4ee4616ad7b3cf0d039ed11",
+      "safetensors_bytes": 2650477736,
       "runtime_verified": false
     },
     "stt": {
-      "repository": "openai/whisper-small",
-      "revision": "973afd24965f72e36ca33b3055d56a652f456b4d",
-      "safetensors_bytes": 966995080,
+      "repository": "openai/whisper-large-v3",
+      "revision": "06f233fe06e710322aca913c1bc4249a0d71fce1",
+      "safetensors_bytes": 3087130976,
       "runtime_verified": false
     }
   }

@@ -107,6 +107,11 @@
         }
       }
     },
+    "modelRefs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", "maxLength": 63}
+    },
     "modelVolumes": {
       "type": "array",
       "items": {
@@ -227,6 +232,8 @@
         "enable-chunked-prefill": {
           "type": "boolean"
         },
+        "no-enable-chunked-prefill": {"type": "boolean"},
+        "no-enable-prefix-caching": {"type": "boolean"},
         "enforce-eager": {
           "type": "boolean"
         }

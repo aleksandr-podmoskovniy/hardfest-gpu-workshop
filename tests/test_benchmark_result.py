@@ -8,13 +8,13 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 class BenchmarkResult(unittest.TestCase):
     def test_documented_gate_rejects_failed_and_partial_streams(self):
         success = {"failed": 0, "completed": 8,
-                   "total_input_tokens": 262144, "total_output_tokens": 16384}
+                   "total_input_tokens": 65536, "total_output_tokens": 16384}
         cases = [
             (success, True),
             ({**success, "failed": 4, "completed": 4,
               "total_input_tokens": 131072, "total_output_tokens": 3001}, False),
             ({**success, "total_output_tokens": 16383}, False),
-            ({**success, "total_input_tokens": 262143}, False),
+            ({**success, "total_input_tokens": 65535}, False),
             ({}, False),
         ]
         text = (ROOT / "labs/01-ab.md").read_text()

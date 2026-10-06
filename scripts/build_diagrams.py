@@ -167,7 +167,7 @@ def memory():
                 'Gemma 4 31B: полезные KV одной истории, без округления блоков и рабочих буферов.')
     d.rect(48, 160, 1104, 126, PALE)
     d.text(600, 213, 'HBM × бюджет − веса − runtime = KV-пул', 36, BLUE, True, 'middle')
-    d.text(600, 256, 'Измеренные веса Gemma A и B: 57,91 GiB', 24, anchor='middle')
+    d.text(600, 256, 'Веса + рабочие буферы проверяем в логах процесса', 24, anchor='middle')
     for x, label in [(76, 'КОНТЕКСТ'), (480, 'BF16 / 2 БАЙТА'), (940, 'FP8 / 1 БАЙТ')]:
         d.text(x, 338, label, 20, MUTED, True, 'start' if x == 76 else 'middle')
     for y, context, bf16, fp8 in [(365, '64K', '5,78 GiB', '2,89 GiB'),
@@ -177,21 +177,21 @@ def memory():
         d.text(76, y+54, context, 34, bold=True)
         d.text(480, y+54, bf16, 36, bold=True, anchor='middle')
         d.text(940, y+54, fp8, 36, TEAL, True, 'middle')
-    d.footer('64K — сравнение A/B. 128K — опыт вместимости. 256K — расчёт, не замер запуска.')
+    d.footer('Сравнение A/B — на 16K. Таблица показывает отдельный расчёт длинного контекста.')
     d.save()
 
 
 def ab():
     d = Diagram('04-ab', 'От базового запуска к сервису',
-                'Gemma A и B: одинаковые веса и окно 64K. Меняются только настройки движка.')
+                'Gemma A и B: одинаковые веса и окно 16K. Меняются только настройки движка.')
     for x, label, color in [(48, 'СТАРТ / H100 №1', MUTED),
                             (432, '1. КЭШ / H100 №2', TEAL),
                             (816, '2. ГЕНЕРАЦИЯ / H100 №2', BLUE)]:
         d.text(x, 177, label, 19, color, True, width=336)
     baseline = d.card(48, 200, 336, 276, 'Gemma A — Base',
-           ['BF16 KV', 'Без prefix cache и offload', 'Без CUDA graphs', 'Prefill: 4096'], GRAY, MUTED)
+           ['BF16 KV', 'Без prefix cache и offload', 'Без graphs и chunked prefill', 'Полный prefill: до 16K'], GRAY, MUTED)
     first = d.card(432, 200, 336, 276, 'Gemma B — Tune',
-           ['FP8 KV / Triton attention', 'Prefix cache', 'KV в RAM: 32 GiB', 'Без CUDA graphs', 'Prefill: 4096'], MINT, TEAL)
+           ['FP8 KV / Triton attention', 'Prefix cache', 'KV в RAM: 32 GiB', 'Без graphs и chunked prefill', 'Полный prefill: до 16K'], MINT, TEAL)
     second = d.card(816, 200, 336, 276, 'Gemma B — Tune',
            ['Кэши первой итерации', 'Prefill: 2048', 'CUDA graphs', 'Gemma assistant / MTP'])
     d.connect(baseline, first, color=TEAL)
@@ -199,7 +199,7 @@ def ab():
     d.text(48, 520, '3. AI INFERENCE / ОДНА GPU', 19, BLUE, True)
     d.text(624, 520, '4. AI INFERENCE / ДВЕ GPU', 19, PURPLE, True)
     platform = d.card(48, 544, 528, 124, 'Gemma',
-                      ['H100 №1, рецепт второй итерации'])
+                      ['H100 №1, платформенный рецепт 64K'])
     qwen = d.card(624, 544, 528, 124, 'Qwen',
                   ['Обе H100, TP2 и MTP'], LILAC, PURPLE)
     d.connect(platform, qwen, color=PURPLE)
@@ -317,7 +317,7 @@ def platform():
         if x < 912:
             d.connect(node, Box(x+288, 374, 240, 120))
     d.card(48, 542, 528, 126, 'Рецепт Gemma',
-           ['FP8 KV, prefix cache, CPU KV', 'Chunked prefill, graphs, assistant'], MINT, TEAL)
+           ['64K, FP8 KV, prefix cache', 'Chunked prefill и CUDA graphs'], MINT, TEAL)
     d.card(624, 542, 528, 126, 'Рецепт Qwen',
            ['Две H100, TP2 и MTP', 'Кэши и параметры движка'], LILAC, PURPLE)
     d.footer('Все настройки эксперимента — в рецепте. Проверяем план, GPU и ответ API.')
@@ -369,12 +369,12 @@ def gitops():
     argo = d.card(48, 424, 528, 168, 'Argo CD / управляющий кластер',
            ['Читает выбранный коммит', 'Рендерит Helm-чарт', 'Применяет манифесты'])
     gpu = d.card(624, 424, 528, 168, 'GPU-кластер',
-           ['ConfigMap с параметрами vLLM', 'Deployment + DRA-заявка', 'Service + NetworkPolicy'], MINT, TEAL)
+           ['Ручной runtime или InferenceService', 'DRA-заявка → Pod', 'Service → ответ модели'], MINT, TEAL)
     d.connect(github, gitlab)
     d.connect(gitlab, argo, ('bottom', 'top'), via=((888, 376), (312, 376)))
     d.connect(argo, gpu, color=TEAL)
     d.text(48, 651, 'Новые параметры vLLM → новый Pod → проверка готовности', 28, bold=True)
-    d.footer('В примерах replicaCount: 0, autosync выключен. Секреты хранятся вне Git.')
+    d.footer('Публичные workloads выключены, autosync нет. Секреты хранятся вне Git.')
     d.save()
 
 

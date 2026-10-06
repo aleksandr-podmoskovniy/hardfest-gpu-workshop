@@ -1,0 +1,14 @@
+# Alternative to PVC site/gemma.yaml. Never layer both files.
+# ai-models injects the read-only cache mount from the workload annotation.
+nodeSelector:
+  kubernetes.io/hostname: REPLACE_H100_NODE
+tolerations: []
+dra:
+  deviceClassName: REPLACE_GENERATED_H100_DEVICECLASS
+modelVolumes: []
+modelRefs:
+  - gemma-4-31b
+vllm:
+  model: /data/modelcache/models/gemma-4-31b
+networkPolicy:
+  extraIngress: []

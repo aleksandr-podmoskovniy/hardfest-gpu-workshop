@@ -1,6 +1,6 @@
 # vLLM runtime
 
-Один чарт для ручных запусков Gemma, эмбеддеров MIG/MPS и Qwen TP2.
+Один чарт для ручных запусков Gemma и проверочного Qwen TP2.
 Он создаёт ConfigMap, Deployment, ResourceClaimTemplate, Service и NetworkPolicy.
 AI Inference использует собственный контроллер и рецепты: его дочерние ресурсы этот чарт не захватывает.
 
@@ -8,14 +8,13 @@ AI Inference использует собственный контроллер и
 
 | Values | Опыт |
 | --- | --- |
-| [gemma-a](../../values/gemma-a.yaml) | 64K, BF16 KV, без prefix cache и CUDA graphs, prefill 4096 |
-| [gemma-b](../../values/gemma-b.yaml) | Итерация 1: 64K, FP8 KV, prefix cache, CPU KV 32 GiB, prefill 4096, eager |
-| [gemma-b-128k](../../values/gemma-b-128k.yaml) | 128K без CPU KV |
-| [gemma-b-ram](../../values/gemma-b-ram.yaml) | 128K и 32 GiB KV в RAM; request 56 GiB, limit 80 GiB, shm 40 GiB |
-| [gemma-b-spec](../../values/gemma-b-spec.yaml) | Итерация 2: кэши первой, prefill 2048, CUDA graphs и Gemma assistant; 64K |
-| [embed-mig](../../values/embed-mig.yaml) | Один MIG-раздел для эмбеддера |
-| [embed-mps](../../values/embed-mps.yaml) | MPS поверх MIG: sharePercent 25, память 4 GiB |
-| [qwen-tp2](../../values/qwen-tp2.yaml) | Ручной проверочный профиль Qwen на двух H100 |
+| [gemma-a](../../values/gemma-a.yaml) | 16K, BF16 KV, без prefix cache, chunked prefill, graphs и offload |
+| [gemma-b](../../values/gemma-b.yaml) | Итерация 1: 16K, FP8 KV, prefix cache, CPU KV 32 GiB, полный prefill |
+| [gemma-b-spec](../../values/gemma-b-spec.yaml) | Итерация 2: 16K, кэши первой, prefill 2048, graphs и assistant |
+| [qwen-tp2](../../values/qwen-tp2.yaml) | Ручной эталон параметров; основной запуск — AI Inference |
+
+64K/128K проверяются изменением окна активной второй B, без смены остальных настроек.
+Все ручные профили закреплены на vLLM 0.31.0.
 
 Конфигурация не заменяет проверку ответа API на своей площадке.
 [Опубликованный опыт KV-offload](../../results/kv-ram/README.md) содержит исходные измерения.
@@ -30,13 +29,13 @@ helm template hf-gemma-b charts/vllm-runtime -n hardfest-demo -f values/gemma-b.
 ```
 
 Для реального стенда добавьте после профиля `-f site/gemma.yaml`:
-[пример привязки](../../examples/site-gemma.yaml). При нулевых репликах placeholders
+[пример ai-models](../../examples/site-gemma-catalog.yaml). При нулевых репликах placeholders
 разрешены для просмотра; перед запуском их нужно заменить.
 
-Другие привязки: [Gemma assistant](../../examples/site-gemma-assistant.yaml),
-[MIG](../../examples/site-embed-mig.yaml), [MPS](../../examples/site-embed-mps.yaml),
-[Qwen TP2](../../examples/site-qwen-tp2.yaml). Копируйте их в `site/` своей GitLab-репы
-и подставляйте только параметры нужной площадки.
+Другие привязки: [ai-models с assistant](../../examples/site-gemma-assistant-catalog.yaml),
+[готовый PVC](../../examples/site-gemma.yaml), [PVC с assistant](../../examples/site-gemma-assistant.yaml),
+[ручной Qwen](../../examples/site-qwen-tp2.yaml). Выбирайте один источник весов,
+а не объединяйте варианты ai-models и PVC.
 
 ## Контракт values
 
@@ -45,7 +44,9 @@ helm template hf-gemma-b charts/vllm-runtime -n hardfest-demo -f values/gemma-b.
 - `image` — образ с digest, не плавающий tag.
 - `dra` — существующий DeviceClass, количество, capacity и driver-specific config.
 - `dra.selectors` — необязательные CEL-фильтры устройств из этого класса, например по UUID для повторяемого теста. Имена атрибутов берутся из ResourceSlice установленного драйвера; отсутствующие атрибуты проверяйте через `has()`.
-- `modelVolumes` — готовые PVC и пути весов; mount только read-only.
+- `modelRefs` — Model в ai-models; аннотация ставится на верхнее metadata Deployment.
+- `modelVolumes` — альтернативный источник: готовые PVC и read-only пути весов.
+- Пути ai-models: `/data/modelcache/models/<Model>`; доступны после доставки на ноду.
 - `resources`, `shmSize` — согласованный бюджет процесса и CPU KV.
 - `nodeSelector`, `tolerations`, `imagePullSecrets` — привязка к площадке.
 - `networkPolicy.extraIngress` — дополнительные точечные разрешения Bifrost/мониторинга.
@@ -73,6 +74,5 @@ Namespace, PVC, Secret, GPUClass/GPUPool и DeviceClass чарт не созда
 Argo использует Helm для рендеринга; отдельного Helm release в кластере не появляется.
 Не выполняйте helm upgrade/rollback поверх ресурсов Argo.
 
-MIG/MPS и Qwen имеют отдельные Application в [argocd](../../argocd/embed-mig.yaml).
-Пример Qwen предназначен для ручной проверки; финальный запуск мастер-класса —
-через рецепт AI Inference.
+Три сервиса A30 и финальный Qwen запускаются через [чарт заказа AI Inference](../inference-service/README.md).
+Их workloads не принадлежат этому чарту.

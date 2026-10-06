@@ -1,24 +1,22 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: hardfest-embed-mps
+  name: hardfest-reranker-platform
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://gitlab.example.com/team/k8s-config.git
     targetRevision: hardfest-demo
-    path: argo-projects/gpu-cluster/hardfest-demo/charts/vllm-runtime
+    path: argo-projects/a30-cluster/hardfest-demo/charts/inference-service
     helm:
-      releaseName: hf-embed-mps
+      releaseName: hf-reranker
       valueFiles:
-        - ../../values/embed-mps.yaml
-        - ../../site/embed-mps.yaml
+        - ../../platform/reranker.yaml
   destination:
-    name: cluster-with-a30
+    name: a30-cluster
     namespace: hardfest-demo
   syncPolicy:
     syncOptions:
       - CreateNamespace=false
       - ServerSideApply=true
-      - PruneLast=true

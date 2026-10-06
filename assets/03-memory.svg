@@ -16,7 +16,7 @@
 <tspan x="600" dy="0">HBM × бюджет − веса − runtime = KV-пул</tspan>
 </text>
 <text x="600" y="256" font-size="24" fill="#17243b" text-anchor="middle">
-<tspan x="600" dy="0">Измеренные веса Gemma A и B: 57,91 GiB</tspan>
+<tspan x="600" dy="0">Веса + рабочие буферы проверяем в логах процесса</tspan>
 </text>
 <text x="76" y="338" font-size="20" fill="#536278" text-anchor="start" font-weight="700">
 <tspan x="76" dy="0">КОНТЕКСТ</tspan>
@@ -62,6 +62,6 @@
 </text>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">64K — сравнение A/B. 128K — опыт вместимости. 256K — расчёт, не замер запуска.</tspan>
+<tspan x="48" dy="0">Сравнение A/B — на 16K. Таблица показывает отдельный расчёт длинного контекста.</tspan>
 </text>
 </svg>

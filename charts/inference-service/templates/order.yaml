@@ -1,0 +1,21 @@
+{{- if .Values.order.enabled }}
+{{- if contains "REPLACE_" (toJson .Values.order) }}
+{{- fail "replace order placeholders before enabling the InferenceService" }}
+{{- end }}
+{{- $ref := .Values.order.spec.model.ref }}
+{{- if and (eq $ref.kind "ClusterModel") $ref.namespace }}
+{{- fail "ClusterModel reference must not specify a namespace" }}
+{{- end }}
+{{- if and (eq $ref.kind "Model") $ref.namespace (ne $ref.namespace .Release.Namespace) }}
+{{- fail "Model reference must use the InferenceService namespace" }}
+{{- end }}
+apiVersion: ai.deckhouse.io/v1alpha1
+kind: InferenceService
+metadata:
+  name: {{ .Values.order.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/part-of: hardfest-gpu-workshop
+spec:
+  {{- toYaml .Values.order.spec | nindent 2 }}
+{{- end }}

@@ -30,7 +30,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: benchmark
-          image: vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40
+          image: vllm/vllm-openai@sha256:c1c9f6fd5c109ba7f0546a59f5b2f15fb87f64c77782e90a27b648b42a8e67c3
           imagePullPolicy: IfNotPresent
           workingDir: /work
           command: ["/bin/bash", "-euc"]

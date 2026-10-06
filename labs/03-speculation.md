@@ -1,7 +1,7 @@
 # Настроить prefill и добавить speculative decoding
 
-Во второй итерации B сохраняем prefix cache и KV-offload, уменьшаем бюджет
-prefill с 4096 до 2048, включаем CUDA graphs и Gemma assistant.
+Во второй итерации B сохраняем prefix cache и KV-offload, включаем chunked
+prefill с бюджетом 2048 вместо полного prefill до 16 384, включаем CUDA graphs и Gemma assistant.
 Проверим совместимость настроек и повторим ту же нагрузку.
 
 ![Черновик предлагает токены, основная модель проверяет предложение](../assets/07-speculation.svg)
@@ -15,7 +15,7 @@ prefill с 4096 до 2048, включаем CUDA graphs и Gemma assistant.
 
 - [ ] Рабочий каталог — `k8s-config`; первая B и [RAM-кэш](02-kv-ram.md) проверены.
 - [ ] Результаты `b-cache` сохранены вне Pod.
-- [ ] Gemma и совместимый assistant закреплённой ревизии доступны на PVC.
+- [ ] Gemma и совместимый assistant закреплённой ревизии готовы в ai-models и доступны целевой ноде.
 - [ ] На VM 128 GiB A выключена; B доступны RAM request/limit 56/80 GiB и shm 40 GiB.
 
 Полную комбинацию второй B нужно проверить на своей GPU: подтверждённых
@@ -35,7 +35,7 @@ Site-файл assistant подготовлен на этапе GitOps. Не пе
 | --- | --- | --- |
 | `$DEMO_DIR/values/gemma-b.yaml` | `replicaCount` | `1` |
 | `$DEMO_DIR/site/gemma-assistant.yaml` | `nodeSelector`, `dra`, `tolerations`, `networkPolicy` | Привязки из рабочего `site/gemma.yaml` |
-| Тот же site-файл | `modelVolumes` | Оба mount: основная Gemma и assistant; существующие PVC и их `subPath` |
+| Тот же site-файл | `modelRefs`, пути `vllm.model` и `speculative-config.model` | Основная Gemma и assistant из ai-models; для PVC — альтернативный site-файл |
 | `$DEMO_DIR/argo-app/gemma-b.yaml` | `spec.source.helm.valueFiles` | Два файла из блока ниже |
 
 ```yaml
@@ -45,15 +45,15 @@ valueFiles:
 ```
 
 > [!IMPORTANT]
-> Helm заменяет список `modelVolumes` целиком. Только mount assistant
-> в site-файле уберёт mount основной Gemma.
+> Helm заменяет списки целиком. В site-файле должны остаться обе Model
+> (или оба `modelVolumes` при использовании PVC).
 
-В профиле должен сохраниться блок:
+После объединения профиля и site-файла в конфигурации должен быть блок:
 
 ```yaml
 speculative-config:
   method: mtp
-  model: /models/assistant
+  model: /data/modelcache/models/gemma-4-31b-assistant
   num_speculative_tokens: 1
 ```
 

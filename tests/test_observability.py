@@ -48,12 +48,24 @@ class Observability(unittest.TestCase):
             self.assertIn("$gateway_namespace", target["expr"])
             self.assertNotIn("$inference_service", target["expr"])
 
-    def test_named_service_ports_and_scoped_scrape_policy(self):
+    def test_named_service_ports(self):
         paths = list((ROOT / "values").glob("*.yaml"))
-        self.assertEqual(len(paths), 8)
+        self.assertEqual(len(paths), 4)
         for path in paths:
-            service = render(path)["Service"]
-            self.assertEqual(service["spec"]["ports"][0]["name"], "http")
+            self.assertEqual(render(path)["Service"]["spec"]["ports"][0]["name"], "http")
+
+    def test_simple_cpu_offload_uses_block_metrics_without_faking_byte_counts(self):
+        for panel_id, metric in ((241, "simple_kv_offload_load_blocks_total"),
+                                 (242, "simple_kv_offload_used_blocks"),
+                                 (243, "simple_kv_offload_save_outcomes_total")):
+            panel = self.panels[panel_id]
+            self.assertIn(metric, panel["targets"][0]["expr"])
+            self.assertNotIn("bytes", panel["fieldConfig"]["defaults"]["unit"])
+            self.assertIn("$inference_service", panel["targets"][0]["expr"])
+        self.assertIn("ноль не означает пустой", self.panels[242]["description"])
+        self.assertIn("outcome", self.panels[243]["targets"][0]["expr"])
+
+    def test_scoped_monitoring_policy(self):
         monitor = (ROOT / "observability/monitoring.yaml").read_text()
         self.assertIn("port: http", monitor)
         self.assertIn("scrapeTimeout: 5s", monitor)

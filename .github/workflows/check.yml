@@ -23,6 +23,12 @@ jobs:
         run: |
           helm lint charts/model-catalog --strict
           helm lint charts/model-catalog --strict -f catalog/models.yaml
+          helm lint charts/model-catalog --strict -f catalog/a30.yaml
+      - name: Lint all inference orders
+        run: |
+          for order in platform/*.yaml; do
+            helm lint charts/inference-service --strict -f "$order"
+          done
       - name: Validate rendered resources and automatic checksums
         run: python3 scripts/check_manifests.py
       - name: Verify committed illustrations match their source

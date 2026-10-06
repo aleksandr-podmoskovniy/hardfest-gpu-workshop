@@ -16,7 +16,7 @@ import check_manifests as checker
 class HelmProfiles(unittest.TestCase):
     def test_all_profiles_validate_and_use_explicit_gpu_count(self):
         profiles = sorted((ROOT / "values").glob("*.yaml"))
-        self.assertEqual(len(profiles), 8)
+        self.assertEqual(len(profiles), 4)
         for path in profiles:
             with self.subTest(profile=path.name):
                 actual = checker.render(path)
@@ -40,10 +40,10 @@ class HelmProfiles(unittest.TestCase):
                     for name in ("gemma-a.yaml", "gemma-b.yaml")]
         for field in ("model", "max-model-len", "dtype", "gpu-memory-utilization"):
             self.assertEqual(profiles[0][field], profiles[1][field])
-        self.assertEqual(profiles[0]["max-model-len"], 65536)
+        self.assertEqual(profiles[0]["max-model-len"], 16384)
         self.assertTrue(profiles[0]["enforce-eager"])
         self.assertTrue(profiles[0]["no-enable-prefix-caching"])
-        self.assertTrue(profiles[0]["enable-chunked-prefill"])
+        self.assertTrue(profiles[0]["no-enable-chunked-prefill"])
         self.assertEqual(profiles[0]["max-num-batched-tokens"], profiles[1]["max-num-batched-tokens"])
         self.assertEqual(profiles[1]["kv-cache-dtype"], "fp8")
         self.assertTrue(profiles[1]["enable-prefix-caching"])
@@ -58,7 +58,7 @@ class HelmProfiles(unittest.TestCase):
             self.assertEqual(a[key], b[key], key)
         self.assertTrue(a["enforce-eager"])
         self.assertNotIn("speculative-config", a)
-        self.assertEqual(a["max-num-batched-tokens"], 4096)
+        self.assertEqual(a["max-num-batched-tokens"], 16384)
         self.assertEqual(b["max-num-batched-tokens"], 2048)
         self.assertFalse(b["enforce-eager"])
         self.assertEqual(b["speculative-config"], {
@@ -69,7 +69,7 @@ class HelmProfiles(unittest.TestCase):
                          32 * 1024**3)
 
     def test_ram_profile_accounts_for_shared_memory(self):
-        actual = checker.render(ROOT / "values/gemma-b-ram.yaml")
+        actual = checker.render(ROOT / "values/gemma-b.yaml")
         config = yaml.safe_load(actual["ConfigMap"]["data"]["profile.yaml"])
         self.assertEqual(config["kv-transfer-config"]["kv_connector_extra_config"]["cpu_bytes_to_use"], 32 * 1024**3)
         pod = actual["Deployment"]["spec"]["template"]["spec"]
@@ -84,13 +84,15 @@ class HelmProfiles(unittest.TestCase):
         config = yaml.safe_load(actual["ConfigMap"]["data"]["profile.yaml"])
         self.assertEqual(config["tensor-parallel-size"], 2)
         self.assertEqual(config["max-model-len"], 262144)
-        self.assertEqual(config["speculative-config"], {"method": "mtp", "num_speculative_tokens": 1})
+        self.assertEqual(config["speculative-config"], {"method": "mtp", "num_speculative_tokens": 1, "moe_backend": "auto"})
         self.assertEqual(config["tool-call-parser"], "qwen3_xml")
         self.assertTrue(config["enable-auto-tool-choice"])
         self.assertEqual(config["safetensors-load-strategy"], "lazy")
-        offload = config["kv-transfer-config"]
-        self.assertEqual(offload["kv_connector"], "OffloadingConnector")
-        self.assertEqual(offload["kv_connector_extra_config"]["cpu_bytes_to_use"], 16 * 1024**3)
+        self.assertNotIn("kv-transfer-config", config)
+        self.assertEqual(config["kv-offloading-size"], 16)
+        self.assertEqual(config["kv-offloading-backend"], "native")
+        env = actual["Deployment"]["spec"]["template"]["spec"]["containers"][0]["env"]
+        self.assertIn({"name": "VLLM_USE_SIMPLE_KV_OFFLOAD", "value": "1"}, env)
         pod = actual["Deployment"]["spec"]["template"]["spec"]
         resources = pod["containers"][0]["resources"]
         self.assertEqual(resources["requests"]["cpu"], "12")
@@ -130,7 +132,7 @@ class HelmProfiles(unittest.TestCase):
 
     def test_variants_keep_one_b_service_and_selector(self):
         base = checker.render(ROOT / "values/gemma-b.yaml")
-        for name in ("gemma-b-128k", "gemma-b-ram", "gemma-b-spec"):
+        for name in ("gemma-b-spec",):
             obj = checker.render(ROOT / "values" / (name + ".yaml"))
             self.assertEqual(base["Service"], obj["Service"])
             self.assertEqual(base["Deployment"]["spec"]["selector"], obj["Deployment"]["spec"]["selector"])
@@ -192,6 +194,34 @@ class HelmProfiles(unittest.TestCase):
         objs = copy.deepcopy(checker.render(ROOT / "values/gemma-b.yaml"))
         objs["ConfigMap"]["metadata"]["name"] = "wrong-name"
         self.assertIn("ConfigMap reference mismatch", checker.validate_objects(objs))
+
+    def test_ai_models_annotation_is_on_workload_not_pod(self):
+        values = {"replicaCount": 1, "modelVolumes": [], "modelRefs": ["gemma"],
+                  "nodeSelector": {"kubernetes.io/hostname": "gpu-node"},
+                  "dra": {"deviceClassName": "generated-h100"},
+                  "vllm": {"model": "/data/modelcache/models/gemma"}}
+        objects = self.render_override(values)
+        deployment = objects["Deployment"]
+        self.assertEqual(deployment["metadata"]["annotations"]["ai.deckhouse.io/model"], "gemma")
+        self.assertNotIn("ai.deckhouse.io/model", deployment["spec"]["template"]["metadata"]["annotations"])
+        self.assertFalse(any("persistentVolumeClaim" in v for v in deployment["spec"]["template"]["spec"]["volumes"]))
+        values["vllm"]["speculative-config"] = {"model": "/data/modelcache/models/assistant"}
+        self.assertIn("matching modelRefs entry", self.render_override(values, success=False))
+        values["modelRefs"].append("assistant")
+        self.render_override(values)
+
+    def test_source_and_boolean_flags_cannot_silently_conflict(self):
+        self.assertIn("not both", self.render_override({"modelRefs": ["gemma"]}, success=False))
+        self.assertIn("conflicting", self.render_override({"vllm": {"no-enable-prefix-caching": True}}, success=False))
+        self.assertIn("conflicting", self.render_override({"vllm": {"enable-chunked-prefill": True}}, success=False))
+
+    def test_baseline_explicitly_disables_all_investigated_optimizations(self):
+        config = yaml.safe_load(checker.render(ROOT / "values/gemma-a.yaml")["ConfigMap"]["data"]["profile.yaml"])
+        for flag in ("enforce-eager", "no-enable-prefix-caching", "no-enable-chunked-prefill"):
+            self.assertTrue(config[flag])
+        for flag in ("enable-prefix-caching", "enable-chunked-prefill", "kv-transfer-config", "speculative-config"):
+            self.assertNotIn(flag, config)
+        self.assertGreaterEqual(config["max-num-batched-tokens"], config["max-model-len"])
 
     def test_multiple_yaml_documents_cannot_hide_extra_profiles(self):
         with tempfile.TemporaryDirectory() as tmp:

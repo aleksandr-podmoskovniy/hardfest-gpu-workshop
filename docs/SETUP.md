@@ -13,7 +13,7 @@
 
 Сборка образов и тесты исходников не входят в подготовку участника.
 
-## 1. Проверить доступ к двум кластерам
+## 1. Проверить доступ к кластерам
 
 Команды выполняются из корня вашей **частной репы `k8s-config`**.
 Замените имена контекстов своими:
@@ -21,6 +21,8 @@
 ```bash
 export ARGO_CONTEXT=management
 export GPU_CONTEXT=gpu-cluster
+export MIG_CONTEXT=a30-cluster
+export A30_DIR=argo-projects/a30-cluster/hardfest-demo
 export ARGO_NAMESPACE=argocd
 export DEMO_DIR=argo-projects/gpu-cluster/hardfest-demo
 set -o pipefail
@@ -28,12 +30,13 @@ set -o pipefail
 kubectl config get-contexts
 kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get applications
 kubectl --context "$GPU_CONTEXT" get nodes,deviceclasses
+kubectl --context "$MIG_CONTEXT" get nodes,deviceclasses
 ```
 
 `ARGO_CONTEXT` — кластер с Argo CD. `GPU_CONTEXT` — кластер, в котором будут
 работать модели. Контекст указан в каждой команде, менять текущий не нужно.
 
-**Проверка:** обе команды возвращают ресурсы без ошибок доступа.
+**Проверка:** все команды возвращают ресурсы без ошибок доступа.
 Namespace и доступы не создаются runtime-чартом.
 
 ## 2. Проверить GPU-ноды и память
@@ -83,13 +86,12 @@ DeviceClass вручную не создаётся. H100 этот этап не 
 
 1. Подготовьте каталог по [инструкции ai-models](../catalog/README.md).
 2. Дождитесь `Ready` у каждого `Model` и проверьте digest артефакта.
-3. Для ручного runtime заполните ссылки на существующие PVC и каталоги весов.
-   Assistant потребуется во второй итерации; подготовьте её mount сразу.
-
-> [!IMPORTANT]
-> Текущий `vllm-runtime` монтирует PVC. Автоматическая доставка по аннотации
-> ai-models пока не встроена в этот чарт. Готовый `Model` не делает ручной Pod
-> готовым: ему по-прежнему нужен проверенный PVC/mount.
+3. Для ручного runtime заполните `modelRefs` и пути в `site-gemma-catalog.yaml`.
+   Чарт ставит аннотацию `ai.deckhouse.io/model` на Deployment; ai-models доставляет
+   и монтирует артефакты. Во второй итерации укажите оба Model, включая assistant.
+4. В режиме NodeCache проверьте готовность артефакта на целевой ноде.
+   При отдельном PVC используйте альтернативный site-пример, не смешивая источники.
+5. В кластере A30 импортируйте три модели из `catalog/a30.yaml`.
 
 Не оценивайте запас только по квоте бакета: проверьте реальное свободное место
 хранилища. Доставка, временная загрузка и другие модели расходуют его отдельно.
@@ -110,16 +112,16 @@ DeviceClass вручную не создаётся. H100 этот этап не 
 
 | Этап | Что обязательно должно быть в поставке |
 | --- | --- |
-| Gemma после второй B | Рецепт 64K с доставкой assistant, MTP, CPU KV 32 GiB, prefill 2048 и RAM 56/80 GiB |
-| Qwen TP2 | Рецепт с `acceleratorCount: 2`, MTP, CPU KV 16 GiB и RAM 80/104 GiB |
+| Gemma 64K | FP8 KV, prefix cache, chunked prefill 4096, CUDA graphs; одна H100 |
+| Полный перенос второй B | Отдельный согласованный рецепт с assistant, CPU KV 32 GiB и доставкой двух checkpoint |
+| Qwen TP2 | `acceleratorCount: 2`, MTP, native Simple CPU KV-offload 16 GiB; runtime 0.31 |
+| A30 | Рецепты Qwen3 Embedding/Reranker 4B W4A16 и Whisper large-v3 |
 | Класс сервиса | Одна реплика; для Qwen разрешены две целые выделенные GPU; аутентификация Token |
 
-> [!WARNING]
-> При сверке исходников 2 октября 2026 года рецепт Gemma в
-> `images/catalogs/recipe-presets/hardfest-gemma.yaml` ещё содержал prefill 4096,
-> без CPU KV и assistant. Нужны доработка рецепта и доставка второго checkpoint;
-> одного YAML InferenceService недостаточно. Полный платформенный прогон
-> второй B пока не подтверждён. После обновления пакета пройдите проверку заново.
+Базовый Gemma 64K и полный перенос ручной B — разные конфигурации.
+В этом руководстве платформенный этап использует первый вариант.
+CPU KV и assistant нельзя приписывать ему по одному названию стратегии Throughput.
+Сравните параметры из пакета, план и процесс после запуска.
 
 Проверьте выбранный InferenceServiceClass через `kubectl get ... -o yaml`.
 Не используйте `default-llm` вслепую: его штатный вариант допускает
@@ -131,7 +133,7 @@ DeviceClass вручную не создаётся. H100 этот этап не 
 
 | Что подготовить | Где продолжить | Что должно получиться |
 | --- | --- | --- |
-| Чарты, values и параметры площадки | [GitOps](GITOPS.md) | Два Application, оба с `replicaCount: 0` |
+| Чарты, values и параметры площадки | [GitOps](GITOPS.md) | Ручные Applications с `replicaCount: 0`, платформенные заказы выключены |
 | Отдельные маршруты A и B | [Чат и доступ](CHAT_AND_ACCESS.md) | Выбор `Gemma A — Base` / `Gemma B — Tune` без fallback между ними |
 | Личные ключи участников | [Чат и доступ](CHAT_AND_ACCESS.md#2-настроить-регистрацию-и-личные-ключи) | Доступ только после одобрения, отдельный учёт расхода |
 | Графики | [Мониторинг](OBSERVABILITY.md) | Метрики нужного namespace и отдельных сервисов |

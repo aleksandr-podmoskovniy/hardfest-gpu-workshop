@@ -55,8 +55,20 @@ vllm:
   speculative-config:
     method: mtp
     num_speculative_tokens: 1
-  kv-transfer-config:
-    kv_connector: OffloadingConnector
-    kv_role: kv_both
-    kv_connector_extra_config:
-      cpu_bytes_to_use: 17179869184
+    moe_backend: auto
+  kv-offloading-size: 16
+  kv-offloading-backend: native
+  disable-custom-all-reduce: true
+  compilation-config:
+    pass_config:
+      fuse_allreduce_rms: false
+      fuse_gemm_comms: false
+extraEnv:
+  - name: VLLM_USE_SIMPLE_KV_OFFLOAD
+    value: "1"
+  - name: VLLM_USE_FLASHINFER_ALLREDUCE
+    value: "0"
+  - name: VLLM_USE_SYMM_MEM_ALLREDUCE
+    value: "0"
+  - name: VLLM_USE_NCCL_SYMM_MEM
+    value: "0"

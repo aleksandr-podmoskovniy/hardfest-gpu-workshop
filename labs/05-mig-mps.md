@@ -1,198 +1,180 @@
-# Выделить MIG-разделы и разделить их через MPS
+# Разместить эмбеддер, реранкер и Whisper на A30
 
-На A30 проверим две вещи: создание MIG-раздела по DRA-заявке и совместное
-использование раздела несколькими MPS-клиентами. Геометрию формирует драйвер
-по запросу, а не заранее подготовленный конфиг MIG Manager.
+Две MIG-партиции по 2g.12gb: первую делят эмбеддер и реранкер через MPS,
+вторая целиком выделена Whisper large-v3. Все три приложения — InferenceService
+из ai-models. Вручную запускаем только проверочные HTTP-запросы.
 
-MIG задаёт аппаратную границу памяти и вычислительных ресурсов.
-MPS запускает несколько процессов внутри раздела. Time-slicing чередует
-выполнение, но не выделяет изолированную память.
+![Два раздела A30: совместные MPS-клиенты и отдельное распознавание речи](../assets/08-mig-mps.svg)
 
 ## Перед началом
 
-- [ ] Рабочий каталог — `k8s-config`; [GitOps](../docs/GITOPS.md) подготовлен.
-- [ ] На выделенной A30 заранее включён MIG mode.
-- [ ] GPUClass/GPUPool создаёт DeviceClass; вручную создавать их не требуется.
-- [ ] Определены контекст кластера A30, нода, готовый PVC с эмбеддером.
-- [ ] Чужие заявки на этой карте проверены; изменения не затрагивают их.
+- [ ] Выбран `MIG_CONTEXT` кластера A30, не H100.
+- [ ] MIG mode подготовлен заранее, нет чужих занятых разделов.
+- [ ] Контроллер GPUClass/GPUPool создал подходящие DeviceClass.
+- [ ] Три Model из [catalog/a30.yaml](../catalog/a30.yaml) готовы на ноде A30.
+- [ ] Три Applications и чарт подготовлены по [GitOps](../docs/GITOPS.md#9-подготовить-helm-заказы-ai-inference).
+- [ ] В runtime поставлены рецепты pooling/score/transcription и проверен CUDA-запуск.
+
+## 1. Сверить классы, квоты и модели
 
 ```bash
-export MIG_CONTEXT=REPLACE_A30_CLUSTER_CONTEXT
-kubectl --context "$MIG_CONTEXT" get deviceclasses
-kubectl --context "$MIG_CONTEXT" -n hardfest-demo get resourceclaims
+kubectl --context "$MIG_CONTEXT" get nodes,deviceclasses,inferenceserviceclasses
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get models.ai.deckhouse.io
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get pods,resourceclaims -o wide
+kubectl --context "$MIG_CONTEXT" get deviceclass REPLACE_MPS_DEVICECLASS -o yaml
+kubectl --context "$MIG_CONTEXT" get deviceclass REPLACE_DEDICATED_MIG_DEVICECLASS -o yaml
 ```
 
-Не считайте, что A30 находится в том же кластере, что H100.
-У Applications эмбеддера должна быть правильная `destination`.
+| Заказ | Model | Политика класса и рецепт |
+| --- | --- | --- |
+| `hf-embedding` | `qwen3-embedding-4b-w4a16` | Partition + Shared, MPS; pooling LAST, 2048, max-num-seqs 2 |
+| `hf-reranker` | `qwen3-reranker-4b-w4a16` | Та же MIG-партиция и Shared; sequence classification |
+| `hf-whisper` | `whisper-large-v3` | Partition + Dedicated на второй 2g.12gb; transcription |
 
-## 1. Подготовить привязки A30
+Целевой бюджет каждого MPS-клиента — 46% вычислений и 5 GiB pinned memory;
+параметры должны поддерживаться установленным GPU-драйвером и классом.
+Для vLLM этих двух моделей рецепт задаёт `gpu-memory-utilization: 0.38`:
+CUDA показывает память MIG, не отдельную долю MPS.
 
-```bash
-for PROFILE in embed-mig embed-mps; do
-  cp "../hardfest-gpu-workshop/examples/site-$PROFILE.yaml" "$DEMO_DIR/site/$PROFILE.yaml"
-  cp "../hardfest-gpu-workshop/argocd/$PROFILE.yaml" "$DEMO_DIR/argo-app/$PROFILE.yaml"
-done
-```
+Не переносите поля драйвера в произвольный InferenceService и не создавайте
+DeviceClass вручную. Проверьте фактический план и DRA allocation после запуска.
+MPS — совместное использование, а не дополнительная граница изоляции памяти.
 
-Откройте файлы редактором:
+## 2. Включить три Helm-заказа
 
-| Файл | Что заполнить |
-| --- | --- |
-| `site/embed-mig.yaml` | Нода A30, созданный контроллером DeviceClass `1g6gb`, PVC и путь эмбеддера |
-| `site/embed-mps.yaml` | Та же площадка, DeviceClass `2g12gb-mps-percent`, PVC и путь |
-| `argo-app/embed-mig.yaml`, `argo-app/embed-mps.yaml` | Git URL, ветка, путь, AppProject и кластер A30 |
-| `values/embed-mig.yaml`, `values/embed-mps.yaml` | `replicaCount: 1` |
-
-Пути в таблице относительны `$DEMO_DIR`. Перед использованием проверьте
-selectors выбранного DeviceClass, а не только его имя:
-
-```bash
-kubectl --context "$MIG_CONTEXT" get deviceclass REPLACE_GENERATED_DEVICECLASS -o yaml
-```
-
-MPS-профиль просит `sharePercent: 25` и pinned memory limit 4 GiB
-через `gpu.deckhouse.io`. Это схема конкретного драйвера.
-У vLLM задано `gpu-memory-utilization: 0.25`: CUDA показывает полную
-память MIG, а не только квоту клиента.
-
-## 2. Проверить и отправить оба профиля
+В `$A30_DIR/platform/{embedding,reranker,whisper}.yaml` заполните
+Model, InferenceServiceClass и DeviceClass, затем задайте `order.enabled: true`.
+Проверьте destination всех трёх Applications.
 
 ```bash
 set -o pipefail
-for PROFILE in embed-mig embed-mps; do
-  helm template "hf-$PROFILE" "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
-    -f "$DEMO_DIR/values/$PROFILE.yaml" -f "$DEMO_DIR/site/$PROFILE.yaml" |
-    kubectl --context "$MIG_CONTEXT" apply --dry-run=server -f - || break
+for SERVICE in embedding reranker whisper; do
+  helm lint "$A30_DIR/charts/inference-service" --strict \
+    -f "$A30_DIR/platform/$SERVICE.yaml" || exit 1
+  helm template "hf-$SERVICE" "$A30_DIR/charts/inference-service" -n hardfest-demo \
+    -f "$A30_DIR/platform/$SERVICE.yaml" |
+    kubectl --context "$MIG_CONTEXT" apply --dry-run=server -f - || exit 1
 done
-```
-
-Продолжайте только после успешной проверки обоих рендеров:
-
-```bash
-git add -- "$DEMO_DIR/values/embed-mig.yaml" "$DEMO_DIR/values/embed-mps.yaml" \
-  "$DEMO_DIR/site/embed-mig.yaml" "$DEMO_DIR/site/embed-mps.yaml" \
-  "$DEMO_DIR/argo-app/embed-mig.yaml" "$DEMO_DIR/argo-app/embed-mps.yaml"
+git add -- "$A30_DIR/platform"
 git diff --cached --check
 git diff --cached
-git commit -S -s -m "Add A30 MIG and MPS workloads"
+git commit -S -s -m "Start three A30 inference services"
 git push
 ```
 
-Для отдельно зарегистрированных Applications:
+Только после успешных проверок и push:
 
 ```bash
-kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply \
-  -f "$DEMO_DIR/argo-app/embed-mig.yaml" -f "$DEMO_DIR/argo-app/embed-mps.yaml"
 REVISION=$(git rev-parse HEAD)
-for APP in hardfest-embed-mig hardfest-embed-mps; do
-  kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application "$APP" \
-    --type merge \
-    --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
+for SERVICE in embedding reranker whisper; do
+  kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application "hardfest-$SERVICE-platform" \
+    --type merge --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
 done
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get inferenceservices
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get pods,resourceclaims -o wide
 ```
 
-Если Applications управляются родителем, сначала синхронизируйте его.
-Дождитесь `Succeeded` нужной ревизии, затем:
+## 3. Проверить размещение и готовность
 
 ```bash
-kubectl --context "$MIG_CONTEXT" -n hardfest-demo get pods,resourceclaims
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get inferenceservice hf-embedding -o yaml
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get inferenceservice hf-reranker -o yaml
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get inferenceservice hf-whisper -o yaml
 kubectl --context "$MIG_CONTEXT" -n hardfest-demo get resourceclaims -o yaml
-kubectl --context "$MIG_CONTEXT" -n hardfest-demo logs deployment/hf-embed-mps --tail=100
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get services \
+  -o custom-columns='NAME:.metadata.name,OWNER:.metadata.ownerReferences[*].name,PORT:.spec.ports[*].port'
 ```
 
-## 3. Проверить эмбеддер
+Эмбеддер и реранкер должны получить **один MIG UUID**, Whisper — другой.
+Одинаковый DeviceClass без этой проверки не доказывает совместное размещение.
+Дождитесь Ready с актуальной generation. Сопоставьте план с конфигурацией
+Pod, затем проверьте каждый API.
 
-В отдельном терминале:
+## 4. Выполнить три запроса
+
+Для каждого сервиса выберите Service и порт из шага 3.
+Ниже один port-forward, который перезапускается для следующего сервиса.
+Для одновременных проверок нужны разные локальные порты.
 
 ```bash
-kubectl --context "$MIG_CONTEXT" -n hardfest-demo port-forward svc/hf-embed-mig 18003:8000
+export A30_SERVICE=REPLACE_SERVICE
+export A30_PORT=8000
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo port-forward "svc/$A30_SERVICE" "18003:$A30_PORT"
 ```
 
-В основном терминале:
+В основном терминале вводите ключ **выбранного сервиса** из менеджера секретов.
+Повторяйте ввод после смены Service, не используйте автоматически чужой ключ.
 
 ```bash
-curl --fail --max-time 60 http://127.0.0.1:18003/v1/embeddings \
-  -H 'Content-Type: application/json' \
-  -d '{"model":"embedding","input":["Динамический MIG","Квоты MPS"]}'
+set +x
+printf 'Model API key: ' >&2
+IFS= read -r -s A30_API_KEY
+printf '\n' >&2
+curl --fail --silent --show-error --max-time 30 \
+  --header @<(printf 'Authorization: Bearer %s\n' "$A30_API_KEY") \
+  http://127.0.0.1:18003/v1/models
 ```
 
-В ответе должны быть два вектора. Аналогично проверьте `hf-embed-mps`,
-переключив port-forward на этот Service.
+В каждом запросе замените ID на значение из API этого сервиса.
 
-## 4. Проверить совместный MPS
-
-Создайте второго клиента отдельно от первого:
+Эмбеддер:
 
 ```bash
-cp "$DEMO_DIR/values/embed-mps.yaml" "$DEMO_DIR/values/embed-mps-2.yaml"
-cp "$DEMO_DIR/argo-app/embed-mps.yaml" "$DEMO_DIR/argo-app/embed-mps-2.yaml"
+curl --fail-with-body --silent --show-error --max-time 120 \
+  --header @<(printf 'Authorization: Bearer %s\n' "$A30_API_KEY") \
+  -H 'Content-Type: application/json' http://127.0.0.1:18003/v1/embeddings \
+  -d '{"model":"REPLACE_EMBEDDING_ID","input":["Динамическое выделение GPU","Квоты и изоляция памяти"]}'
 ```
 
-В редакторе измените только следующие поля новых файлов:
+Ожидаются два вектора по 2560 элементов. Проверьте отсутствие NaN/Inf
+и соответствие размерности конфигурации модели.
 
-| Файл | Поле | Значение |
-| --- | --- | --- |
-| `values/embed-mps-2.yaml` | `fullnameOverride` | `hf-embed-mps-2` |
-| `argo-app/embed-mps-2.yaml` | `metadata.name` | `hardfest-embed-mps-2` |
-| Тот же Application | `spec.source.helm.releaseName` | `hf-embed-mps-2` |
-| Тот же Application | Первый элемент `spec.source.helm.valueFiles` | `../../values/embed-mps-2.yaml` |
-
-Второй value file остаётся `../../site/embed-mps.yaml`: нода, DeviceClass
-и веса одинаковы. `replicaCount` нового профиля равен `1`.
+Реранкер — после переключения Service и ключа:
 
 ```bash
-helm template hf-embed-mps-2 "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
-  -f "$DEMO_DIR/values/embed-mps-2.yaml" -f "$DEMO_DIR/site/embed-mps.yaml" |
-  kubectl --context "$MIG_CONTEXT" apply --dry-run=server -f -
+curl --fail-with-body --silent --show-error --max-time 120 \
+  --header @<(printf 'Authorization: Bearer %s\n' "$A30_API_KEY") \
+  -H 'Content-Type: application/json' http://127.0.0.1:18003/rerank \
+  -d '{"model":"REPLACE_RERANKER_ID","query":"Как ограничить память GPU?","documents":["MIG разделяет ресурсы GPU.","Git хранит историю файлов."],"top_n":2}'
 ```
 
-После успешной проверки:
+Ожидаются два результата с конечными score; релевантный документ должен быть выше.
+Это прямой endpoint vLLM. Для подключения WebUI через шлюз используется
+другой, Cohere-совместимый маршрут из [инструкции доступа](../docs/CHAT_AND_ACCESS.md).
+
+Whisper — после переключения Service и ключа; `sample.wav` —
+заранее подготовленная короткая запись с известной фразой без личных данных:
 
 ```bash
-git add -- "$DEMO_DIR/values/embed-mps-2.yaml" "$DEMO_DIR/argo-app/embed-mps-2.yaml"
-git diff --cached --check
-git diff --cached
-git commit -S -s -m "Add a second MPS client on A30"
-git push
-kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply \
-  -f "$DEMO_DIR/argo-app/embed-mps-2.yaml"
-REVISION=$(git rev-parse HEAD)
-kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application hardfest-embed-mps-2 \
-  --type merge \
-  --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
-kubectl --context "$MIG_CONTEXT" -n hardfest-demo get pods,resourceclaims
+curl --fail-with-body --silent --show-error --max-time 180 \
+  --header @<(printf 'Authorization: Bearer %s\n' "$A30_API_KEY") \
+  http://127.0.0.1:18003/v1/audio/transcriptions \
+  -F 'model=REPLACE_WHISPER_ID' -F 'file=@sample.wav' -F 'language=ru'
+unset A30_API_KEY
 ```
 
-Для App-of-Apps регистрируйте новый Application через родителя.
+Ожидается узнаваемый текст записи, не только HTTP 200.
 
-Проверьте оба ResourceClaim и фактические устройства:
+## 5. Подключить RAG и голос
 
-| Условие | Что должно наблюдаться |
-| --- | --- |
-| Два клиента делят один раздел | Одинаковый MIG UUID |
-| Оба приложения работоспособны | Оба API возвращают векторы |
-| Квоты применены | Выделение соответствует запросам драйвера |
-| Совместная нагрузка | Записаны latency, ошибки и пик памяти каждого клиента |
+Подключите три API в [WebUI через ai-mcp-gateway](../docs/CHAT_AND_ACCESS.md#4-подключить-базы-знаний-и-whisper).
+При замене эмбеддера перестройте индекс; сохраните исходные документы и ACL.
+Проверьте вопрос по базе знаний с известным ответом и голосовой ввод.
 
-Две заявки одного DeviceClass могут попасть на разные разделы — это ещё
-не совместный MPS. Квота 25% также не обещает ровно 25% скорости.
-Аппаратная граница изоляции остаётся на уровне MIG.
-
-## 5. Освободить учебную нагрузку
-
-В редакторе верните `replicaCount: 0` только у созданных в этом упражнении
-профилей. Отправьте коммит и синхронизируйте их Applications тем же способом.
-
-```bash
-kubectl --context "$MIG_CONTEXT" -n hardfest-demo get pods,resourceclaims
-```
+В [дашборде](../docs/OBSERVABILITY.md) выберите datasource A30, а не H100.
+Одновременно нагрузите эмбеддер и реранкер небольшими запросами:
+оба должны отвечать без OOM, а метрики — разделяться по сервису.
+Whisper оставьте отдельным сервисом на второй партиции.
 
 ## Проверка
 
-- [ ] MIG-раздел выделен динамически по заявке, API эмбеддера работает.
-- [ ] MPS-клиенты действительно делят один MIG UUID и соблюдают квоты.
-- [ ] После остановки владельцев исчезли их заявки и освободилась ёмкость.
+- [ ] В Console кластера A30 видны три Model и три InferenceService.
+- [ ] MPS-клиенты делят один MIG UUID, Whisper использует другой.
+- [ ] Успешны embeddings, rerank и transcription напрямую и через шлюз.
+- [ ] База знаний возвращает релевантные источники; голос распознаётся.
+- [ ] Обычному участнику MCP недоступен.
+- [ ] Сохранены ошибки, latency и пик памяти при совместной нагрузке.
 
-Геометрия может сохраняться согласно политике драйвера. Не удаляйте ради
-этого GPUClass/GPUPool, namespace, PVC или finalizers.
-Следующий этап — [Qwen TP2 на H100](06-tp2.md).
+A30 остаётся включённой при переходе к [Qwen](06-tp2.md).
+Для завершения всего стенда используйте [адресную остановку заказов](../docs/GITOPS.md#остановка),
+не удаляя GPUClass, namespace, Model и PVC.

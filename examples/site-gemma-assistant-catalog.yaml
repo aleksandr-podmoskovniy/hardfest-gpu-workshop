@@ -1,0 +1,16 @@
+# Complete replacement for site/gemma-assistant.yaml, not an extra overlay.
+nodeSelector:
+  kubernetes.io/hostname: REPLACE_H100_NODE
+tolerations: []
+dra:
+  deviceClassName: REPLACE_GENERATED_H100_DEVICECLASS
+modelVolumes: []
+modelRefs:
+  - gemma-4-31b
+  - gemma-4-31b-assistant
+vllm:
+  model: /data/modelcache/models/gemma-4-31b
+  speculative-config:
+    model: /data/modelcache/models/gemma-4-31b-assistant
+networkPolicy:
+  extraIngress: []

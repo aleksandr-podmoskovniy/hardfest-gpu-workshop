@@ -1,0 +1,15 @@
+order:
+  enabled: false
+  name: hf-embedding
+  spec:
+    inferenceServiceClassName: REPLACE_A30_EMBEDDING_CLASS
+    launchStrategy: Throughput
+    model:
+      src: ai-models
+      ref:
+        kind: Model
+        name: qwen3-embedding-4b-w4a16
+    resources:
+      accelerator:
+        deviceClasses:
+          - REPLACE_GENERATED_A30_MIG_MPS_DEVICECLASS

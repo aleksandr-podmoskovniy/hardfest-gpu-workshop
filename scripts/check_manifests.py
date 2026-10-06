@@ -65,8 +65,8 @@ def validate_objects(objects):
 def check():
     errors = []
     paths = sorted((ROOT / "values").glob("*.yaml"))
-    if len(paths) != 8:
-        errors.append("expected eight standalone Helm profiles")
+    if len(paths) != 4:
+        errors.append("expected four standalone Helm profiles")
     for path in paths:
         try:
             errors.extend(f"{path.name}: {e}" for e in validate_objects(render(path)))
@@ -78,11 +78,15 @@ def check():
         if path.stem == "observability":
             if source.get("directory") != {"recurse": False}:
                 errors.append("observability must retain its standalone directory")
-        elif path.stem == "platform":
-            if source.get("directory") != {"recurse": False, "include": "*.yaml"}:
-                errors.append("platform must include only its top-level order YAML files")
-            if not source.get("path", "").endswith("/hardfest-demo/platform") or "helm" in source:
-                errors.append("platform must use its separate directory, not a manual runtime chart")
+        elif path.stem.endswith("-platform"):
+            service = path.stem.removesuffix("-platform")
+            if "directory" in source or not source.get("path", "").endswith("/charts/inference-service"):
+                errors.append(f"{path.name}: expected inference-service Helm chart")
+            if source.get("helm", {}).get("valueFiles") != [f"../../platform/{service}.yaml"]:
+                errors.append(f"{path.name}: unexpected order values")
+            for field in ("parameters", "valuesObject", "values"):
+                if source.get("helm", {}).get(field):
+                    errors.append(f"{path.name}: keep settings in explicit valueFiles")
         elif "directory" in source or "helm" not in source:
             errors.append(f"{path.name}: expected Helm source, not directory")
         else:

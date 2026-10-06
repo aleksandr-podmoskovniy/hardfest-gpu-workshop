@@ -1,0 +1,15 @@
+order:
+  enabled: false
+  name: hf-reranker
+  spec:
+    inferenceServiceClassName: REPLACE_A30_RERANKER_CLASS
+    launchStrategy: Throughput
+    model:
+      src: ai-models
+      ref:
+        kind: Model
+        name: qwen3-reranker-4b-w4a16
+    resources:
+      accelerator:
+        deviceClasses:
+          - REPLACE_GENERATED_A30_MIG_MPS_DEVICECLASS

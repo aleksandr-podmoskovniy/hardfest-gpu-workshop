@@ -1,0 +1,15 @@
+order:
+  enabled: false
+  name: hf-whisper
+  spec:
+    inferenceServiceClassName: REPLACE_A30_SPEECH_CLASS
+    launchStrategy: Throughput
+    model:
+      src: ai-models
+      ref:
+        kind: Model
+        name: whisper-large-v3
+    resources:
+      accelerator:
+        deviceClasses:
+          - REPLACE_GENERATED_A30_MIG_DEVICECLASS

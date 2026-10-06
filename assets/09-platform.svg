@@ -65,8 +65,8 @@
 <tspan x="72" dy="0">Рецепт Gemma</tspan>
 </text>
 <text x="72" y="624" font-size="22" fill="#17243b" text-anchor="start" data-max-width="480">
-<tspan x="72" dy="0">FP8 KV, prefix cache, CPU KV</tspan>
-<tspan x="72" dy="30.799999999999997">Chunked prefill, graphs, assistant</tspan>
+<tspan x="72" dy="0">64K, FP8 KV, prefix cache</tspan>
+<tspan x="72" dy="30.799999999999997">Chunked prefill и CUDA graphs</tspan>
 </text>
 <rect x="624" y="542" width="528" height="126" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="648" y="584" font-size="25" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="480">

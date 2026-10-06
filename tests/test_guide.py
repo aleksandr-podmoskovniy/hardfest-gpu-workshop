@@ -63,20 +63,20 @@ class Guide(unittest.TestCase):
         ram = readme.split('id="ram"', 1)[1].split('id="speculation"', 1)[0]
         second = readme.split('id="speculation"', 1)[1].split('id="platform"', 1)[0]
         self.assertNotIn("max-model-len: 131072", ram)
-        self.assertIn("Отдельно проверить расширение окна до 128K", second)
         self.assertIn("max-model-len: 131072", second)
-        self.assertIn("верните `max-model-len: 65536`", second)
+        self.assertIn("max-model-len: 16384", second)
+        self.assertIn("опыт на вместимость", second)
         self.assertIn("cpu_bytes_to_use: 34359738368", ram)
         self.assertIn("остановите A через Git", ram)
-        self.assertIn("values/gemma-b-128k.yaml", second)
-        self.assertIn("values/gemma-b-ram.yaml", second)
+        for stale in ("gemma-b-128k.yaml", "gemma-b-ram.yaml"):
+            self.assertNotIn(stale, readme)
 
     def test_primary_workshop_uses_gitops_not_private_python_wrappers(self):
         readme = (ROOT / "README.md").read_text()
         for old in ("python3", "scripts/hf.py", ".local/"):
             self.assertNotIn(old, readme)
         for command in ("apply --dry-run=server -f", "git commit -S -s", "git push"):
-            self.assertIn(command, readme)
+            self.assertIn(command, (ROOT / "docs/GITOPS.md").read_text())
         self.assertNotIn("kustomize", readme.lower())
         self.assertNotIn("```text", readme)
         gitops = (ROOT / "docs/GITOPS.md").read_text()
@@ -102,7 +102,7 @@ class Guide(unittest.TestCase):
 
     def test_helm_profiles_are_safe_and_complete(self):
         profiles = list((ROOT / "values").glob("*.yaml"))
-        self.assertEqual(len(profiles), 8)
+        self.assertEqual(len(profiles), 4)
         self.assertEqual(manifests.check(), [])
         for path in profiles:
             with self.subTest(profile=path.stem):
@@ -115,7 +115,7 @@ class Guide(unittest.TestCase):
                 self.assertNotIn("cpu-offload-gb", path.read_text())
                 self.assertRegex(resources["spec"]["template"]["spec"]["containers"][0]["image"], r"@sha256:[0-9a-f]{64}")
         for name in ("gemma-a", "gemma-b"):
-            self.assertIn("max-model-len: 65536", (ROOT / "values" / (name + ".yaml")).read_text())
+            self.assertIn("max-model-len: 16384", (ROOT / "values" / (name + ".yaml")).read_text())
         for path in (ROOT / "argocd").glob("*.yaml"):
             self.assertNotIn("automated:", path.read_text())
             self.assertNotIn("finalizers:", path.read_text())
@@ -148,17 +148,13 @@ class Guide(unittest.TestCase):
         readme = (ROOT / "README.md").read_text()
         chapter = readme.split('id="platform"', 1)[1].split('id="placement"', 1)[0]
         lab = (ROOT / "labs/04-deckhouse.md").read_text()
-        diagram = (ROOT / "assets/09-platform.svg").read_text()
-        self.assertIn("рецепт Gemma 64K", chapter)
-        for setting in ('второй итерации', '32 GiB', '2048', 'assistant', 'первой H100'):
-            self.assertIn(setting, chapter)
-        for recipe in ("Gemma 64K", "Gemma 128K с CPU KV", "Gemma с assistant", "Qwen TP2 с MTP"):
-            self.assertIn(recipe, lab)
-        for stale in ("не переключатель", "сам по себе их не гарантирует",
-                      "Если рецепт не проверен", "Не подтверждение готовности"):
-            self.assertNotIn(stale, chapter + lab + diagram)
-        self.assertIn("Все настройки эксперимента — в рецепте", diagram)
-        self.assertIn("## Проверка", lab)
+        for term in ("Gemma 64K", "CPU KV", "assistant", "hf-platform-gemma", "Gemma A — DP"):
+            self.assertIn(term, chapter)
+        for term in ("charts/inference-service", "order.enabled: true", "model", "Ready",
+                     "полный ответ"):
+            self.assertIn(term, lab)
+        self.assertIn("Не входят в этот базовый рецепт", lab)
+        self.assertIn("Короткий вариант: A вручную, B через платформу", lab)
 
     def test_workshop_has_one_canonical_source(self):
         alias = (ROOT / "WORKSHOP.md").read_text()
@@ -173,7 +169,7 @@ class Guide(unittest.TestCase):
         self.assertNotIn("бонус", chapter.lower())
         self.assertLess(readme.index('id="tp2"'), readme.index('id="cleanup"'))
         for term in ("AI Inference", "DeviceClass", "tensor-parallel-size: 2",
-                     "QWEN_WORKLOAD=statefulset/", "port-forward", "/v1/chat/completions",
+                     "acceleratorCount=2", "/v1/chat/completions",
                      "Virtual Key", "OIDC", "MTP", "labs/06-tp2.md"):
             self.assertIn(term, chapter)
         for filename in ("17-qwen-transition.svg", "18-qwen-mtp.svg", "19-qwen-capacity.svg"):
@@ -186,8 +182,8 @@ class Guide(unittest.TestCase):
     def test_platform_preflight_precedes_releasing_working_gpus(self):
         gemma = (ROOT / "labs/04-deckhouse.md").read_text()
         preflight = gemma.split("## 2. Освободить GPU и RAM", 1)[0]
-        self.assertIn("до её успешного завершения", preflight.lower())
-        self.assertIn("inference-readiness", preflight)
+        for term in ("inference-readiness", "до успешной проверки", "authentication: Token"):
+            self.assertIn(term, preflight.lower() if term.startswith("до ") else preflight)
         qwen = (ROOT / "labs/06-tp2.md").read_text()
         preflight = qwen.split("## 2. Освободить обе H100", 1)[0]
         for field in ("acceleratorPolicy.maxAcceleratorCount", "scalingPolicy.minReplicas",
@@ -210,7 +206,7 @@ class Guide(unittest.TestCase):
         self.assertIn("Gemma A — Base", readme)
         self.assertIn("Gemma B — Tune", readme)
         self.assertIn("отдельным маршрутом Bifrost", readme)
-        self.assertIn("сервис через AI Inference", readme)
+        self.assertIn("созданная через AI Inference", readme)
         self.assertIn("docs/CHAT_AND_ACCESS.md", readme)
         guide = (ROOT / "docs/CHAT_AND_ACCESS.md").read_text()
         for term in ("pending", "Virtual Key", "OIDC", "MCP", "ACL", "отзыв"):

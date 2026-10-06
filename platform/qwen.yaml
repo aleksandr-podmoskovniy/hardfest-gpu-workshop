@@ -1,0 +1,15 @@
+order:
+  enabled: false
+  name: hf-qwen-platform
+  spec:
+    inferenceServiceClassName: REPLACE_H100_TP2_INFERENCE_CLASS
+    launchStrategy: Throughput
+    model:
+      src: ai-models
+      ref:
+        kind: Model
+        name: qwen3-8-flash-next-nvfp4
+    resources:
+      accelerator:
+        deviceClasses:
+          - REPLACE_GENERATED_H100_DEVICECLASS

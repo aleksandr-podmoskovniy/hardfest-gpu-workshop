@@ -1,0 +1,16 @@
+# No order and no GPU allocation until explicitly enabled in private GitOps.
+order:
+  enabled: false
+  name: inference
+  spec:
+    inferenceServiceClassName: REPLACE_INFERENCE_SERVICE_CLASS
+    launchStrategy: Throughput
+    model:
+      src: ai-models
+      ref:
+        kind: Model
+        name: REPLACE_MODEL
+    resources:
+      accelerator:
+        deviceClasses:
+          - REPLACE_GENERATED_DEVICECLASS

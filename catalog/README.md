@@ -164,11 +164,30 @@ metadata:
 | Gemma | `/data/modelcache/models/gemma-4-31b` |
 | Assistant | `/data/modelcache/models/gemma-4-31b-assistant` |
 
-> [!IMPORTANT]
-> В текущем чарте `vllm-runtime` этот режим ещё не встроен: он использует
-> `modelVolumes` и пути `/models/gemma`, `/models/assistant`. Не заменяйте пути
-> и не патчите рабочий Deployment вручную. Сначала требуется поддержка доставки
-> в чарте, затем проверка на отдельной выключенной конфигурации и запуск.
+В чарте этот режим включается через `modelRefs`.
+Используйте [site-gemma-catalog.yaml](../examples/site-gemma-catalog.yaml) и
+[вариант с assistant](../examples/site-gemma-assistant-catalog.yaml).
+`modelVolumes` оставьте пустым; пути в `vllm` должны совпасть с таблицей.
+Чарт формирует аннотацию, вручную патчить Deployment не нужно.
+
+Для каждого назначенного Pod проверьте события доставки. `Model Ready`
+не означает, что NodeCache уже прогрет на всех нодах.
+`MountVolume ... artifact ... is not ready` относится к доставке весов;
+`Pulling image` — к контейнерному образу runtime. Это разные кеши.
+
+## Каталог A30
+
+Повторите шаги 1–4 в каталоге `$A30_DIR` и контексте `$MIG_CONTEXT`,
+используя [a30.yaml](a30.yaml) вместо `models.yaml`.
+Application назовите `hardfest-models-a30`, destination укажите кластер A30;
+source.path должен вести к `$A30_DIR/charts/model-catalog`.
+Не назначайте двум Applications одно имя или один каталог.
+
+В этом каталоге три закреплённых модели: Qwen3 Embedding 4B W4A16,
+Qwen3 Reranker 4B W4A16 и Whisper large-v3.
+В Console откройте **кластер A30 → hardfest-demo → AI-модели**.
+Каталог H100-кластера не показывает Models из соседнего кластера.
+После импорта переходите к [трём сервисам](../labs/05-mig-mps.md).
 
 ## Обновление ревизии
 

@@ -182,10 +182,27 @@ GPU-панели показывают все DCGM-устройства выбр�
 неисправимой ECC-ошибки. Панель не заменяет сравнение volatile/aggregate
 счётчиков и проверку повторения под нагрузкой.
 
-В vLLM 0.30 `kv_offload_cpu_cache_usage_perc` описывает память,
+В OffloadingConnector vLLM 0.31 `kv_offload_cpu_cache_usage_perc` описывает память,
 закреплённую активными передачами, а не все сохранённые KV-блоки.
 Ноль не означает пустой RAM-кэш. `cpu_offload_gb` относится к выгрузке
 **весов**, не KV. Выделение кэша и фактический возврат байтов проверяются отдельно.
+
+### Qwen: отдельные метрики Simple CPU backend
+
+В рецепте Qwen включён `VLLM_USE_SIMPLE_KV_OFFLOAD=1`.
+Его панели находятся в строке **Simple CPU KV-offload: блоки, не байты**:
+
+| Метрика | Значение |
+| --- | --- |
+| `simple_kv_offload_load_blocks_total` | Завершённые возвраты блоков на GPU |
+| `simple_kv_offload_used_blocks` | Закреплённые блоки активных передач или cache hits |
+| `simple_kv_offload_save_outcomes_total{outcome=...}` | Решения о сохранении, с причинами отказов |
+| `simple_kv_offload_info` | Факты конфигурации backend, включая ёмкость |
+
+`used_blocks` не включает вытесняемые сохранённые блоки.
+Не называйте этот график «вся занятая RAM». Счётчики решений о сохранении
+также не являются завершённой передачей байтов.
+[Семантика метрик v0.31.0](https://github.com/vllm-project/vllm/blob/v0.31.0/vllm/v1/simple_kv_offload/metrics.py).
 
 ### Учёт на шлюзе
 

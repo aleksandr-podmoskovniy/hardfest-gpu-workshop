@@ -31,7 +31,7 @@ vllm:
   dtype: bfloat16
   safetensors-load-strategy: lazy
   tensor-parallel-size: 1
-  max-model-len: 65536
+  max-model-len: 16384
   max-num-seqs: 32
   gpu-memory-utilization: 0.9
   language-model-only: true
@@ -42,8 +42,8 @@ vllm:
   kv-cache-dtype: fp8
   attention-backend: TRITON_ATTN
   enable-prefix-caching: true
-  enable-chunked-prefill: true
-  max-num-batched-tokens: 4096
+  no-enable-chunked-prefill: true
+  max-num-batched-tokens: 16384
   enforce-eager: true
   kv-transfer-config:
     kv_connector: OffloadingConnector

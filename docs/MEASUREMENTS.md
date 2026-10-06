@@ -35,15 +35,15 @@
 
 | Серия | Что меняется относительно предыдущей |
 | --- | --- |
-| `a-base` | BF16 KV, без prefix cache/offload/CUDA graphs; chunked prefill 4096 |
+| `a-base` | BF16 KV, без prefix cache/offload/CUDA graphs; без chunked prefill |
 | `b-cache` | FP8 KV, Triton attention, prefix cache, CPU KV 32 GiB |
 | `b-spec` | Те же кэши; prefill 2048, CUDA graphs, assistant |
 
 A — намеренно выбранная исходная конфигурация современного runtime.
-Это не штатные настройки vLLM 0.30 и не воспроизведение старой версии.
-Минимальный chunked prefill оставлен для вместимости 64K.
+Это не штатные настройки vLLM 0.31 и не воспроизведение старой версии.
+Строгий baseline использует окно 16K; больший контекст B проверяется отдельно.
 
-Основное сравнение: окно 65 536, вход 32 768, выход 2048, concurrency 4.
+Основное сравнение: окно 16 384, вход 8192, выход 2048, concurrency 4.
 Вклад одной оптимизации проверяется отдельной парой запусков,
 где меняется только она.
 
@@ -100,7 +100,7 @@ curl --fail http://127.0.0.1:18001/metrics > results/hardfest/a-base/before.prom
 После серии повторите команду с именем `after.prom`.
 Для B используйте 18002 и отдельный каталог серии.
 Точные имена и labels сверяйте с `HELP/TYPE` и
-[справочником vLLM](https://docs.vllm.ai/en/v0.30.0/usage/metrics/).
+[справочником vLLM](https://docs.vllm.ai/en/v0.31.0/usage/metrics/).
 
 Среднее ожидание очереди за интервал:
 
