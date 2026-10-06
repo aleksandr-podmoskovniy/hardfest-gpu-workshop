@@ -1,14 +1,14 @@
 # Подключить мониторинг инференса
 
-[Дашборд](../observability/dashboard.yaml) разделяет ряды по
+[AI Inference / Service performance](../observability/dashboard.yaml) разделяет ряды по
 `namespace / service`. Поэтому две Gemma с одинаковыми весами не
 сливаются в одну линию. Ручные Deployment и сервисы AI Inference можно
 сравнивать вместе, когда Prometheus собирает их `/metrics`.
 
-Если H100 и A30 находятся в разных кластерах, откройте дашборд в каждой
-Console отдельно. Источник Prometheus относится к выбранному кластеру:
-общая схема чата не объединяет их метрики. Вкладка H100 нужна для Gemma/Qwen,
-вкладка A30 — для эмбеддера, реранкера и Whisper. Учёт ai-mcp-gateway смотрите
+В каждом кластере используется один и тот же дашборд, без отдельных версий
+под карту или модель. Выбирайте namespace, сервис и модель фильтрами.
+Источник Prometheus относится к выбранному кластеру: общая схема чата
+не объединяет метрики разных кластеров. Учёт ai-mcp-gateway смотрите
 в кластере шлюза.
 
 ## Перед началом
@@ -56,6 +56,21 @@ TCP/8000 только сборщику ручных сервисов и не м�
 > Для сервисов AI Inference сохраняйте сбор, уже созданный модулем.
 > Второй ServiceMonitor одного endpoint даст двойной счёт.
 
+Prometheus должен также выбирать namespace, в котором находится
+ServiceMonitor. В стандартной конфигурации Deckhouse с
+`serviceMonitorNamespaceSelector` по метке
+`prometheus.deckhouse.io/monitor-watcher-enabled` добавьте в существующий
+манифест namespace приложения:
+
+```yaml
+metadata:
+  labels:
+    prometheus.deckhouse.io/monitor-watcher-enabled: "true"
+```
+
+Остальные поля и labels namespace сохраните. Проверьте фактический selector
+в `Prometheus/main`: один лишь ServiceMonitor не гарантирует обнаружение цели.
+
 ## 2. Проверить и отправить конфигурацию
 
 ```bash
@@ -91,7 +106,7 @@ kubectl --context "$GPU_CONTEXT" get clusterobservabilitydashboard ai-inference-
 ```
 
 В Console: **Система → Управление → Мониторинг → Дашборды →
-AI Platform → AI Inference / Live performance**.
+AI Platform → AI Inference / Service performance**.
 
 В примере объект называется `ai-inference-live`. Если на площадке уже есть
 этот дашборд под другим именем, сохраните его `metadata.name` и JSON `uid`,
@@ -110,11 +125,15 @@ AI Platform → AI Inference / Live performance**.
 | --- | --- |
 | Namespace | `hardfest-demo` |
 | Service | `hf-gemma-a`, `hf-gemma-b` или активный сервис платформы |
+| Model | Нужная модель или All |
+| GPU node (whole node) | Нода сервиса; All показывает все GPU кластера |
 | Период | Последние 30 минут |
 | Prometheus | Сборщик вашей площадки |
 
-Inventory использует также сведения Kubernetes: сервис остаётся виден,
-даже если движок ещё не запустился и не отдаёт `/metrics`.
+Inventory использует также labels Pod, управляемых AI Inference: сервис
+виден, даже если его Pod ещё не запустился и не отдаёт `/metrics`.
+Ручные сервисы обнаруживаются по метрикам vLLM; без Pod и метрик запись
+в inventory не гарантируется.
 `UP` означает успешный сбор, `DOWN` — ошибку имеющейся цели,
 `NO SCRAPE` — отсутствие цели. Последнее нормально для намеренно выключенных
 Gemma при запуске Qwen; сверяйте число реплик и состояние InferenceService.
@@ -149,7 +168,8 @@ JSON блока `spec.definition` в импорт Grafana.
 | TPOT | Время на выходной токен после первого, распределение по запросам |
 | Темп decode | Обратное среднее ITL, не общий throughput |
 | KV-cache / external hit | Заполнение GPU KV и повторное использование префиксов |
-| KV-offload | Экспортируемые backend метрики CPU KV и передачи байтов |
+| KV-offload | Закреплённые блоки CPU KV, очередь сохранения и возврат блоков на GPU |
+| Speculative decoding | Draft tokens/s и доля принятых токенов; не коэффициент ускорения |
 | Шлюз | Отдельные метрики ai-mcp-gateway с собственными фильтрами |
 | MIG engine / tensor activity | Активность разделов по `GPU_I_ID` и `GPU_I_PROFILE`, не доля отдельного MPS-процесса |
 | Last Xid | Последний код ошибки драйвера для устройства, не количество ECC-ошибок |
@@ -170,7 +190,7 @@ GPU-панели показывают все DCGM-устройства выбр�
 нагрузку. Фильтр Service не создаёт изолированный учёт MIG/MPS — для него
 нужны соответствующие метрики драйвера.
 
-Выбирайте узел явно в фильтре **GPU node**. На A30 в MIG-режиме экспортёр
+Выбирайте узел явно в фильтре **GPU node (whole node)**. В MIG-режиме экспортёр
 может не отдавать обычные `GPU_UTIL` и `FB_USED`; доступны отдельные
 счётчики активности MIG. Не заменяйте отсутствующую память нулём и не
 суммируйте повторённые значения физической карты как память разных разделов.
@@ -182,15 +202,12 @@ GPU-панели показывают все DCGM-устройства выбр�
 неисправимой ECC-ошибки. Панель не заменяет сравнение volatile/aggregate
 счётчиков и проверку повторения под нагрузкой.
 
-В OffloadingConnector vLLM 0.31 `kv_offload_cpu_cache_usage_perc` описывает память,
-закреплённую активными передачами, а не все сохранённые KV-блоки.
-Ноль не означает пустой RAM-кэш. `cpu_offload_gb` относится к выгрузке
-**весов**, не KV. Выделение кэша и фактический возврат байтов проверяются отдельно.
+### KV-offload и speculative decoding
 
-### Qwen: отдельные метрики Simple CPU backend
-
-В рецепте Qwen включён `VLLM_USE_SIMPLE_KV_OFFLOAD=1`.
-Его панели находятся в строке **Simple CPU KV-offload: блоки, не байты**:
+Панели **KV-offload: блоки CPU-кеша (если включён)** используют метрики
+Simple CPU backend vLLM 0.31. Они подходят любой модели с этим backend,
+а не только Qwen. Если backend не включён или runtime не экспортирует
+эти метрики, панели остаются пустыми.
 
 | Метрика | Значение |
 | --- | --- |
@@ -198,11 +215,17 @@ GPU-панели показывают все DCGM-устройства выбр�
 | `simple_kv_offload_used_blocks` | Закреплённые блоки активных передач или cache hits |
 | `simple_kv_offload_save_outcomes_total{outcome=...}` | Решения о сохранении, с причинами отказов |
 | `simple_kv_offload_info` | Факты конфигурации backend, включая ёмкость |
+| `simple_kv_offload_pending_store_blocks` | Блоки в очереди сохранения |
 
 `used_blocks` не включает вытесняемые сохранённые блоки.
 Не называйте этот график «вся занятая RAM». Счётчики решений о сохранении
 также не являются завершённой передачей байтов.
 [Семантика метрик v0.31.0](https://github.com/vllm-project/vllm/blob/v0.31.0/vllm/v1/simple_kv_offload/metrics.py).
+
+Speculative decoding показывает скорость draft-токенов и долю принятых
+токенов. Высокая доля принятия сама по себе не доказывает ускорения:
+сравните время и throughput на одинаковой нагрузке. При выключенном
+speculative decoding эти панели также могут не иметь данных.
 
 ### Учёт на шлюзе
 
@@ -224,7 +247,7 @@ GPU-панели показывают все DCGM-устройства выбр�
 
 ## Если графики пустые
 
-1. Проверьте ServiceMonitor selector, имя порта и NetworkPolicy.
+1. Проверьте namespace selector Prometheus, ServiceMonitor selector, имя порта и NetworkPolicy.
 2. Сверьте `/metrics` закреплённого runtime: имена и labels могли отличаться.
 3. Убедитесь, что в выбранном интервале были запросы.
 4. Проверьте права на кластерные дашборды, а не только namespace приложения.

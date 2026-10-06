@@ -4,7 +4,7 @@ metadata:
   name: ai-inference-live
   annotations:
     metadata.deckhouse.io/category: AI Platform
-    metadata.deckhouse.io/title: AI Inference / Live performance
+    metadata.deckhouse.io/title: AI Inference / Service performance
 spec:
   definition: |
     {
@@ -24,7 +24,7 @@ spec:
           }
         ]
       },
-      "description": "Метрики одного выбранного кластера: namespace/service разделяют модели и варианты. Inventory остаётся видимым до запуска движка. Для второго кластера откройте его Console и Prometheus. GPU-панели показывают устройства узла, не отдельные MPS-процессы.",
+      "description": "Сервисы инференса выбранного кластера: запросы, токены, задержки, очередь, кеш и ресурсы. Выберите namespace, сервис и модель. GPU-панели показывают весь выбранный узел, не долю отдельного сервиса или MPS-процесса. Нет запросов в окне — задержка не определена; отсутствующая или не поддерживаемая движком метрика не заменяется нулём.",
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 1,
@@ -36,7 +36,7 @@ spec:
         "ai-inference",
         "vllm",
         "gpu",
-        "hardfest"
+        "observability"
       ],
       "templating": {
         "list": [
@@ -66,10 +66,10 @@ spec:
               "type": "prometheus",
               "uid": "${ds_prometheus}"
             },
-            "definition": "query_result(max by(namespace,service)(kube_service_labels{label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\"} or label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:cache_config_info))",
+            "definition": "query_result(max by(namespace,service)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:num_requests_running))",
             "query": {
               "qryType": 3,
-              "query": "query_result(max by(namespace,service)(kube_service_labels{label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\"} or label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:cache_config_info))",
+              "query": "query_result(max by(namespace,service)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:num_requests_running))",
               "refId": "namespace"
             },
             "hide": 0,
@@ -99,10 +99,10 @@ spec:
               "type": "prometheus",
               "uid": "${ds_prometheus}"
             },
-            "definition": "query_result(max by(namespace,service)(kube_service_labels{label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",namespace=~\"$namespace\"} or label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\"}))",
+            "definition": "query_result(max by(namespace,service)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:num_requests_running{namespace=~\"$namespace\"}))",
             "query": {
               "qryType": 3,
-              "query": "query_result(max by(namespace,service)(kube_service_labels{label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",namespace=~\"$namespace\"} or label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\"}))",
+              "query": "query_result(max by(namespace,service)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:num_requests_running{namespace=~\"$namespace\"}))",
               "refId": "inference_service"
             },
             "hide": 0,
@@ -158,6 +158,39 @@ spec:
             "type": "custom"
           },
           {
+            "name": "model",
+            "label": "Model",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${ds_prometheus}"
+            },
+            "definition": "query_result(max by(model_name)(vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\"}))",
+            "query": {
+              "qryType": 3,
+              "query": "query_result(max by(model_name)(vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\"}))",
+              "refId": "model"
+            },
+            "hide": 0,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "options": [],
+            "refresh": 2,
+            "sort": 1,
+            "regex": "/model_name=\"([^\"]+)\"/",
+            "skipUrlSync": false
+          },
+          {
             "name": "pod",
             "label": "Runtime pod",
             "type": "query",
@@ -165,10 +198,10 @@ spec:
               "type": "prometheus",
               "uid": "${ds_prometheus}"
             },
-            "definition": "query_result(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or label_replace(kube_pod_labels{namespace=~\"$namespace\",label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",label_app_kubernetes_io_name=~\"$inference_service\",label_app_kubernetes_io_name!=\"\"},\"service\",\"$1\",\"label_app_kubernetes_io_name\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))",
+            "definition": "query_result(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\"}))",
             "query": {
               "qryType": 3,
-              "query": "query_result(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or label_replace(kube_pod_labels{namespace=~\"$namespace\",label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",label_app_kubernetes_io_name=~\"$inference_service\",label_app_kubernetes_io_name!=\"\"},\"service\",\"$1\",\"label_app_kubernetes_io_name\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))",
+              "query": "query_result(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\"}))",
               "refId": "pod"
             },
             "hide": 0,
@@ -192,7 +225,7 @@ spec:
           },
           {
             "name": "node",
-            "label": "GPU node",
+            "label": "GPU node (whole node)",
             "type": "query",
             "datasource": {
               "type": "prometheus",
@@ -222,7 +255,7 @@ spec:
             "sort": 1,
             "regex": "",
             "skipUrlSync": false,
-            "description": "Узел выбранного кластера. GPU-панели не зависят от готовности модели и показывают всю нагрузку узла."
+            "description": "Независимый фильтр узлов для диагностики GPU, включая остановленные движки. All означает все GPU кластера; выберите узел сервиса. Namespace / Service / Model не ограничивают метрики GPU."
           },
           {
             "name": "gateway_namespace",
@@ -306,18 +339,18 @@ spec:
         ]
       },
       "timezone": "browser",
-      "title": "AI Inference / Live performance",
+      "title": "AI Inference / Service performance",
       "uid": "ai-inference-live",
-      "version": 4,
+      "version": 5,
       "weekStart": "",
       "panels": [
         {
           "collapsed": false,
           "gridPos": {
-            "h": 1,
-            "w": 24,
             "x": 0,
-            "y": 0
+            "y": 0,
+            "w": 24,
+            "h": 1
           },
           "id": 100,
           "panels": [],
@@ -405,10 +438,10 @@ spec:
             ]
           },
           "gridPos": {
-            "h": 8,
-            "w": 24,
             "x": 0,
-            "y": 1
+            "y": 1,
+            "w": 24,
+            "h": 8
           },
           "id": 1,
           "options": {
@@ -433,7 +466,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "(min by(namespace,service)(up{namespace=~\"$namespace\",service=~\"$inference_service\"}) and on(namespace,service) max by(namespace,service)(kube_service_labels{label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",namespace=~\"$namespace\",service=~\"$inference_service\"} or label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"})) or on(namespace,service) (-1 * max by(namespace,service)(kube_service_labels{label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",namespace=~\"$namespace\",service=~\"$inference_service\"} or label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))",
+              "expr": "(min by(namespace,service)(up{namespace=~\"$namespace\",service=~\"$inference_service\"}) and on(namespace,service) max by(namespace,service)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or (vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"} and on(namespace,service,pod,engine) max by(namespace,service,pod,engine)(vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"})))) or on(namespace,service) (-1 * max by(namespace,service)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or (vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"} and on(namespace,service,pod,engine) max by(namespace,service,pod,engine)(vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}))))",
               "format": "table",
               "instant": true,
               "legendFormat": "{{namespace}} / {{service}}",
@@ -467,10 +500,10 @@ spec:
         {
           "collapsed": false,
           "gridPos": {
-            "h": 1,
-            "w": 24,
             "x": 0,
-            "y": 9
+            "y": 9,
+            "w": 24,
+            "h": 1
           },
           "id": 101,
           "panels": [],
@@ -505,10 +538,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 4,
             "x": 0,
-            "y": 10
+            "y": 10,
+            "w": 4,
+            "h": 5
           },
           "id": 5,
           "options": {
@@ -529,7 +562,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(rate(vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",finished_reason!~\"abort|error\"}[$__rate_interval]))",
+              "expr": "sum(rate(vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",finished_reason!~\"abort|error\",model_name=~\"$model\"}[$__rate_interval]))",
               "legendFormat": "Successful requests/s",
               "range": false,
               "refId": "A",
@@ -574,10 +607,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 4,
             "x": 4,
-            "y": 10
+            "y": 10,
+            "w": 4,
+            "h": 5
           },
           "id": 6,
           "options": {
@@ -598,7 +631,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(rate(vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",finished_reason=~\"abort|error\"}[$__rate_interval])) / (sum(rate(vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "expr": "sum(rate(vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",finished_reason=~\"abort|error\",model_name=~\"$model\"}[$__rate_interval])) / (sum(rate(vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) > 0)",
               "legendFormat": "Error ratio",
               "range": false,
               "refId": "A",
@@ -636,10 +669,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 4,
             "x": 8,
-            "y": 10
+            "y": 10,
+            "w": 4,
+            "h": 5
           },
           "id": 7,
           "options": {
@@ -660,7 +693,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(rate(vllm:prompt_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))",
+              "expr": "sum(rate(vllm:prompt_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval]))",
               "legendFormat": "Input tokens/s",
               "range": false,
               "refId": "A",
@@ -698,10 +731,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 4,
             "x": 12,
-            "y": 10
+            "y": 10,
+            "w": 4,
+            "h": 5
           },
           "id": 8,
           "options": {
@@ -722,7 +755,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(rate(vllm:generation_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))",
+              "expr": "sum(rate(vllm:generation_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval]))",
               "legendFormat": "Output tokens/s",
               "range": false,
               "refId": "A",
@@ -767,10 +800,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 4,
             "x": 16,
-            "y": 10
+            "y": 10,
+            "w": 4,
+            "h": 5
           },
           "id": 9,
           "options": {
@@ -791,7 +824,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:time_to_first_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:time_to_first_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])))",
               "legendFormat": "TTFT p95",
               "range": false,
               "refId": "A",
@@ -836,10 +869,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 4,
             "x": 20,
-            "y": 10
+            "y": 10,
+            "w": 4,
+            "h": 5
           },
           "id": 10,
           "options": {
@@ -860,7 +893,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:e2e_request_latency_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\"}[$__rate_interval])))",
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:e2e_request_latency_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",model_name=~\"$model\"}[$__rate_interval])))",
               "legendFormat": "End-to-end p95",
               "range": false,
               "refId": "A",
@@ -917,10 +950,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 8,
             "x": 0,
-            "y": 15
+            "y": 15,
+            "w": 8,
+            "h": 8
           },
           "id": 11,
           "options": {
@@ -942,7 +975,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, sum by(namespace, service)(rate(vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",finished_reason!~\"abort|error\"}[$__rate_interval])))",
+              "expr": "topk($series_limit, sum by(namespace, service)(rate(vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",finished_reason!~\"abort|error\",model_name=~\"$model\"}[$__rate_interval])))",
               "legendFormat": "{{namespace}} / {{service}}",
               "range": true,
               "refId": "A"
@@ -998,10 +1031,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 8,
             "x": 8,
-            "y": 15
+            "y": 15,
+            "w": 8,
+            "h": 8
           },
           "id": 12,
           "options": {
@@ -1023,14 +1056,14 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, sum by (namespace, service) (rate(vllm:prompt_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "expr": "topk($series_limit, sum by (namespace, service) (rate(vllm:prompt_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])))",
               "legendFormat": "{{namespace}} / {{service}} / input",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, sum by (namespace, service) (rate(vllm:generation_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "expr": "topk($series_limit, sum by (namespace, service) (rate(vllm:generation_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])))",
               "legendFormat": "{{namespace}} / {{service}} / output",
               "range": true,
               "refId": "B"
@@ -1086,10 +1119,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 8,
             "x": 16,
-            "y": 15
+            "y": 15,
+            "w": 8,
+            "h": 8
           },
           "id": 13,
           "options": {
@@ -1111,14 +1144,14 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:time_to_first_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))))",
+              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:time_to_first_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval]))))",
               "legendFormat": "{{namespace}} / {{service}} / TTFT",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:e2e_request_latency_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\"}[$__rate_interval]))))",
+              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:e2e_request_latency_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",model_name=~\"$model\"}[$__rate_interval]))))",
               "legendFormat": "{{namespace}} / {{service}} / E2E",
               "range": true,
               "refId": "B"
@@ -1130,10 +1163,10 @@ spec:
         {
           "collapsed": false,
           "gridPos": {
-            "h": 1,
-            "w": 24,
             "x": 0,
-            "y": 23
+            "y": 23,
+            "w": 24,
+            "h": 1
           },
           "id": 102,
           "panels": [],
@@ -1172,10 +1205,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 6,
             "x": 0,
-            "y": 24
+            "y": 24,
+            "w": 6,
+            "h": 5
           },
           "id": 14,
           "options": {
@@ -1196,7 +1229,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})",
+              "expr": "sum(vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"})",
               "legendFormat": "Running now",
               "range": false,
               "refId": "A",
@@ -1241,10 +1274,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 6,
             "x": 6,
-            "y": 24
+            "y": 24,
+            "w": 6,
+            "h": 5
           },
           "id": 15,
           "options": {
@@ -1265,7 +1298,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(vllm:num_requests_waiting{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})",
+              "expr": "sum(vllm:num_requests_waiting{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"})",
               "legendFormat": "Waiting now",
               "range": false,
               "refId": "A",
@@ -1306,10 +1339,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 6,
             "x": 12,
-            "y": 24
+            "y": 24,
+            "w": 6,
+            "h": 5
           },
           "id": 16,
           "options": {
@@ -1330,7 +1363,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(increase(vllm:num_preemptions_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__range]))",
+              "expr": "sum(increase(vllm:num_preemptions_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__range]))",
               "legendFormat": "Preemptions in range",
               "range": false,
               "refId": "A",
@@ -1375,10 +1408,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 6,
             "x": 18,
-            "y": 24
+            "y": 24,
+            "w": 6,
+            "h": 5
           },
           "id": 17,
           "options": {
@@ -1399,7 +1432,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:request_queue_time_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:request_queue_time_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])))",
               "legendFormat": "Queue time p95",
               "range": false,
               "refId": "A",
@@ -1456,10 +1489,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 12,
             "x": 0,
-            "y": 29
+            "y": 29,
+            "w": 12,
+            "h": 8
           },
           "id": 18,
           "options": {
@@ -1481,14 +1514,14 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, sum by (namespace, service) (vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}))",
+              "expr": "topk($series_limit, sum by (namespace, service) (vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}))",
               "legendFormat": "{{namespace}} / {{service}} / running",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, sum by (namespace, service) (vllm:num_requests_waiting{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}))",
+              "expr": "topk($series_limit, sum by (namespace, service) (vllm:num_requests_waiting{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}))",
               "legendFormat": "{{namespace}} / {{service}} / waiting",
               "range": true,
               "refId": "B"
@@ -1544,10 +1577,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 12,
             "x": 12,
-            "y": 29
+            "y": 29,
+            "w": 12,
+            "h": 8
           },
           "id": 19,
           "options": {
@@ -1569,14 +1602,14 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, histogram_quantile(0.50, sum by (namespace, service, le) (rate(vllm:request_queue_time_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))))",
+              "expr": "topk($series_limit, histogram_quantile(0.50, sum by (namespace, service, le) (rate(vllm:request_queue_time_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval]))))",
               "legendFormat": "{{namespace}} / {{service}} / p50",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:request_queue_time_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))))",
+              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:request_queue_time_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval]))))",
               "legendFormat": "{{namespace}} / {{service}} / p95",
               "range": true,
               "refId": "B"
@@ -1588,10 +1621,10 @@ spec:
         {
           "collapsed": false,
           "gridPos": {
-            "h": 1,
-            "w": 24,
             "x": 0,
-            "y": 37
+            "y": 37,
+            "w": 24,
+            "h": 1
           },
           "id": 103,
           "panels": [],
@@ -1634,10 +1667,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 6,
-            "w": 6,
             "x": 0,
-            "y": 38
+            "y": 38,
+            "w": 6,
+            "h": 6
           },
           "id": 20,
           "options": {
@@ -1658,7 +1691,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "max(vllm:kv_cache_usage_perc{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})",
+              "expr": "max(vllm:kv_cache_usage_perc{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"})",
               "legendFormat": "GPU KV cache fill",
               "range": false,
               "refId": "A",
@@ -1704,10 +1737,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 6,
-            "w": 6,
             "x": 6,
-            "y": 38
+            "y": 38,
+            "w": 6,
+            "h": 6
           },
           "id": 21,
           "options": {
@@ -1728,7 +1761,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(rate(vllm:prefix_cache_hits_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum(rate(vllm:prefix_cache_queries_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "expr": "sum(rate(vllm:prefix_cache_hits_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) / (sum(rate(vllm:prefix_cache_queries_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) > 0)",
               "legendFormat": "Prefix cache hit",
               "range": false,
               "refId": "A",
@@ -1774,10 +1807,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 6,
-            "w": 6,
             "x": 12,
-            "y": 38
+            "y": 38,
+            "w": 6,
+            "h": 6
           },
           "id": 22,
           "options": {
@@ -1798,7 +1831,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(rate(vllm:external_prefix_cache_hits_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum(rate(vllm:external_prefix_cache_queries_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "expr": "sum(rate(vllm:external_prefix_cache_hits_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) / (sum(rate(vllm:external_prefix_cache_queries_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) > 0)",
               "legendFormat": "External KV hit",
               "range": false,
               "refId": "A",
@@ -1844,10 +1877,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 6,
-            "w": 6,
             "x": 18,
-            "y": 38
+            "y": 38,
+            "w": 6,
+            "h": 6
           },
           "id": 23,
           "options": {
@@ -1868,7 +1901,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:request_prompt_tokens_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:request_prompt_tokens_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])))",
               "legendFormat": "Prompt length p95",
               "range": false,
               "refId": "A",
@@ -1925,10 +1958,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 8,
             "x": 0,
-            "y": 44
+            "y": 44,
+            "w": 8,
+            "h": 8
           },
           "id": 24,
           "options": {
@@ -1950,7 +1983,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, max by (namespace, service) (vllm:kv_cache_usage_perc{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}))",
+              "expr": "topk($series_limit, max by (namespace, service) (vllm:kv_cache_usage_perc{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}))",
               "legendFormat": "{{namespace}} / {{service}}",
               "range": true,
               "refId": "A"
@@ -2006,10 +2039,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 8,
             "x": 8,
-            "y": 44
+            "y": 44,
+            "w": 8,
+            "h": 8
           },
           "id": 25,
           "options": {
@@ -2031,14 +2064,14 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit,sum by(namespace, service)(rate(vllm:prefix_cache_hits_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:prefix_cache_queries_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0))",
+              "expr": "topk($series_limit,sum by(namespace, service)(rate(vllm:prefix_cache_hits_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:prefix_cache_queries_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) > 0))",
               "legendFormat": "{{namespace}} / {{service}} / prefix",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "topk($series_limit,sum by(namespace, service)(rate(vllm:external_prefix_cache_hits_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:external_prefix_cache_queries_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0))",
+              "expr": "topk($series_limit,sum by(namespace, service)(rate(vllm:external_prefix_cache_hits_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:external_prefix_cache_queries_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) > 0))",
               "legendFormat": "{{namespace}} / {{service}} / external KV",
               "range": true,
               "refId": "B"
@@ -2094,10 +2127,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 8,
             "x": 16,
-            "y": 44
+            "y": 44,
+            "w": 8,
+            "h": 8
           },
           "id": 26,
           "options": {
@@ -2119,14 +2152,14 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, histogram_quantile(0.50, sum by (namespace, service, le) (rate(vllm:request_prompt_tokens_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))))",
+              "expr": "topk($series_limit, histogram_quantile(0.50, sum by (namespace, service, le) (rate(vllm:request_prompt_tokens_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval]))))",
               "legendFormat": "{{namespace}} / {{service}} / p50",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:request_prompt_tokens_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))))",
+              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:request_prompt_tokens_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval]))))",
               "legendFormat": "{{namespace}} / {{service}} / p95",
               "range": true,
               "refId": "B"
@@ -2138,10 +2171,10 @@ spec:
         {
           "collapsed": false,
           "gridPos": {
-            "h": 1,
-            "w": 24,
             "x": 0,
-            "y": 52
+            "y": 52,
+            "w": 24,
+            "h": 1
           },
           "id": 104,
           "panels": [],
@@ -2183,10 +2216,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 6,
             "x": 0,
-            "y": 53
+            "y": 53,
+            "w": 6,
+            "h": 5
           },
           "id": 27,
           "options": {
@@ -2244,10 +2277,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 6,
             "x": 6,
-            "y": 53
+            "y": 53,
+            "w": 6,
+            "h": 5
           },
           "id": 28,
           "options": {
@@ -2313,10 +2346,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 6,
             "x": 12,
-            "y": 53
+            "y": 53,
+            "w": 6,
+            "h": 5
           },
           "id": 29,
           "options": {
@@ -2375,10 +2408,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 5,
-            "w": 6,
             "x": 18,
-            "y": 53
+            "y": 53,
+            "w": 6,
+            "h": 5
           },
           "id": 30,
           "options": {
@@ -2456,10 +2489,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 8,
             "x": 0,
-            "y": 58
+            "y": 58,
+            "w": 8,
+            "h": 8
           },
           "id": 31,
           "options": {
@@ -2632,10 +2665,10 @@ spec:
             ]
           },
           "gridPos": {
-            "h": 8,
-            "w": 8,
             "x": 8,
-            "y": 58
+            "y": 58,
+            "w": 8,
+            "h": 8
           },
           "id": 32,
           "options": {
@@ -2720,10 +2753,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 8,
             "x": 16,
-            "y": 58
+            "y": 58,
+            "w": 8,
+            "h": 8
           },
           "id": 33,
           "options": {
@@ -2752,7 +2785,7 @@ spec:
             },
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, sum by (namespace,pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or label_replace(kube_pod_labels{namespace=~\"$namespace\",label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",label_app_kubernetes_io_name=~\"$inference_service\",label_app_kubernetes_io_name!=\"\"},\"service\",\"$1\",\"label_app_kubernetes_io_name\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))))",
+              "expr": "topk($series_limit, sum by (namespace,pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or (vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"} and on(namespace,service,pod,engine) max by(namespace,service,pod,engine)(vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}))))))",
               "legendFormat": "{{pod}} / RAM",
               "range": true,
               "refId": "B"
@@ -2764,10 +2797,10 @@ spec:
         {
           "collapsed": false,
           "gridPos": {
-            "h": 1,
-            "w": 24,
             "x": 0,
-            "y": 66
+            "y": 66,
+            "w": 24,
+            "h": 1
           },
           "id": 105,
           "panels": [],
@@ -2821,10 +2854,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 8,
             "x": 0,
-            "y": 67
+            "y": 67,
+            "w": 8,
+            "h": 8
           },
           "id": 34,
           "options": {
@@ -2846,7 +2879,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, sum by (namespace,pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}[$__rate_interval])) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or label_replace(kube_pod_labels{namespace=~\"$namespace\",label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",label_app_kubernetes_io_name=~\"$inference_service\",label_app_kubernetes_io_name!=\"\"},\"service\",\"$1\",\"label_app_kubernetes_io_name\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))))",
+              "expr": "topk($series_limit, sum by (namespace,pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}[$__rate_interval])) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or (vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"} and on(namespace,service,pod,engine) max by(namespace,service,pod,engine)(vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}))))))",
               "legendFormat": "{{pod}}",
               "range": true,
               "refId": "A"
@@ -2902,10 +2935,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 8,
             "x": 8,
-            "y": 67
+            "y": 67,
+            "w": 8,
+            "h": 8
           },
           "id": 35,
           "options": {
@@ -2927,7 +2960,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, sum by (namespace,pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or label_replace(kube_pod_labels{namespace=~\"$namespace\",label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",label_app_kubernetes_io_name=~\"$inference_service\",label_app_kubernetes_io_name!=\"\"},\"service\",\"$1\",\"label_app_kubernetes_io_name\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))))",
+              "expr": "topk($series_limit, sum by (namespace,pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!~\"POD|\"}) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or (vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"} and on(namespace,service,pod,engine) max by(namespace,service,pod,engine)(vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}))))))",
               "legendFormat": "{{pod}}",
               "range": true,
               "refId": "A"
@@ -2983,10 +3016,10 @@ spec:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 8,
             "x": 16,
-            "y": 67
+            "y": 67,
+            "w": 8,
+            "h": 8
           },
           "id": 36,
           "options": {
@@ -3008,7 +3041,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, sum by (namespace,pod) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\",pod=~\"$pod\"}[$__range])) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or label_replace(kube_pod_labels{namespace=~\"$namespace\",label_app_kubernetes_io_part_of=\"hardfest-gpu-workshop\",label_app_kubernetes_io_name=~\"$inference_service\",label_app_kubernetes_io_name!=\"\"},\"service\",\"$1\",\"label_app_kubernetes_io_name\",\"(.+)\") or vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"}))))",
+              "expr": "topk($series_limit, sum by (namespace,pod) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\",pod=~\"$pod\"}[$__range])) and on(namespace,pod) (max by(namespace,pod,node)(kube_pod_info{namespace=~\"$namespace\",pod=~\"$pod\",node=~\"$node\"}) * on(namespace,pod) group_left(service) max by(namespace,pod,service)(max by(namespace,service,pod)(label_replace(kube_pod_labels{label_ai_inference_deckhouse_io_managed=\"true\",namespace=~\"$namespace\",label_ai_inference_deckhouse_io_inference_service=~\"$inference_service\"},\"service\",\"$1\",\"label_ai_inference_deckhouse_io_inference_service\",\"(.+)\") or (vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\"} and on(namespace,service,pod,engine) max by(namespace,service,pod,engine)(vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}))))))",
               "legendFormat": "{{pod}}",
               "range": true,
               "refId": "A"
@@ -3020,10 +3053,10 @@ spec:
         {
           "collapsed": false,
           "gridPos": {
-            "h": 1,
-            "w": 24,
             "x": 0,
-            "y": 75
+            "y": 75,
+            "w": 24,
+            "h": 1
           },
           "id": 106,
           "panels": [],
@@ -3196,10 +3229,10 @@ spec:
             ]
           },
           "gridPos": {
-            "h": 10,
-            "w": 24,
             "x": 0,
-            "y": 76
+            "y": 76,
+            "w": 24,
+            "h": 10
           },
           "id": 37,
           "options": {
@@ -3219,7 +3252,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "max by (namespace, service, pod, cache_dtype, cpu_offload_gb, enable_prefix_caching, gpu_memory_utilization, kv_offloading_backend, kv_offloading_size, num_gpu_blocks) (vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})",
+              "expr": "max by (namespace, service, pod, cache_dtype, cpu_offload_gb, enable_prefix_caching, gpu_memory_utilization, kv_offloading_backend, kv_offloading_size, num_gpu_blocks) ((vllm:cache_config_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"} and on(namespace,service,pod,engine) max by(namespace,service,pod,engine)(vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"})))",
               "legendFormat": "Runtime configuration",
               "range": false,
               "refId": "A",
@@ -3228,7 +3261,7 @@ spec:
             },
             {
               "editorMode": "code",
-              "expr": "max by (namespace, service, pod, model_name) (vllm:request_success_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})",
+              "expr": "max by(namespace,service,pod,model_name)(vllm:num_requests_running{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"})",
               "legendFormat": "Model identity",
               "range": false,
               "refId": "B",
@@ -3350,21 +3383,21 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum by(namespace, service)(rate(vllm:request_queue_time_seconds_sum{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:request_queue_time_seconds_count{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "expr": "sum by(namespace, service)(rate(vllm:request_queue_time_seconds_sum{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:request_queue_time_seconds_count{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) > 0)",
               "legendFormat": "{{namespace}} / {{service}} / queue",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "sum by(namespace, service)(rate(vllm:request_prefill_time_seconds_sum{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:request_prefill_time_seconds_count{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "expr": "sum by(namespace, service)(rate(vllm:request_prefill_time_seconds_sum{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:request_prefill_time_seconds_count{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) > 0)",
               "legendFormat": "{{namespace}} / {{service}} / prefill",
               "range": true,
               "refId": "B"
             },
             {
               "editorMode": "code",
-              "expr": "sum by(namespace, service)(rate(vllm:request_decode_time_seconds_sum{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:request_decode_time_seconds_count{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "expr": "sum by(namespace, service)(rate(vllm:request_decode_time_seconds_sum{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:request_decode_time_seconds_count{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) > 0)",
               "legendFormat": "{{namespace}} / {{service}} / decode",
               "range": true,
               "refId": "C"
@@ -3444,14 +3477,14 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95,sum by(namespace, service,le)(rate(vllm:time_to_first_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "expr": "histogram_quantile(0.95,sum by(namespace, service,le)(rate(vllm:time_to_first_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])))",
               "legendFormat": "{{namespace}} / {{service}} / TTFT p95",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95,sum by(namespace, service,le)(rate(vllm:request_prefill_time_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "expr": "histogram_quantile(0.95,sum by(namespace, service,le)(rate(vllm:request_prefill_time_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])))",
               "legendFormat": "{{namespace}} / {{service}} / prefill p95",
               "range": true,
               "refId": "B"
@@ -3531,14 +3564,14 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "histogram_quantile(0.5,sum by(namespace, service,le)(rate(vllm:request_time_per_output_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "expr": "histogram_quantile(0.5,sum by(namespace, service,le)(rate(vllm:request_time_per_output_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])))",
               "legendFormat": "{{namespace}} / {{service}} / p50",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95,sum by(namespace, service,le)(rate(vllm:request_time_per_output_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])))",
+              "expr": "histogram_quantile(0.95,sum by(namespace, service,le)(rate(vllm:request_time_per_output_token_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])))",
               "legendFormat": "{{namespace}} / {{service}} / p95",
               "range": true,
               "refId": "B"
@@ -3618,7 +3651,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum by(namespace, service)(rate(vllm:inter_token_latency_seconds_count{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:inter_token_latency_seconds_sum{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+              "expr": "sum by(namespace, service)(rate(vllm:inter_token_latency_seconds_count{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) / (sum by(namespace, service)(rate(vllm:inter_token_latency_seconds_sum{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) > 0)",
               "legendFormat": "{{namespace}} / {{service}}",
               "range": true,
               "refId": "A"
@@ -3628,8 +3661,8 @@ spec:
           "type": "timeseries"
         },
         {
-          "id": 210,
-          "title": "KV-offload в RAM (при включённом backend)",
+          "id": 220,
+          "title": "ai-mcp-gateway: отдельные метрики шлюза",
           "type": "row",
           "collapsed": false,
           "gridPos": {
@@ -3645,260 +3678,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "OffloadingConnector: доля CPU KV, закреплённая активными передачами. 0 означает нет активных передач, а не пустой кэш. Не общая заполненность RAM и не выгрузка весов. Для SimpleCPUOffloadConnector используйте отдельные панели блоков. No data — метрики нет.",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "drawStyle": "line",
-                "fillOpacity": 12,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "smooth",
-                "lineWidth": 2,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "decimals": 1,
-              "unit": "percentunit"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "x": 0,
-            "y": 104,
-            "w": 8,
-            "h": 8
-          },
-          "id": 211,
-          "options": {
-            "legend": {
-              "calcs": [
-                "lastNotNull",
-                "max",
-                "mean"
-              ],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "editorMode": "code",
-              "expr": "max by(namespace, service)(vllm:kv_offload_cpu_cache_usage_perc{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})",
-              "legendFormat": "{{namespace}} / {{service}}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "CPU KV: доля памяти, занятая передачами",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${ds_prometheus}"
-          },
-          "description": "Фактические байты записи KV; отсутствует при выключенном или другом backend.",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "drawStyle": "line",
-                "fillOpacity": 12,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "smooth",
-                "lineWidth": 2,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "decimals": 1,
-              "unit": "Bps"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "x": 8,
-            "y": 104,
-            "w": 8,
-            "h": 8
-          },
-          "id": 212,
-          "options": {
-            "legend": {
-              "calcs": [
-                "lastNotNull",
-                "max",
-                "mean"
-              ],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "editorMode": "code",
-              "expr": "sum by(namespace, service)(rate(vllm:kv_offload_store_bytes_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))",
-              "legendFormat": "{{namespace}} / {{service}}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "KV: запись из GPU в RAM",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${ds_prometheus}"
-          },
-          "description": "Фактические байты чтения KV; внешний cache hit сам по себе не доказывает передачу данных.",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "drawStyle": "line",
-                "fillOpacity": 12,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "smooth",
-                "lineWidth": 2,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "decimals": 1,
-              "unit": "Bps"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "x": 16,
-            "y": 104,
-            "w": 8,
-            "h": 8
-          },
-          "id": 213,
-          "options": {
-            "legend": {
-              "calcs": [
-                "lastNotNull",
-                "max",
-                "mean"
-              ],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "editorMode": "code",
-              "expr": "sum by(namespace, service)(rate(vllm:kv_offload_load_bytes_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))",
-              "legendFormat": "{{namespace}} / {{service}}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "KV: чтение из RAM в GPU",
-          "type": "timeseries"
-        },
-        {
-          "id": 220,
-          "title": "ai-mcp-gateway: отдельные метрики шлюза",
-          "type": "row",
-          "collapsed": false,
-          "gridPos": {
-            "x": 0,
-            "y": 112,
-            "w": 24,
-            "h": 1
-          },
-          "panels": []
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${ds_prometheus}"
-          },
-          "description": "Отдельные фильтры Bifrost namespace / model. Нет объединения с vLLM по model_name: разные сервисы могут обслуживать одинаковые веса. Если gateway не экспортирует selected_key_name, различить A/B здесь нельзя.",
+          "description": "Отдельные фильтры Bifrost namespace / model. Нет объединения с vLLM по model_name: разные сервисы могут обслуживать одинаковые веса. Если gateway не экспортирует selected_key_name, разные маршруты к одинаковой модели здесь не различаются.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3940,7 +3720,7 @@ spec:
           },
           "gridPos": {
             "x": 0,
-            "y": 113,
+            "y": 104,
             "w": 8,
             "h": 8
           },
@@ -3978,7 +3758,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "Отдельные фильтры Bifrost namespace / model. Нет объединения с vLLM по model_name: разные сервисы могут обслуживать одинаковые веса. Если gateway не экспортирует selected_key_name, различить A/B здесь нельзя.",
+          "description": "Отдельные фильтры Bifrost namespace / model. Нет объединения с vLLM по model_name: разные сервисы могут обслуживать одинаковые веса. Если gateway не экспортирует selected_key_name, разные маршруты к одинаковой модели здесь не различаются.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -4020,7 +3800,7 @@ spec:
           },
           "gridPos": {
             "x": 8,
-            "y": 113,
+            "y": 104,
             "w": 8,
             "h": 8
           },
@@ -4058,7 +3838,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "Отдельные фильтры Bifrost namespace / model. Нет объединения с vLLM по model_name: разные сервисы могут обслуживать одинаковые веса. Если gateway не экспортирует selected_key_name, различить A/B здесь нельзя.",
+          "description": "Отдельные фильтры Bifrost namespace / model. Нет объединения с vLLM по model_name: разные сервисы могут обслуживать одинаковые веса. Если gateway не экспортирует selected_key_name, разные маршруты к одинаковой модели здесь не различаются.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -4100,7 +3880,7 @@ spec:
           },
           "gridPos": {
             "x": 16,
-            "y": 113,
+            "y": 104,
             "w": 8,
             "h": 8
           },
@@ -4141,7 +3921,7 @@ spec:
           "panels": [],
           "gridPos": {
             "x": 0,
-            "y": 121,
+            "y": 112,
             "w": 24,
             "h": 1
           }
@@ -4194,7 +3974,7 @@ spec:
           },
           "gridPos": {
             "x": 0,
-            "y": 122,
+            "y": 113,
             "w": 24,
             "h": 8
           },
@@ -4230,12 +4010,12 @@ spec:
         {
           "id": 240,
           "type": "row",
-          "title": "Simple CPU KV-offload: блоки, не байты",
+          "title": "KV-offload: блоки CPU-кеша (если включён)",
           "collapsed": false,
           "panels": [],
           "gridPos": {
             "x": 0,
-            "y": 130,
+            "y": 121,
             "w": 24,
             "h": 1
           }
@@ -4251,7 +4031,7 @@ spec:
           },
           "gridPos": {
             "x": 0,
-            "y": 131,
+            "y": 122,
             "w": 8,
             "h": 8
           },
@@ -4280,7 +4060,7 @@ spec:
             {
               "refId": "A",
               "editorMode": "code",
-              "expr": "sum by(namespace, service)(rate(vllm:simple_kv_offload_load_blocks_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))",
+              "expr": "sum by(namespace, service)(rate(vllm:simple_kv_offload_load_blocks_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval]))",
               "legendFormat": "{{namespace}} / {{service}}",
               "range": true
             }
@@ -4297,7 +4077,7 @@ spec:
           },
           "gridPos": {
             "x": 8,
-            "y": 131,
+            "y": 122,
             "w": 8,
             "h": 8
           },
@@ -4326,7 +4106,7 @@ spec:
             {
               "refId": "A",
               "editorMode": "code",
-              "expr": "sum by(namespace, service)(vllm:simple_kv_offload_used_blocks{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"})",
+              "expr": "sum by(namespace, service)(vllm:simple_kv_offload_used_blocks{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"})",
               "legendFormat": "{{namespace}} / {{service}}",
               "range": true
             }
@@ -4343,7 +4123,7 @@ spec:
           },
           "gridPos": {
             "x": 16,
-            "y": 131,
+            "y": 122,
             "w": 8,
             "h": 8
           },
@@ -4372,8 +4152,290 @@ spec:
             {
               "refId": "A",
               "editorMode": "code",
-              "expr": "sum by(namespace, service, outcome)(rate(vllm:simple_kv_offload_save_outcomes_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\"}[$__rate_interval]))",
+              "expr": "sum by(namespace, service, outcome)(rate(vllm:simple_kv_offload_save_outcomes_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval]))",
               "legendFormat": "{{namespace}} / {{service}} / {{outcome}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 244,
+          "type": "timeseries",
+          "title": "KV: блоки в очереди сохранения",
+          "description": "Блоки, ожидающие записи CPU-offload. Ноль — очередь пуста; отсутствие метрики — backend не включён или не поддерживает её.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 130,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "editorMode": "code",
+              "expr": "sum by(namespace,service)(vllm:simple_kv_offload_pending_store_blocks{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"})",
+              "legendFormat": "{{namespace}} / {{service}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "description": "Ёмкость capacity_blocks — label конфигурации, в блоках. Не байты и не процент занятой RAM. Значение info=1 означает наличие конфигурации, а не использование одного блока.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": true,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 130,
+            "w": 12,
+            "h": 8
+          },
+          "id": 245,
+          "options": {
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [],
+            "enablePagination": true
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "editorMode": "code",
+              "expr": "max by(namespace,service,pod,model_name,backend,capacity_blocks,lazy_offload,page_cache)(vllm:simple_kv_offload_info{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"})",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            }
+          ],
+          "title": "KV-offload: backend и ёмкость",
+          "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "namespace",
+                    "service",
+                    "pod",
+                    "model_name",
+                    "backend",
+                    "capacity_blocks",
+                    "lazy_offload",
+                    "page_cache"
+                  ]
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "id": 250,
+          "title": "Speculative decoding (если включён)",
+          "type": "row",
+          "collapsed": false,
+          "gridPos": {
+            "x": 0,
+            "y": 138,
+            "w": 24,
+            "h": 1
+          },
+          "panels": []
+        },
+        {
+          "id": 251,
+          "type": "timeseries",
+          "title": "MTP / draft: токены в секунду",
+          "description": "Черновые токены speculative decoding. Не суммарный output throughput.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 139,
+            "w": 8,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "editorMode": "code",
+              "expr": "sum by(namespace,service)(rate(vllm:spec_decode_num_draft_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval]))",
+              "legendFormat": "{{namespace}} / {{service}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 252,
+          "type": "timeseries",
+          "title": "MTP / draft: доля принятых токенов",
+          "description": "Доля принятых draft-токенов в окне. Без drafted-токенов не определена. Это не коэффициент ускорения.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "gridPos": {
+            "x": 8,
+            "y": 139,
+            "w": 8,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "unit": "percentunit",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "editorMode": "code",
+              "expr": "sum by(namespace,service)(rate(vllm:spec_decode_num_accepted_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) / (sum by(namespace,service)(rate(vllm:spec_decode_num_draft_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval])) > 0)",
+              "legendFormat": "{{namespace}} / {{service}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 253,
+          "type": "timeseries",
+          "title": "MTP / draft: принятые токены в секунду",
+          "description": "Принятые черновые токены, не все сгенерированные токены. При выключенном speculative decoding метрика отсутствует.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "gridPos": {
+            "x": 16,
+            "y": 139,
+            "w": 8,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "editorMode": "code",
+              "expr": "sum by(namespace,service)(rate(vllm:spec_decode_num_accepted_tokens_total{namespace=~\"$namespace\",service=~\"$inference_service\",pod=~\"$pod\",model_name=~\"$model\"}[$__rate_interval]))",
+              "legendFormat": "{{namespace}} / {{service}}",
               "range": true
             }
           ]

@@ -18,7 +18,7 @@ class Observability(unittest.TestCase):
 
     def test_services_are_not_collapsed_by_model_name(self):
         variables = {v["name"]: v for v in self.dashboard["templating"]["list"]}
-        for name in ("namespace", "inference_service", "pod", "node"):
+        for name in ("namespace", "inference_service", "model", "pod", "node"):
             self.assertEqual(variables[name]["type"], "query")
             self.assertTrue(variables[name]["includeAll"])
         for query in self.queries:
@@ -39,10 +39,11 @@ class Observability(unittest.TestCase):
         self.assertIn("histogram_quantile", self.panels[202]["targets"][0]["expr"])
 
     def test_offload_semantics_and_node_scope_are_explicit(self):
-        self.assertIn("активными передачами", self.panels[211]["description"])
-        self.assertIn("не пустой кэш", self.panels[211]["description"])
-        self.assertIn("kv_offload_store_bytes_total", self.panels[212]["targets"][0]["expr"])
-        self.assertIn("kv_offload_load_bytes_total", self.panels[213]["targets"][0]["expr"])
+        self.assertIn("pending_store_blocks", self.panels[244]["targets"][0]["expr"])
+        self.assertIn("capacity_blocks", self.panels[245]["targets"][0]["expr"])
+        for query in self.queries:
+            self.assertNotIn("kv_offload_store_bytes_total", query)
+            self.assertNotIn("kv_offload_load_bytes_total", query)
         self.assertIn("не атрибуция сервису", self.panels[104]["title"])
         for target in self.panels[221]["targets"]:
             self.assertIn("$gateway_namespace", target["expr"])
@@ -82,7 +83,7 @@ class Observability(unittest.TestCase):
             self.assertIn("kube_pod_labels", variables[name]["definition"])
             self.assertIn("label_ai_inference_deckhouse_io_managed", variables[name]["definition"])
         inventory = self.panels[1]
-        self.assertIn("kube_service_labels", inventory["targets"][0]["expr"])
+        self.assertIn("kube_pod_labels", inventory["targets"][0]["expr"])
         self.assertIn("-1 *", inventory["targets"][0]["expr"])
         mapping = inventory["fieldConfig"]["defaults"]["mappings"][0]["options"]
         self.assertEqual(mapping["-1"]["text"], "NO SCRAPE")
@@ -104,3 +105,34 @@ class Observability(unittest.TestCase):
         for name in ("gateway_namespace", "gateway_model"):
             self.assertIn("error_requests_total", variables[name]["definition"])
             self.assertIn("upstream_requests_total", variables[name]["definition"])
+
+    def test_dashboard_is_shared_across_clusters_and_model_families(self):
+        self.assertEqual(self.dashboard["title"], "AI Inference / Service performance")
+        for query in self.queries:
+            for site in ("hardfest", "h100-pair", "hf-qwen", "hf-embedding", "192.168."):
+                self.assertNotIn(site, query)
+        variables = {v["name"]: v for v in self.dashboard["templating"]["list"]}
+        self.assertIn("num_requests_running", variables["model"]["definition"])
+        self.assertIn('model_name=~"$model"', self.panels[12]["targets"][0]["expr"])
+        config_query = self.panels[37]["targets"][0]["expr"]
+        self.assertIn("and on(namespace,service,pod,engine)", config_query)
+        cache_selector = config_query.split("cache_config_info{", 1)[1].split("}", 1)[0]
+        self.assertNotIn("model_name", cache_selector)
+
+    def test_speculative_panels_measure_tokens_not_speedup(self):
+        query = self.panels[252]["targets"][0]["expr"]
+        self.assertIn("spec_decode_num_accepted_tokens_total", query)
+        self.assertIn("spec_decode_num_draft_tokens_total", query)
+        self.assertIn("> 0", query)
+        self.assertNotIn("speedup", self.panels[252]["title"].lower())
+
+    def test_panels_have_unique_ids_and_do_not_overlap(self):
+        self.assertEqual(len(self.panels), len(self.dashboard["panels"]))
+        panels = list(self.panels.values())
+        for i, a in enumerate(panels):
+            x = a["gridPos"]
+            for b in panels[i + 1:]:
+                y = b["gridPos"]
+                overlaps = (x["x"] < y["x"] + y["w"] and y["x"] < x["x"] + x["w"]
+                            and x["y"] < y["y"] + y["h"] and y["y"] < x["y"] + x["h"])
+                self.assertFalse(overlaps, (a["id"], b["id"]))

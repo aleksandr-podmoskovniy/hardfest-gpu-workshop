@@ -112,7 +112,7 @@ export A30_DIR=argo-projects/a30-cluster/hardfest-demo
 <a id="monitoring"></a>
 ### Дашборд открывается до первого запроса
 
-Установите [мониторинг](docs/OBSERVABILITY.md) и откройте **AI Inference / Live performance**
+Установите [мониторинг](docs/OBSERVABILITY.md) и откройте **AI Inference / Service performance**
 в каждом кластере с GPU. Выберите сервис и модель. Проверьте ненулевой scrape
 и рост счётчиков после одного запроса.
 
