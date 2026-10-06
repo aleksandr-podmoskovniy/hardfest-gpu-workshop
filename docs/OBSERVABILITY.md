@@ -134,6 +134,9 @@ Inventory использует также labels Pod, управляемых AI 
 виден, даже если его Pod ещё не запустился и не отдаёт `/metrics`.
 Ручные сервисы обнаруживаются по метрикам vLLM; без Pod и метрик запись
 в inventory не гарантируется.
+Model ограничивает метрики движка. Inventory и Kubernetes-ресурсы сохраняют
+сведения о Pod без метрик модели; для них используйте Service и Runtime pod,
+а для ресурсов также GPU node.
 `UP` означает успешный сбор, `DOWN` — ошибку имеющейся цели,
 `NO SCRAPE` — отсутствие цели. Последнее нормально для намеренно выключенных
 Gemma при запуске Qwen; сверяйте число реплик и состояние InferenceService.
@@ -142,8 +145,36 @@ Gemma при запуске Qwen; сверяйте число реплик и с
 Выполните короткие запросы к выбранным сервисам и подождите два интервала scrape.
 Статистика задержек появляется только после запросов.
 
-Если вместо Deckhouse Console используется Grafana, импортируйте JSON
-из `spec.definition`. После создания CR его можно извлечь без дополнительных утилит:
+### Регистрация в Grafana
+
+`ClusterObservabilityDashboard` публикует дашборд в Console, но не
+в отдельной Grafana. Для Grafana Deckhouse проверьте наличие её CRD:
+
+```bash
+kubectl --context "$GPU_CONTEXT" get crd grafanadashboarddefinitions.deckhouse.io
+```
+
+Добавьте в тот же GitOps-каталог `grafana-dashboard.yaml`:
+
+```yaml
+apiVersion: deckhouse.io/v1
+kind: GrafanaDashboardDefinition
+metadata:
+  name: ai-inference-live
+spec:
+  folder: AI Platform
+  definition: |
+    # Вставьте сюда тот же JSON из dashboard.yaml.
+```
+
+Комментарий замените полным JSON; поле верхнего уровня `id` не добавляйте,
+`uid` сохраните. AppProject должен разрешать также
+`deckhouse.io/GrafanaDashboardDefinition`. После commit/push и синхронизации
+того же Application дашборд появится в папке **AI Platform** в Grafana.
+Используйте одинаковое содержимое для обоих интерфейсов, не отдельные версии.
+
+В Grafana без этой CRD импортируйте JSON вручную. Из существующего
+Console-дашборда его можно извлечь без дополнительных утилит:
 
 ```bash
 mkdir -p results/hardfest
@@ -153,7 +184,7 @@ kubectl --context "$GPU_CONTEXT" get clusterobservabilitydashboard ai-inference-
 
 Без установленной CRD откройте `dashboard.yaml` редактором и скопируйте
 JSON блока `spec.definition` в импорт Grafana.
-Само создание CR не добавляет дашборд в отдельную Grafana.
+Само создание Console CR не добавляет дашборд в отдельную Grafana.
 
 ## Как читать панели
 

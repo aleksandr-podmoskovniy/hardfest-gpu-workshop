@@ -126,6 +126,11 @@ class Observability(unittest.TestCase):
         self.assertIn("> 0", query)
         self.assertNotIn("speedup", self.panels[252]["title"].lower())
 
+    def test_latency_filters_include_selected_runtime_pod(self):
+        for panel_id in (9, 10, 13, 17, 19, 201, 202, 203, 204):
+            for target in self.panels[panel_id]["targets"]:
+                self.assertIn('pod=~"$pod"', target["expr"])
+
     def test_panels_have_unique_ids_and_do_not_overlap(self):
         self.assertEqual(len(self.panels), len(self.dashboard["panels"]))
         panels = list(self.panels.values())

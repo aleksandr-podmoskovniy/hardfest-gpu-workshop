@@ -362,7 +362,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "UP — все обнаруженные endpoint отдают /metrics. DOWN — хотя бы один endpoint недоступен. NO SCRAPE — цели нет: модель запускается, остановлена или сбор не настроен. Это не результат запроса к модели; намеренно выключенный сервис не объявляется неисправным.",
+          "description": "UP — все обнаруженные endpoint отдают /metrics. DOWN — хотя бы один endpoint недоступен. NO SCRAPE — цели нет: модель запускается, остановлена или сбор не настроен. Это не результат запроса к модели; намеренно выключенный сервис не объявляется неисправным. Inventory сохраняет Pod AI Inference без метрик движка; фильтр Model не скрывает такие записи. Для выбора сервиса используйте Namespace / Inference service.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -893,7 +893,7 @@ spec:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:e2e_request_latency_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",model_name=~\"$model\"}[$__rate_interval])))",
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:e2e_request_latency_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",model_name=~\"$model\",pod=~\"$pod\"}[$__rate_interval])))",
               "legendFormat": "End-to-end p95",
               "range": false,
               "refId": "A",
@@ -1151,7 +1151,7 @@ spec:
             },
             {
               "editorMode": "code",
-              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:e2e_request_latency_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",model_name=~\"$model\"}[$__rate_interval]))))",
+              "expr": "topk($series_limit, histogram_quantile(0.95, sum by (namespace, service, le) (rate(vllm:e2e_request_latency_seconds_bucket{namespace=~\"$namespace\",service=~\"$inference_service\",model_name=~\"$model\",pod=~\"$pod\"}[$__rate_interval]))))",
               "legendFormat": "{{namespace}} / {{service}} / E2E",
               "range": true,
               "refId": "B"
@@ -2711,7 +2711,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "GPU-память относится к физическим картам узлов из фильтра GPU node и не изолирует расход сервиса. RAM относится к выбранным Pod с учётом Namespace, Service и Runtime pod. Отсутствующие метрики памяти GPU не заменяются нулём.",
+          "description": "GPU-память относится к физическим картам узлов из фильтра GPU node и не изолирует расход сервиса. RAM относится к выбранным Pod с учётом Namespace, Service и Runtime pod. Отсутствующие метрики памяти GPU не заменяются нулём. Метрики Kubernetes выбираются по Namespace / Service / Runtime pod / GPU node, не по Model: это сохраняет диагностику Pod без работающего движка.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2812,7 +2812,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "CPU usage by inference runtime pod. KV offload and tokenization can consume host CPU.",
+          "description": "CPU usage by inference runtime pod. KV offload and tokenization can consume host CPU. Метрики Kubernetes выбираются по Namespace / Service / Runtime pod / GPU node, не по Model: это сохраняет диагностику Pod без работающего движка.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2893,7 +2893,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "Working-set memory by inference runtime pod.",
+          "description": "Working-set memory by inference runtime pod. Метрики Kubernetes выбираются по Namespace / Service / Runtime pod / GPU node, не по Model: это сохраняет диагностику Pod без работающего движка.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2974,7 +2974,7 @@ spec:
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "description": "Container restarts in the visible time range. Any increase requires investigation.",
+          "description": "Container restarts in the visible time range. Any increase requires investigation. Метрики Kubernetes выбираются по Namespace / Service / Runtime pod / GPU node, не по Model: это сохраняет диагностику Pod без работающего движка.",
           "fieldConfig": {
             "defaults": {
               "color": {
