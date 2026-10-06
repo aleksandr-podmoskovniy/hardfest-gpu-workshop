@@ -59,6 +59,17 @@ class WebUIAccessChart(unittest.TestCase):
         self.assertEqual(len(config["chat_models"]), 2)
         self.assertEqual(config["pricing"][0]["input_usd_per_million_tokens"], 10)
 
+    def test_webui_background_tasks_have_bounded_parallel_capacity(self):
+        before = self.render()
+        config = json.loads(before["ConfigMap"]["data"]["config.json"])
+        self.assertEqual(config["max_concurrent_per_user"], 3)
+        self.assertEqual(config["max_concurrent_total"], 8)
+        after = self.render("--set", "config.max_concurrent_per_user=2")
+        actual = json.loads(after["ConfigMap"]["data"]["config.json"])
+        self.assertEqual(actual["max_concurrent_per_user"], 2)
+        checksum = lambda obj: obj["Deployment"]["spec"]["template"]["metadata"]["annotations"]["checksum/config"]
+        self.assertNotEqual(checksum(before), checksum(after))
+
     def test_running_with_missing_policy_or_unpinned_image_fails(self):
         for extra in ([], ["-f", str(ROOT / "examples/webui-access.yaml")]):
             result = subprocess.run(["helm", "template", "access", str(CHART), *extra,

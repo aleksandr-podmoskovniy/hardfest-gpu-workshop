@@ -21,7 +21,7 @@ config:
   requests_per_minute: 10
   tokens_per_minute: 200000
   max_concurrent_total: 8
-  max_concurrent_per_user: 1
+  max_concurrent_per_user: 3
   reconcile_interval_seconds: 15
 webuiSelector:
   app.kubernetes.io/component: open-webui
