@@ -270,7 +270,7 @@ ServiceMonitor: проверьте его наличие и `up=1` в Prometheus
 Проверьте selector наблюдения за namespace и labels Service. Второй ServiceMonitor
 для тех же endpoints создавать не нужно: это может удвоить scrape.
 
-Панели **KV-offload: блоки CPU-кеша (если включён)** используют метрики
+Панели **KV-offload: SimpleCPUOffload (только этот backend)** используют метрики
 Simple CPU backend vLLM 0.31. Они подходят любой модели с этим backend,
 а не только Qwen. Если backend не включён или runtime не экспортирует
 эти метрики, панели остаются пустыми.

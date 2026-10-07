@@ -279,7 +279,7 @@ helm template rtx-gemma-base "$RTX_DIR/charts/vllm-runtime" -n "$NS" \
 | Gemma A — Base | `vllm/rtx-gemma-base` | `rtx-gemma-base:8000` | `rtx-gemma-base` |
 | Gemma B — Cache | `vllm/rtx-gemma-cache` | `rtx-gemma-cache:8000` | `rtx-gemma-cache` |
 | Gemma B — Tune | `vllm/rtx-gemma-tune` | `rtx-gemma-tune:8000` | `rtx-gemma-tune` |
-| Gemma A — DP | `vllm/rtx-gemma-base` | `rtx-gemma-platform:80` | `rtx-gemma-e2b` |
+| Gemma A — DP | `vllm/rtx-gemma-platform` | `rtx-gemma-platform:80` | `rtx-gemma-e2b` |
 | Qwen 9B — TP2 | `vllm/rtx-qwen35-tp2` | `rtx-qwen35-tp2:80` | `rtx-qwen35-9b` |
 
 Все эти Service — в `hardfest-rtx`. До занятия показываем только Base.

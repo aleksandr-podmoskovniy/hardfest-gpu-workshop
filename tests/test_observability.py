@@ -24,6 +24,12 @@ class Observability(unittest.TestCase):
         self.assertIn("CPU_to_GPU", text)
         self.assertIn("vllm:kv_offload_cpu_cache_usage_perc", text)
 
+    def test_idle_cpu_cache_ratio_has_a_zero_to_one_axis(self):
+        defaults = self.panels[263]["fieldConfig"]["defaults"]
+        self.assertEqual(defaults["unit"], "percentunit")
+        self.assertEqual(defaults["min"], 0)
+        self.assertEqual(defaults["max"], 1)
+
     @classmethod
     def setUpClass(cls):
         raw = (ROOT / "observability/dashboard.yaml").read_text()
@@ -42,6 +48,13 @@ class Observability(unittest.TestCase):
             self.assertNotIn("on(model_name)", query)
             self.assertNotIn("or vector(0)", query)
         self.assertIn("namespace, service", self.panels[12]["targets"][0]["expr"])
+
+    def test_gpu_stat_maxima_are_current_not_peaks_over_the_time_range(self):
+        for panel_id in (28, 29):
+            panel = self.panels[panel_id]
+            self.assertIn("максимум сейчас", panel["title"])
+            self.assertTrue(panel["targets"][0]["instant"])
+            self.assertNotIn("max_over_time", panel["targets"][0]["expr"])
 
     def test_queue_prefill_decode_means_are_not_percentiles(self):
         queries = [t["expr"] for t in self.panels[201]["targets"]]

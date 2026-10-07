@@ -10,6 +10,34 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class RTXProfiles(unittest.TestCase):
+    def test_rehearsal_results_preserve_workload_counts_and_ram_evidence(self):
+        report = json.loads((ROOT / "results/rtx5060-rehearsal-20261008.json").read_text())
+        self.assertEqual(len(report["results"]), 19)
+        self.assertEqual(sum(row["result"]["completed"] for row in report["results"]), 110)
+        for row in report["results"]:
+            result = row["result"]
+            if row["label"] == "qwen-8-sessions":
+                prompts, inputs, outputs, concurrency = 8, 32768, 512, 8
+            elif row["label"].endswith("short") or row["label"].endswith("-4k"):
+                prompts, inputs, outputs, concurrency = 8, 2048, 128, 2
+            else:
+                prompts, inputs, outputs, concurrency = 1, (57344 if row["label"].endswith("64k") else 122880), 512, 1
+            self.assertEqual((result["completed"], result["failed"]), (prompts, 0))
+            self.assertEqual(result["total_input_tokens"], prompts * inputs)
+            self.assertEqual(result["total_output_tokens"], prompts * outputs)
+            self.assertEqual(result["max_concurrency"], concurrency)
+            self.assertAlmostEqual(result["output_throughput"], prompts * outputs / result["duration"])
+        metrics = report["qwen_eight_sessions"]
+        self.assertEqual(metrics["errors"], [])
+        self.assertEqual(max(s["running"] for s in metrics["samples"]), 8)
+        self.assertEqual(metrics["samples"][-1]["preemptions"] - metrics["samples"][0]["preemptions"], 0)
+        replay = report["qwen_ram_replay"]
+        self.assertTrue(replay["not_performance_comparison"])
+        self.assertGreater(replay["delta"]["cpu_to_gpu_bytes"], 0)
+        self.assertGreater(replay["delta"]["external_hits"], 0)
+        self.assertIn("GPU-repeat", [r["label"] for r in replay["rows"]])
+        self.assertEqual(replay["rows"][-1]["label"], "RAM-replay")
+
     def test_catalog_qwen_acceptance_does_not_claim_long_context(self):
         report = json.loads((ROOT / "results/rtx5060-qwen-nodecache-20261006.json").read_text())
         self.assertEqual(report["inference_service"]["model"]["src"], "ai-models")
@@ -220,6 +248,7 @@ class RTXProfiles(unittest.TestCase):
         for service, served in (("rtx-gemma-platform", "rtx-gemma-e2b"),
                                 ("rtx-qwen35-tp2", "rtx-qwen35-9b")):
             row = next(line for line in preparation.splitlines() if f"`{service}:80`" in line)
+            self.assertIn(f"`vllm/{service}`", row)
             self.assertTrue(row.endswith(f"`{served}` |"))
         guide = (ROOT / "RTX5060.md").read_text()
         self.assertIn("--model rtx-qwen35-9b", guide)

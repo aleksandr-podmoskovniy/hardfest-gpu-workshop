@@ -2302,13 +2302,13 @@ spec:
             {
               "editorMode": "code",
               "expr": "max((DCGM_FI_DEV_POWER_USAGE{node=~\"$node\"} >= 0) and (DCGM_FI_DEV_POWER_USAGE{node=~\"$node\"} < 1000000000))",
-              "legendFormat": "Peak GPU power",
+              "legendFormat": "Мощность GPU (максимум сейчас)",
               "range": false,
               "refId": "A",
               "instant": true
             }
           ],
-          "title": "Peak GPU power",
+          "title": "Мощность GPU (максимум сейчас)",
           "type": "stat"
         },
         {
@@ -2371,13 +2371,13 @@ spec:
             {
               "editorMode": "code",
               "expr": "max((DCGM_FI_DEV_GPU_TEMP{node=~\"$node\"} >= 0) and (DCGM_FI_DEV_GPU_TEMP{node=~\"$node\"} < 1000000000))",
-              "legendFormat": "Peak GPU temperature",
+              "legendFormat": "Температура GPU (максимум сейчас)",
               "range": false,
               "refId": "A",
               "instant": true
             }
           ],
-          "title": "Peak GPU temperature",
+          "title": "Температура GPU (максимум сейчас)",
           "type": "stat"
         },
         {
@@ -4010,7 +4010,7 @@ spec:
         {
           "id": 240,
           "type": "row",
-          "title": "KV-offload: блоки CPU-кеша (если включён)",
+          "title": "KV-offload: SimpleCPUOffload (только этот backend)",
           "collapsed": false,
           "panels": [],
           "gridPos": {
@@ -4563,6 +4563,7 @@ spec:
           "fieldConfig": {
             "defaults": {
               "min": 0,
+              "max": 1,
               "unit": "percentunit",
               "color": {
                 "mode": "palette-classic"
