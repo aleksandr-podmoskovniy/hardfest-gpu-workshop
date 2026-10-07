@@ -4,6 +4,7 @@
 
 {{- define "vllm.labels" -}}
 app.kubernetes.io/part-of: hardfest-gpu-workshop
+app.kubernetes.io/component: llm-runtime
 app.kubernetes.io/name: {{ include "vllm.name" . | quote }}
 {{- end -}}
 

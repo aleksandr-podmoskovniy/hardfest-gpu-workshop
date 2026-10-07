@@ -115,6 +115,28 @@ class Observability(unittest.TestCase):
         self.assertIn("DCGM_FI_PROF_GR_ENGINE_ACTIVE", self.panels[31]["targets"][2]["expr"])
         self.assertIn("не счётчик ECC", self.panels[231]["description"])
 
+    def test_manual_runtime_is_discoverable_before_metrics_are_ready(self):
+        variables = {v["name"]: v for v in self.dashboard["templating"]["list"]}
+        inventory_queries = [variables[name]["definition"] for name in ("namespace", "inference_service", "pod")]
+        inventory_queries.extend(t["expr"] for p in self.panels.values() for t in p.get("targets", [])
+                                 if "kube_pod_labels" in t["expr"])
+        for query in inventory_queries:
+            self.assertIn('label_app_kubernetes_io_component="llm-runtime"', query)
+            self.assertIn('"service","$1","label_app_kubernetes_io_name","(.+)"', query)
+        for panel_id in (33, 34, 35, 36):
+            for target in self.panels[panel_id]["targets"]:
+                if "kube_pod_labels" not in target["expr"]:
+                    continue
+                self.assertNotIn("group_left(service)", target["expr"])
+                self.assertIn("and on(namespace,pod)", target["expr"])
+        for path in (ROOT / "values/rtx").glob("gemma-*.yaml"):
+            objects = render(path)
+            pod_labels = objects["Deployment"]["spec"]["template"]["metadata"]["labels"]
+            service_name = objects["Service"]["metadata"]["name"]
+            self.assertEqual(pod_labels["app.kubernetes.io/component"], "llm-runtime")
+            self.assertEqual(pod_labels["app.kubernetes.io/name"], service_name)
+            self.assertNotIn("ai-inference.deckhouse.io/managed", pod_labels)
+
     def test_gateway_is_discoverable_when_only_errors_exist(self):
         variables = {v["name"]: v for v in self.dashboard["templating"]["list"]}
         for name in ("gateway_namespace", "gateway_model"):
