@@ -95,12 +95,28 @@ class RTXProfiles(unittest.TestCase):
 
     def test_argo_apps_are_explicit_and_not_autosynced(self):
         apps = list((ROOT / "argocd/rtx").glob("*.yaml"))
-        self.assertEqual(len(apps), 5)
+        self.assertEqual(len(apps), 6)
         for path in apps:
             spec = yaml.safe_load(path.read_text())["spec"]
             self.assertNotIn("automated", spec["syncPolicy"])
             self.assertEqual(spec["destination"]["namespace"], "hardfest-rtx")
             self.assertEqual(len(spec["source"]["helm"]["valueFiles"]), 1)
+
+    def test_cache_and_tune_have_distinct_gitops_owners(self):
+        names = set()
+        for stage, filename in (("cache", "gemma-cache"), ("tune", "gemma-spec")):
+            app = yaml.safe_load((ROOT / "argocd/rtx" / f"rtx-gemma-{stage}.yaml").read_text())
+            profile = yaml.safe_load((ROOT / "values/rtx" / f"{filename}.yaml").read_text())
+            expected = f"rtx-gemma-{stage}"
+            self.assertEqual(app["metadata"]["name"], expected)
+            self.assertEqual(app["spec"]["source"]["helm"]["releaseName"], expected)
+            self.assertEqual(app["spec"]["source"]["helm"]["valueFiles"], [f"../../values/{filename}.yaml"])
+            self.assertIn("FailOnSharedResource=true", app["spec"]["syncPolicy"]["syncOptions"])
+            self.assertEqual(profile["fullnameOverride"], expected)
+            self.assertEqual(profile["vllm"]["served-model-name"], expected)
+            self.assertEqual(profile["replicaCount"], 0)
+            names.add(profile["fullnameOverride"])
+        self.assertEqual(len(names), 2)
 
     def test_same_weights_and_increasing_mechanisms(self):
         profiles = [yaml.safe_load((ROOT / "values/rtx" / (name + ".yaml")).read_text())
@@ -174,7 +190,7 @@ class RTXProfiles(unittest.TestCase):
         guide = (ROOT / "RTX5060.md").read_text()
         lab = (ROOT / "labs/rtx5060.md").read_text()
         self.assertIn("(RTX5060.md)", (ROOT / "README.md").read_text())
-        stages = ["topology", "setup", "monitoring", "latency", "memory", "ab", "ram",
+        stages = ["topology", "setup", "monitoring", "ab", "latency", "memory", "ram",
                   "speculation", "platform", "placement", "tp2", "cleanup", "results"]
         positions = [guide.index(f'id="{name}"') for name in stages]
         self.assertEqual(positions, sorted(positions))

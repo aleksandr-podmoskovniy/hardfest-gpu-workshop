@@ -153,6 +153,8 @@ def latency():
     for x, label in [(48, 'Отправка'), (608, 'Первый токен'), (848, 'Первое слово ответа')]:
         d.path(f'M{x} 188 V330', MUTED, dash=True, width=1)
         d.text(x, 359, label, 20, MUTED)
+    d.path('M608 380 V390 H1152 V380', PURPLE)
+    d.text(880, 418, 'Decode: reasoning + финальный текст', 21, PURPLE, anchor='middle')
     for y, end, label, color in [(434, 608, 'TTFT', BLUE),
             (503, 848, 'До первого текста ответа', PURPLE), (572, 1152, 'Полное время запроса', TEAL)]:
         d.path(f'M48 {y-10} V{y} H{end} V{y-10}', color)
@@ -280,9 +282,9 @@ def speculation():
 
 def mig():
     d = Diagram('08-mig-mps', 'MIG делит карту, MPS делит её раздел',
-                'A30: режим MIG включён заранее; геометрию создаёт DRA-драйвер по заявкам.')
+                'MIG mode включён. Для создания разделов драйверу нужны свободные ресурсы.')
     for x, title, body in [(48, 'GPUClass / GPUPool', 'Выбор GPU'), (336, 'DeviceClass', 'Профили'),
-            (624, 'ResourceClaim', 'Запрос ресурсов'), (912, 'DRA-драйвер', 'Создание раздела')]:
+            (624, 'ResourceClaim', 'Запрос ресурсов'), (912, 'DRA-драйвер', 'Подготовка MIG')]:
         node = d.rect(x, 160, 240, 110, node=True)
         d.text(x+16, 203, title, 20, BLUE, True)
         d.text(x+16, 242, body, 21)
@@ -296,7 +298,7 @@ def mig():
     d.card(616, 352, 536, 244, '2g.12gb',
            ['Whisper large-v3', 'Отдельный MIG UUID'], MINT, TEAL)
     d.text(48, 643, 'Две MIG-партиции → три InferenceService', 27, bold=True)
-    d.footer('Целевая геометрия. MPS ограничивает ресурсы, MIG даёт аппаратную изоляцию.')
+    d.footer('Сравниваем MIG UUID до и после заказа. Готовый раздел выделить ≠ создать новый.')
     d.save()
 
 
@@ -571,25 +573,25 @@ def qwen_capacity():
 
 
 def rtx_sequence():
-    d = Diagram('20-rtx-sequence', 'Тот же опыт — две RTX 5060 Ti',
-                'Меняем размер моделей и кеша. Порядок оптимизаций остаётся прежним.')
+    d = Diagram('20-rtx-sequence', 'От Gemma к Qwen на двух RTX 5060 Ti',
+                'Пять запусков: измерить, настроить, повторить через платформу и перейти к TP2.')
     a = d.card(48, 180, 320, 158, '1. Gemma A',
                ['E2B / BF16 / 4K', 'Строгий baseline'], compact=True)
     cache = d.card(440, 180, 320, 158, '2. Gemma B: кеш',
-                   ['Prefix cache + FP8 KV', 'KV → RAM: 4 GiB'], MINT, TEAL, compact=True)
+                   ['rtx-gemma-cache', 'Prefix + FP8 + RAM 4 GiB'], MINT, TEAL, compact=True)
     spec = d.card(832, 180, 320, 158, '3. Gemma B: decode',
-                  ['Chunked prefill', 'Assistant + graphs'], LILAC, PURPLE, compact=True)
+                  ['rtx-gemma-tune', 'Chunked + assistant + graphs'], LILAC, PURPLE, compact=True)
     d.connect(a, cache)
     d.connect(cache, spec)
     platform = d.card(48, 424, 480, 164, '4. Gemma → AI Inference',
                       ['Освобождаем первую карту', 'B остаётся на второй'], compact=True)
     qwen = d.card(672, 424, 480, 164, '5. Qwen → AI Inference',
-                  ['Qwen3.5-9B / BF16 / TP2', 'Встроенный MTP / 8K'], LILAC, PURPLE, compact=True)
+                  ['Qwen3.5-9B / BF16 / TP2', 'MTP / FP8 KV / окно 128K'], LILAC, PURPLE, compact=True)
     d.connector([spec.port('bottom'), (992, 380), (288, 380), platform.port('top')])
     d.connect(platform, qwen)
     d.text(48, 652, '2 × 16 GiB, общий чат, ai-mcp-gateway и дашборд',
            24, BLUE, True, width=1104)
-    d.footer('RAG и Whisper остаются на A30. TP2 на RTX не означает наличие NVLink.')
+    d.footer('Перед Tune останавливаем Cache. Перед Qwen — обе Gemma. A30 остаётся работать.')
     d.save()
 
 
@@ -609,10 +611,10 @@ def rtx_memory():
     d.text(600, 263, 'VRAM × доля − веса − служебная память', 35, INK, True, 'middle', width=1032)
     for x, title, body, fill, color in [
             (48, 'Gemma 4 E2B', ['1 GPU на сервис', 'BF16-веса / окно 4K', 'A и B: по 2 последовательности'], PALE, BLUE),
-            (624, 'Qwen3.5-9B', ['2 GPU на один сервис', 'BF16-веса + MTP: ≈17,13 GiB', 'TP2 / окно 8K'], LILAC, PURPLE)]:
+            (624, 'Qwen3.5-9B', ['2 GPU на один сервис', 'BF16-веса + MTP: ≈17,13 GiB', 'TP2 / FP8 KV / окно 128K'], LILAC, PURPLE)]:
         d.card(x, 350, 528, 187, title, body, fill, color)
     d.card(48, 572, 1104, 108, 'RAM: отдельный бюджет CPU KV',
-           ['4 GiB в конфигурации кеша. Это не выгрузка весов и не добавочная VRAM.'], MINT, TEAL)
+           ['Gemma: 4 GiB. Qwen: 16 GiB. Это не выгрузка весов и не добавочная VRAM.'], MINT, TEAL)
     d.footer('Размер checkpoint на диске ≠ память процесса. NVLink и MIG у RTX здесь нет.')
     d.save()
 

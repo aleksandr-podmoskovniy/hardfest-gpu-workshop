@@ -39,6 +39,10 @@
 <text x="848" y="359" font-size="20" fill="#536278" text-anchor="start">
 <tspan x="848" dy="0">Первое слово ответа</tspan>
 </text>
+<path d="M608 380 V390 H1152 V380" fill="none" stroke="#7041b8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="880" y="418" font-size="21" fill="#7041b8" text-anchor="middle">
+<tspan x="880" dy="0">Decode: reasoning + финальный текст</tspan>
+</text>
 <path d="M48 424 V434 H608 V424" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="328.0" y="416" font-size="25" fill="#1554dc" text-anchor="middle" font-weight="700">
 <tspan x="328.0" dy="0">TTFT</tspan>

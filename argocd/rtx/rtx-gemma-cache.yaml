@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: rtx-gemma-tune
+  name: rtx-gemma-cache
   namespace: argocd
 spec:
   project: default
@@ -10,9 +10,9 @@ spec:
     targetRevision: hardfest-rtx
     path: argo-projects/gpu-cluster/hardfest-rtx/charts/vllm-runtime
     helm:
-      releaseName: rtx-gemma-tune
+      releaseName: rtx-gemma-cache
       valueFiles:
-        - ../../values/gemma-spec.yaml
+        - ../../values/gemma-cache.yaml
   destination:
     name: gpu-cluster
     namespace: hardfest-rtx

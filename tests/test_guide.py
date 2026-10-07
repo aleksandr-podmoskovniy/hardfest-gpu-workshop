@@ -33,7 +33,7 @@ class Guide(unittest.TestCase):
         self.assertIn('width="250" height="250"', top)
         self.assertIn(f'href="{url}"', top)
         for section in ("## Содержание", "## Подготовка окружения", "## Стенд и подключение",
-                        "## 1. Где теряется время", "## Остановка"):
+                        "## 1. Запускаем Gemma A", "## 2. Разбираем время ответа", "## Остановка"):
             self.assertIn(section, readme)
         svg = ET.parse(ROOT / "assets/workshop-qr.svg").getroot()
         self.assertEqual(svg.find("{http://www.w3.org/2000/svg}desc").text, url)
@@ -138,7 +138,7 @@ class Guide(unittest.TestCase):
         targets = re.findall(r"\]\(#([^)]+)\)", readme)
         self.assertGreaterEqual(len(targets), 10)
         self.assertTrue(set(targets).issubset(anchors))
-        stages = ['ab', 'ram', 'speculation', 'platform', 'placement', 'tp2', 'cleanup']
+        stages = ['ab', 'latency', 'memory', 'ram', 'speculation', 'platform', 'placement', 'tp2', 'cleanup']
         positions = [readme.index(f'id="{stage}"') for stage in stages]
         self.assertEqual(positions, sorted(positions))
         self.assertEqual(readme.count('<a id="speculation">'), 1)
@@ -155,6 +155,26 @@ class Guide(unittest.TestCase):
             self.assertIn(term, lab)
         self.assertIn("Не входят в этот базовый рецепт", lab)
         self.assertIn("Короткий вариант: A вручную, B через платформу", lab)
+
+    def test_original_teaching_chain_is_preserved_for_current_models(self):
+        for name in ("README.md", "RTX5060.md"):
+            text = (ROOT / name).read_text()
+            for term in ("https://ai.ap4y.ru", "GQA", "Kpool", "TTFT", "max-num-batched-tokens",
+                         "reasoning", "CPU", "MTP", "InferenceService"):
+                self.assertIn(term, text, name)
+            self.assertLess(text.index('id="ab"'), text.index('id="latency"'))
+            self.assertLess(text.index('id="memory"'), text.index('id="ram"'))
+        readme = (ROOT / "README.md").read_text()
+        for histories in (1, 4, 8):
+            for element_bytes in (1, 2):
+                value = maths.calculate_gemma(tokens=131072, sessions=histories,
+                                              element_bytes=element_bytes)["all_sessions_gib"]
+                self.assertIn(str(value).rstrip("0").rstrip(".").replace(".", ",") + " GiB", readme)
+        rtx = (ROOT / "RTX5060.md").read_text()
+        for histories in (1, 4, 8):
+            for element_bytes in (1, 2):
+                mib = 2 * element_bytes * (3 * 512 * 131072 + 12 * 256 * 512) * histories / 2**20
+                self.assertIn(f"{mib:g} MiB", rtx)
 
     def test_workshop_has_one_canonical_source(self):
         alias = (ROOT / "WORKSHOP.md").read_text()

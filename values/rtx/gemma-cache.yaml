@@ -1,4 +1,4 @@
-fullnameOverride: rtx-gemma-tune
+fullnameOverride: rtx-gemma-cache
 replicaCount: 0
 image: REPLACE_RUNTIME_IMAGE@sha256:f7cb9820c7e92eb78a4b3f60033e240c87a16bf99117471aba347fdd69eaca2d
 profile: gemma-cache-4k
@@ -22,7 +22,7 @@ runtimeSize: 6Gi
 shmSize: 6Gi
 vllm:
   model: /data/modelcache/models/rtx-gemma-e2b
-  served-model-name: rtx-gemma-tune
+  served-model-name: rtx-gemma-cache
   host: 0.0.0.0
   port: 8000
   dtype: bfloat16
