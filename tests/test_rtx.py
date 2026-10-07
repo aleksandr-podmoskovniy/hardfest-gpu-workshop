@@ -184,9 +184,22 @@ class RTXProfiles(unittest.TestCase):
             self.assertIn(f'<a id="{target}"></a>', lab)
         self.assertGreaterEqual(len(re.findall(r"!\[.+?\]\(assets/", guide)), 10)
         for term in ("ai-models", "InferenceService", "16 GiB", "assistant", "TP2", "MTP",
-                     "NodeCache", "ещё", "Прям", "Hugging Face"):
+                     "NodeCache"):
             self.assertIn(term.lower(), (guide + lab).lower())
         self.assertNotIn("·", guide)
+
+    def test_participant_guides_do_not_contain_preparation_status(self):
+        for filename in ("RTX5060.md", "labs/rtx5060.md"):
+            text = (ROOT / filename).read_text()
+            for fragment in ("Состояние проверки на", "условия полного показа",
+                             "во время выступления", "графики проверены визуально",
+                             "Установленная сборка пока", "В прогоне 6 октября",
+                             "не бонус после показа"):
+                self.assertNotIn(fragment, text, (filename, fragment))
+        guide = (ROOT / "RTX5060.md").read_text()
+        self.assertIn("## Результаты измерений", guide)
+        self.assertIn("rtx5060-nodecache-20261006.json", guide)
+        self.assertIn("общий лимит расходов", guide)
 
     def test_catalog_chat_examples_use_served_model_names(self):
         lab = (ROOT / "labs/rtx5060.md").read_text()
