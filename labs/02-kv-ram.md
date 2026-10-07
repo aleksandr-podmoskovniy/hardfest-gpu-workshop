@@ -7,16 +7,51 @@ Prefix cache экономит повторный prefill. KV-offload сохра�
 ## Перед началом
 
 - [ ] Рабочий каталог — `k8s-config`; переменные заданы по [GitOps](../docs/GITOPS.md).
-- [ ] B отвечает с текущим профилем: окно 16K, FP8 KV,
-  prefix cache и 32 GiB CPU KV. Первый проход — с [первой B](../values/gemma-b.yaml),
-  повтор после assistant — со второй B, не заменяя её профиль.
+- [ ] Результат A сохранён; первая B подготовлена, вторая H100 свободна.
+- [ ] Профиль первой B: окно 16K, FP8 KV, prefix cache и 32 GiB CPU KV.
+  Если B уже отвечает с этими настройками, пропустите запуск в шаге 1.
+  Повтор после assistant выполняется со второй B, не заменяя её профиль.
 - [ ] RAM request/limit — 56/80 GiB, shared memory — 40 GiB.
 - [ ] На VM 128 GiB A остановлена; посторонних запросов к B нет.
 
 Серия использует вход 8192 и выход 128 токенов. Она не заменяет замер
 decode из A/B, где выход равен 2048. Веса остаются на GPU.
 
-## 1. Подготовить одинаковые входы
+## 1. Запустить первую B
+
+В `$DEMO_DIR/values/gemma-b.yaml` установите `replicaCount: 1`.
+Профиль — [первая B](../values/gemma-b.yaml), без assistant, chunked prefill
+и CUDA graphs. Application `hardfest-gemma-b` использует этот файл и
+подготовленный `site/gemma.yaml`. На стенде с достаточной RAM A остаётся работать.
+
+```bash
+set -o pipefail
+helm template hf-gemma-b "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
+  -f "$DEMO_DIR/values/gemma-b.yaml" -f "$DEMO_DIR/site/gemma.yaml" |
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f -
+```
+
+После успешного dry-run:
+
+```bash
+git add -- "$DEMO_DIR/values/gemma-b.yaml"
+git diff --cached --check
+git diff --cached
+git commit -S -s -m "Start Gemma with prefix cache and RAM KV"
+git push
+REVISION=$(git rev-parse HEAD)
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application hardfest-gemma-b \
+  --type merge --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo rollout status deployment/hf-gemma-b --timeout=30m
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims -o wide
+```
+
+Проверьте ответ API по [первой лабораторной](01-ab.md#2-выполнить-серию)
+с `SLOT=b`, затем включите подготовленный маршрут `Gemma B — Tune` в WebUI.
+На этом этапе Tune означает первую итерацию B, а не наличие assistant.
+Повторите контрольную A/B-серию. После неё отдельно проверяйте возврат KV из RAM.
+
+## 2. Подготовить одинаковые входы
 
 Начните с десяти синтетических последовательностей token ID обычным shell.
 Первый токен у каждой последовательности различается. Десять запросов не
@@ -41,7 +76,7 @@ shasum -a 256 "$REQUEST_DIR"/*.json
 Token ID относятся к токенизатору Gemma; для другой модели сначала
 проверьте словарь.
 
-## 2. Выполнить серию с RAM-кэшем
+## 3. Выполнить серию с RAM-кэшем
 
 В отдельном терминале откройте доступ к B:
 
@@ -76,7 +111,7 @@ curl --fail --max-time 600 http://127.0.0.1:18002/v1/completions \
 curl --fail http://127.0.0.1:18002/metrics > "results/hardfest/$SERIES/after-return.txt"
 ```
 
-## 3. Сопоставить счётчики
+## 4. Сопоставить счётчики
 
 Откройте `before-return.txt` и `after-return.txt`. Сравните приращения
 только за повтор первого запроса:
@@ -101,13 +136,13 @@ curl --fail http://127.0.0.1:18002/metrics > "results/hardfest/$SERIES/after-ret
 токена. Серверное время повтора берите из приращений histogram `sum/count`
 без посторонней нагрузки либо измеряйте отдельно streaming-клиентом.
 
-## 4. Провести контроль без offload
+## 5. Провести контроль без offload
 
 В редакторе откройте `$DEMO_DIR/values/gemma-b.yaml` и удалите **только**
 блок `vllm.kv-transfer-config`. Не меняйте prefix cache, FP8 KV, окно
 или ресурсные лимиты. Доставьте изменение по [GitOps](../docs/GITOPS.md).
 
-После нового запуска повторите шаги 2–3 с:
+После нового запуска повторите шаги 3–4 с:
 
 ```bash
 export SERIES=cache-off
@@ -152,9 +187,15 @@ kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get application hardfest-
 ```
 
 Дождитесь `Succeeded` для `$REVISION`, затем rollout B и успешного короткого ответа.
-Для новой серии повторите шаг 1 с `INPUT_TOKENS=65536` и новым `REQUEST_DIR`,
-затем шаги 2–3. Ожидаемое `usage.prompt_tokens` теперь равно 65 536.
-Этот вход проверяет offload, но сам по себе не проверяет всю границу 128K.
+Для новой серии повторите шаг 2 с новым `REQUEST_DIR`, затем шаги 3–4.
+Оставьте место под выход; не подставляйте размер всего окна в длину входа:
+
+| Окно | `INPUT_TOKENS` | Выход | Ожидаемое `usage.prompt_tokens` |
+| --- | ---: | ---: | ---: |
+| 65 536 | 57344 | 128 | 57 344 |
+| 131 072 | 122880 | 128 | 122 880 |
+
+Это длинные входы для проверки offload, не заполнение окна до последнего токена.
 Для проверки границы увеличивайте вход отдельно, оставляя место под 128 токенов
 ответа и контролируя отсутствие обрезки. Результаты храните отдельно от сравнения 16K.
 
@@ -163,9 +204,10 @@ kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get application hardfest-
 > в дополнительную HBM для произвольно длинной истории.
 > В RAM-профиле остаются лимиты 56/80 GiB и shm 40 GiB; A на VM 128 GiB выключена.
 
-После сохранения результата верните **только** `vllm.max-model-len: 16384`
-через commit/push/sync того же Application. Сверьте наличие assistant,
-prefill 2048 и CPU KV перед сравнением с платформенной Gemma.
+Для нового сравнения с контрольной A верните **только** `vllm.max-model-len: 16384`
+через commit/push/sync того же Application. Если следующим идёт платформенный
+опыт, оставьте проверенное длинное окно B и требуйте такое же от рецепта.
+Сверьте assistant, prefill 2048, CPU KV и окно обеих моделей до начала сравнения.
 
 ## Проверка
 

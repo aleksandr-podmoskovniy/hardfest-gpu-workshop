@@ -574,9 +574,9 @@ def qwen_capacity():
 
 def rtx_sequence():
     d = Diagram('20-rtx-sequence', 'От Gemma к Qwen на двух RTX 5060 Ti',
-                'Пять запусков: измерить, настроить, повторить через платформу и перейти к TP2.')
+                'Начинаем с работающей A: измеряем, настраиваем B, переходим к платформе и TP2.')
     a = d.card(48, 180, 320, 158, '1. Gemma A',
-               ['E2B / BF16 / 4K', 'Строгий baseline'], compact=True)
+               ['E2B / BF16 / 4K', 'Уже запущена'], compact=True)
     cache = d.card(440, 180, 320, 158, '2. Gemma B: кеш',
                    ['rtx-gemma-cache', 'Prefix + FP8 + RAM 4 GiB'], MINT, TEAL, compact=True)
     spec = d.card(832, 180, 320, 158, '3. Gemma B: decode',

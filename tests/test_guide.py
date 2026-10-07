@@ -32,8 +32,8 @@ class Guide(unittest.TestCase):
         self.assertIn('<p align="center">', top)
         self.assertIn('width="250" height="250"', top)
         self.assertIn(f'href="{url}"', top)
-        for section in ("## Содержание", "## Подготовка окружения", "## Стенд и подключение",
-                        "## 1. Запускаем Gemma A", "## 2. Разбираем время ответа", "## Остановка"):
+        for section in ("## Содержание", "## Подготовка своего стенда", "## Стенд и подключение",
+                        "## 1. Пробуем уже работающую Gemma A", "## 2. Разбираем время ответа", "## Остановка"):
             self.assertIn(section, readme)
         svg = ET.parse(ROOT / "assets/workshop-qr.svg").getroot()
         self.assertEqual(svg.find("{http://www.w3.org/2000/svg}desc").text, url)
@@ -138,7 +138,8 @@ class Guide(unittest.TestCase):
         targets = re.findall(r"\]\(#([^)]+)\)", readme)
         self.assertGreaterEqual(len(targets), 10)
         self.assertTrue(set(targets).issubset(anchors))
-        stages = ['ab', 'latency', 'memory', 'ram', 'speculation', 'platform', 'placement', 'tp2', 'cleanup']
+        stages = ['ab', 'monitoring', 'latency', 'memory', 'ram', 'speculation',
+                  'platform', 'placement', 'tp2', 'conclusion', 'cleanup', 'setup']
         positions = [readme.index(f'id="{stage}"') for stage in stages]
         self.assertEqual(positions, sorted(positions))
         self.assertEqual(readme.count('<a id="speculation">'), 1)
@@ -232,12 +233,40 @@ class Guide(unittest.TestCase):
         for term in ("pending", "Virtual Key", "OIDC", "MCP", "ACL", "отзыв"):
             self.assertIn(term, guide)
 
-    def test_architecture_precedes_setup_with_plain_navigation(self):
+    def test_architecture_leads_to_running_base_before_theory(self):
         readme = (ROOT / "README.md").read_text()
-        ordered = ["contents", "topology", "setup", "latency"]
+        ordered = ["contents", "topology", "ab", "monitoring", "latency", "conclusion", "setup"]
         positions = [readme.index(f'<a id="{name}"></a>') for name in ordered]
         self.assertEqual(positions, sorted(positions))
         self.assertIn("[К содержанию](#contents)", readme)
+
+    def test_both_walkthroughs_start_with_prepared_running_base(self):
+        for name in ("README.md", "RTX5060.md"):
+            text = (ROOT / name).read_text()
+            with self.subTest(name=name):
+                self.assertIn("Gemma A — Base уже запущена", text)
+                baseline = text.split('id="ab"', 1)[1].split('id="latency"', 1)[0]
+                self.assertIn("Argo CD", baseline)
+                self.assertIn("ещё не", baseline)
+                self.assertIn("InferenceService", baseline)
+                self.assertNotIn("replicaCount: 1", baseline)
+                self.assertNotIn("helm template", baseline)
+                self.assertLess(text.index('id="conclusion"'), text.index('id="cleanup"'))
+                self.assertLess(text.index('id="cleanup"'), text.index('id="setup"'))
+                self.assertIn("https://ai.ap4y.ru", text.split('id="ab"', 1)[0])
+
+    def test_initial_launch_commands_live_in_preparation(self):
+        setup = (ROOT / "docs/SETUP.md").read_text()
+        lab = (ROOT / "labs/01-ab.md").read_text()
+        self.assertIn("## 6. Заранее запустить A", setup)
+        self.assertIn("Prepare running Gemma baseline", setup)
+        self.assertIn("A уже запущена", lab)
+        self.assertNotIn("Start manual Gemma baseline", lab)
+        rtx = (ROOT / "labs/rtx5060.md").read_text()
+        preparation, exercises = rtx.split('<a id="base"></a>', 1)
+        self.assertIn("Prepare running RTX Gemma baseline", preparation)
+        self.assertIn("A уже запущена", exercises)
+        self.assertNotIn("Prepare running RTX Gemma baseline", exercises)
 
     def test_readme_has_no_decorative_tagline_or_boilerplate_labels(self):
         readme = (ROOT / "README.md").read_text()

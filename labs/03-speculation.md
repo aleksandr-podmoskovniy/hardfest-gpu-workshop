@@ -23,6 +23,13 @@ prefill с бюджетом 2048 вместо полного prefill до 16 384
 
 ## 1. Подготовить профиль и два mount
 
+Сначала скройте маршрут B в WebUI и дождитесь завершения её запросов.
+Затем остановите только первую B: в `$DEMO_DIR/values/gemma-b.yaml`
+установите `replicaCount: 0`, выполните адресный commit/push/sync
+`hardfest-gemma-b` по [GitOps](../docs/GITOPS.md).
+Дождитесь завершения её Pod и освобождения claim; A, Model и кеш не удаляйте.
+После этого замените профиль:
+
 ```bash
 cp "$DEMO_DIR/values/gemma-b-spec.yaml" "$DEMO_DIR/values/gemma-b.yaml"
 ```
@@ -126,6 +133,9 @@ curl --fail --max-time 120 http://127.0.0.1:18002/v1/chat/completions \
   -d '{"model":"gemma-4-31b","messages":[{"role":"user","content":"Зачем нужен KV-кэш?"}],"max_tokens":256,"temperature":0}'
 curl --fail http://127.0.0.1:18002/metrics
 ```
+
+После успешного ответа API снова включите `Gemma B — Tune` в WebUI
+и повторите вопрос через личный VK.
 
 ## Проверка
 

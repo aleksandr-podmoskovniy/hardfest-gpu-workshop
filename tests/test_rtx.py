@@ -190,8 +190,8 @@ class RTXProfiles(unittest.TestCase):
         guide = (ROOT / "RTX5060.md").read_text()
         lab = (ROOT / "labs/rtx5060.md").read_text()
         self.assertIn("(RTX5060.md)", (ROOT / "README.md").read_text())
-        stages = ["topology", "setup", "monitoring", "ab", "latency", "memory", "ram",
-                  "speculation", "platform", "placement", "tp2", "cleanup", "results"]
+        stages = ["topology", "ab", "monitoring", "latency", "memory", "ram",
+                  "speculation", "platform", "placement", "tp2", "conclusion", "results", "cleanup", "setup"]
         positions = [guide.index(f'id="{name}"') for name in stages]
         self.assertEqual(positions, sorted(positions))
         for target in re.findall(r"\]\(#([^)]+)\)", guide):
