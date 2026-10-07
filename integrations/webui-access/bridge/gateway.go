@@ -114,7 +114,7 @@ func (b *Bridge) newKey(ctx context.Context, u User) (object, error) {
 	return out.Key, err
 }
 
-// The stable name is also unique in Bifrost's database. Never rename it on login.
+// Names stay unchanged on login. Durable state (when configured) guards retries.
 // A failed POST can have committed. Read back first; no blind retry in this process.
 func (b *Bridge) createKey(ctx context.Context, u User) (object, error) {
 	if b.createAttempted[u.ID] {
@@ -123,12 +123,16 @@ func (b *Bridge) createKey(ctx context.Context, u User) (object, error) {
 	if b.createAttempted == nil {
 		b.createAttempted = map[string]bool{}
 	}
+	name, err := b.beginIssuance(u)
+	if err != nil {
+		return nil, err
+	}
 	providers := make([]object, 0, len(b.cfg.Providers))
 	for _, p := range b.cfg.Providers {
 		providers = append(providers, object{"provider": p.Provider, "allowed_models": p.Models, "key_ids": p.KeyIDs})
 	}
 	body := object{
-		"name": b.cfg.ManagedBy + ":" + u.ID, "description": b.description(u), "is_active": false,
+		"name": name, "description": b.description(u), "is_active": false,
 		"provider_configs": providers, "mcp_configs": []object{},
 		"budgets":    []object{{"max_limit": b.cfg.BudgetUSD, "reset_duration": b.cfg.BudgetReset}},
 		"rate_limit": object{"request_max_limit": b.cfg.RequestsPerMinute, "request_reset_duration": "60s", "token_max_limit": b.cfg.TokensPerMinute, "token_reset_duration": "60s"},
@@ -140,7 +144,7 @@ func (b *Bridge) createKey(ctx context.Context, u User) (object, error) {
 	var out struct {
 		Key object `json:"virtual_key"`
 	}
-	err := b.gateway(ctx, "POST", "/api/governance/virtual-keys", body, &out)
+	err = b.gateway(ctx, "POST", "/api/governance/virtual-keys", body, &out)
 	if err == nil && b.keyUserID(out.Key) == u.ID {
 		return out.Key, nil
 	}
@@ -327,6 +331,9 @@ func (b *Bridge) ensureKey(ctx context.Context, u User) (credential, error) {
 	value := stringValue(key["value"])
 	if id == "" || value == "" {
 		return credential{}, errors.New("key response is incomplete")
+	}
+	if err := b.rememberIssuance(u, key); err != nil {
+		return credential{}, err
 	}
 	if mcp, ok := key["mcp_configs"].([]any); ok && len(mcp) != 0 {
 		return credential{}, errors.New("unexpected MCP permission")

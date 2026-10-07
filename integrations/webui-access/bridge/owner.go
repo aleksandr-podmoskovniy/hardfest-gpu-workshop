@@ -135,13 +135,16 @@ func (b *Bridge) createOwnerKey(ctx context.Context, u User) (object, error) {
 		b.createAttempted = map[string]bool{}
 	}
 	b.createAttempted[u.ID] = true
-	name := b.cfg.ManagedBy + ":" + u.ID
+	name, err := b.beginIssuance(u)
+	if err != nil {
+		return nil, err
+	}
 	var out struct {
 		Key object `json:"virtual_key"`
 	}
 	body := object{"name": name, "description": b.description(u)}
 	endpoint := fmt.Sprintf("%s/access-profiles/%d/virtual-keys", b.ownerPath(), b.cfg.IssuerProfileID)
-	err := b.gateway(ctx, "POST", endpoint, body, &out)
+	err = b.gateway(ctx, "POST", endpoint, body, &out)
 	if err == nil && out.Key["name"] == name && b.keyUserID(out.Key) == u.ID && stringValue(out.Key["id"]) != "" && stringValue(out.Key["value"]) != "" {
 		// Retain the complete successful response before pricing. It is not a
 		// usable credential until all checks below pass, and is never logged.
@@ -216,6 +219,9 @@ func (b *Bridge) ensureOwnerKey(ctx context.Context, u User) (credential, error)
 	}
 	if _, ok := key["is_active"].(bool); !ok {
 		return credential{}, errors.New("owner key activation state missing")
+	}
+	if err := b.rememberIssuance(u, key); err != nil {
+		return credential{}, err
 	}
 	if err := b.validateOwnerQuota(ctx, key); err != nil {
 		return credential{}, err

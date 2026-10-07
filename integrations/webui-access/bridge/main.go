@@ -32,6 +32,7 @@ type Bridge struct {
 	keys                                              map[string]credential
 	createAttempted                                   map[string]bool
 	issued                                            map[string]issuedKey
+	journal                                           *issuanceJournal
 	activeMu                                          sync.Mutex
 	activeUsers                                       map[string]int
 	activeTotal                                       int
@@ -39,6 +40,13 @@ type Bridge struct {
 }
 
 func main() {
+	if len(os.Args) == 4 && os.Args[1] == "--initialize-state" {
+		if err := initializeJournal(os.Args[2], os.Args[3], os.Stdin); err != nil {
+			log.Fatal(err)
+		}
+		log.Print("issuance journal initialized")
+		return
+	}
 	path := os.Getenv("CONFIG_FILE")
 	if path == "" {
 		path = "/config/config.json"
@@ -64,6 +72,13 @@ func main() {
 	}
 	if b.transportKey == b.signingKey {
 		log.Fatal("transport and signing secrets must differ")
+	}
+	if cfg.StateDir != "" {
+		b.journal, err = openJournal(cfg.StateDir, cfg.ManagedBy, false)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer b.journal.lock.Close()
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()

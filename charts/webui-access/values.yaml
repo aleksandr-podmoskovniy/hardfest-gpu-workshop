@@ -1,15 +1,21 @@
 replicaCount: 0
 name: webui-access
-image: registry.example.com/integrations/webui-access:0.3.0
+image: registry.example.com/integrations/webui-access:0.4.0
 imagePullSecrets: []
 existingSecret: webui-access
 caConfigMap: ""
+persistence:
+  enabled: false
+  existingClaim: ""
+  storageClass: ""
+  size: 64Mi
 config:
   webui_url: http://open-webui:8080
   gateway_url: https://gateway.example.com
   service_user_id: REPLACE_WITH_WEBUI_SERVICE_USER_ID
   managed_by: REPLACE_WITH_INSTALLATION_ID
   key_name_prefix: Open WebUI
+  state_dir: ""
   provisioning_mode: create
   issuer_user_id: ""
   issuer_user_access_profile_id: 0

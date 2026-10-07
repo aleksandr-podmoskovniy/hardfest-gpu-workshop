@@ -39,6 +39,17 @@
     "caConfigMap": {
       "type": "string"
     },
+    "persistence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "existingClaim", "storageClass", "size"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "existingClaim": {"type": "string"},
+        "storageClass": {"type": "string"},
+        "size": {"type": "string", "pattern": "^[1-9][0-9]*(Mi|Gi)$"}
+      }
+    },
     "webuiSelector": {
       "type": "object",
       "minProperties": 1,
@@ -97,6 +108,7 @@
           "minLength": 1,
           "maxLength": 64
         },
+        "state_dir": {"enum": ["", "/state"]},
         "provisioning_mode": {
           "enum": [
             "create",

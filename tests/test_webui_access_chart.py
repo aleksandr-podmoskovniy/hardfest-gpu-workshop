@@ -11,6 +11,30 @@ CHART = ROOT / "charts/webui-access"
 
 
 class WebUIAccessChart(unittest.TestCase):
+    def test_durable_issuance_volume_and_retention(self):
+        args = ["--set", "persistence.enabled=true", "--set", "config.state_dir=/state"]
+        objects = self.render(*args)
+        claim = objects["PersistentVolumeClaim"]
+        self.assertEqual(claim["spec"]["resources"]["requests"]["storage"], "64Mi")
+        self.assertEqual(claim["metadata"]["annotations"]["argocd.argoproj.io/sync-options"], "Prune=false")
+        pod = objects["Deployment"]["spec"]["template"]["spec"]
+        self.assertEqual(pod["securityContext"]["fsGroup"], 65532)
+        self.assertIn({"name": "state", "mountPath": "/state"}, pod["containers"][0]["volumeMounts"])
+        existing = self.render(*args, "--set", "persistence.existingClaim=retained-state")
+        self.assertNotIn("PersistentVolumeClaim", existing)
+        self.assertIn({"name": "state", "persistentVolumeClaim": {"claimName": "retained-state"}}, existing["Deployment"]["spec"]["template"]["spec"]["volumes"])
+
+    def test_refuses_unbacked_or_unconfigured_journal(self):
+        for option in ("persistence.enabled=true", "config.state_dir=/state"):
+            result = subprocess.run(["helm", "template", "access", str(CHART), "--set", option], capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("durable issuance", result.stderr)
+
+    def test_durable_issuance_refuses_reserve_assignment(self):
+        result = subprocess.run(["helm", "template", "access", str(CHART), "--set", "persistence.enabled=true", "--set", "config.state_dir=/state", "--set", "config.provisioning_mode=reserve"], capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("durable issuance requires create mode", result.stderr)
+
     def render(self, *options):
         result = subprocess.run(
             ["helm", "template", "access", str(CHART), "-n", "workshop-ui", *options],

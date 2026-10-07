@@ -7,6 +7,7 @@ import (
 	"io"
 	"math"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -32,6 +33,7 @@ type Config struct {
 	TeamID               string           `json:"team_id,omitempty"`
 	ManagedBy            string           `json:"managed_by"`
 	KeyNamePrefix        string           `json:"key_name_prefix"`
+	StateDir             string           `json:"state_dir,omitempty"`
 	ProvisioningMode     string           `json:"provisioning_mode"`
 	ChatModels           []string         `json:"chat_models"`
 	Providers            []ProviderPolicy `json:"providers"`
@@ -72,6 +74,9 @@ func readConfig(r io.Reader) (Config, error) {
 }
 
 func (c Config) validate() error {
+	if c.StateDir != "" && (!filepath.IsAbs(c.StateDir) || filepath.Clean(c.StateDir) == "/") {
+		return fmt.Errorf("state_dir requires a dedicated absolute directory")
+	}
 	for _, base := range []string{c.WebUIURL, c.GatewayURL} {
 		u, err := url.Parse(base)
 		if err != nil || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || u.Path != "" || (u.Scheme != "http" && u.Scheme != "https") {
@@ -95,6 +100,9 @@ func (c Config) validate() error {
 	}
 	if c.ProvisioningMode != "create" && c.ProvisioningMode != "reserve" {
 		return fmt.Errorf("provisioning_mode must be create or reserve")
+	}
+	if c.StateDir != "" && c.ProvisioningMode != "create" {
+		return fmt.Errorf("durable issuance requires create mode")
 	}
 	if c.IssuerUserID != "" || c.IssuerProfileID != 0 {
 		if !userIDPattern.MatchString(c.IssuerUserID) || c.IssuerProfileID == 0 || c.ProvisioningMode != "create" {
