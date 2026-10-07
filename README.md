@@ -44,11 +44,9 @@
 - [9. Запрос участника, личный ключ и стоимость](#conclusion)
 - [После работы: остановка](#cleanup), [подготовка своего стенда](#setup)
 
-Участники работают в чате; команды Git, Argo CD и Kubernetes выполняет
-администратор стенда. Полные команды находятся в лабораторных работах рядом
-с соответствующим опытом. Веса, runtime, маршруты и мониторинг подготовлены
-заранее. Здесь идём от работающего сервиса к наблюдению, объяснению механизма,
-изменению настройки и повторному измерению.
+Участники работают в чате; изменения в Git и Argo CD выполняет администратор.
+Веса, runtime, маршруты и мониторинг подготовлены заранее. Всё занятие идём
+по этой странице: пробуем → объясняем → меняем → сравниваем.
 
 <a id="topology"></a>
 ## Стенд и подключение
@@ -140,13 +138,53 @@ chart, DRA выделяет одну H100, vLLM читает доставлен�
 Теперь ненадолго отделим свободные вопросы от контрольного замера:
 8192 входных и 2048 выходных токенов, 8 запросов, concurrency 4.
 Пока выполняется серия, пользовательские запросы к A приостановлены.
-Запишем фактические длины, длительность и ошибки по [лабораторной 1](labs/01-ab.md).
+Запишем фактические длины, длительность и ошибки.
 Позже ровно эту нагрузку повторим на B. Короткий чат показывает ощущение
 пользователя, фиксированная серия позволяет сравнить конфигурации.
 
+<details>
+<summary>Команда одинаковой нагрузки для A и обеих B</summary>
+
+Терминал открыт в частном `k8s-config`; контексты заданы при подготовке.
+Выберите сервис и новое имя серии, чтобы не затереть предыдущий результат:
+
+```bash
+export SLOT=a SERIES=a-base-1
+# B1: export SLOT=b SERIES=b-cache-1
+# B2: export SLOT=b SERIES=b-spec-1
+export TOKENIZER_PATH=/data/modelcache/models/gemma-4-31b
+mkdir -p "results/hardfest/$SERIES"
+set -o pipefail
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec "deployment/hf-gemma-$SLOT" -- \
+  vllm bench serve --backend vllm \
+    --base-url "http://hf-gemma-$SLOT.hardfest-demo.svc.cluster.local:8000" \
+    --endpoint /v1/completions --model gemma-4-31b --tokenizer "$TOKENIZER_PATH" \
+    --dataset-name random --seed 42 \
+    --random-input-len 8192 --random-output-len 2048 --random-range-ratio 0 \
+    --num-prompts 8 --max-concurrency 4 --ignore-eos --temperature 0 \
+    --ready-check-timeout-sec 0 --num-warmups 0 \
+    --save-result --result-dir /dev --result-filename stdout \
+  | tee "results/hardfest/$SERIES/bench.txt"
+```
+
+В JSON проверяем все четыре поля, не только код завершения CLI:
+
+| Поле | Значение |
+| --- | --- |
+| `failed` | `0` |
+| `completed` | `8` |
+| `total_input_tokens` | `65536` |
+| `total_output_tokens` | `16384` |
+
+Повтор seed прогревает серверный prefix cache. Первый проход и повтор
+сохраняйте отдельно; не называйте их одинаково холодными.
+Клиент внутри Pod тоже потребляет CPU: это короткая демонстрационная проверка.
+Для итоговых цифр нужен один отдельный CPU-клиент и несколько повторов.
+
+</details>
+
 Если график пуст, проверьте выбранный сервис и интервал, а не считайте это нулём.
-Сбор ручного runtime уже входит в [подготовку мониторинга](docs/OBSERVABILITY.md).
-Теперь можно разобрать, из каких частей состоит увиденное ожидание.
+Теперь разберём, из каких частей состоит увиденное ожидание.
 
 <a id="latency"></a>
 ## 2. Разбираем время ответа
@@ -394,9 +432,40 @@ backend, синхронизации и конкуренции за RAM. Срав
 Если ускорения нет, проверяем совпадение префикса и вытеснение: не выдаём
 сам факт включения настройки за результат.
 
-В [лабораторной 2](labs/02-kv-ram.md) — команды этого перехода и отдельный
-опыт восстановления из RAM. Фиксируйте загрузку/сохранение блоков и задержки,
-а не только более быстрый повтор.
+<details>
+<summary>Включить первую B в Git и Argo</summary>
+
+В подготовленном `$DEMO_DIR/values/gemma-b.yaml` задайте `replicaCount: 1`.
+Остальные параметры берём из разобранного профиля, не собираем заново.
+
+```bash
+set -o pipefail
+helm template hf-gemma-b "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
+  -f "$DEMO_DIR/values/gemma-b.yaml" -f "$DEMO_DIR/site/gemma.yaml" |
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f -
+```
+
+После успешной проверки:
+
+```bash
+git add -- "$DEMO_DIR/values/gemma-b.yaml"
+git diff --cached --check
+git diff --cached
+git commit -S -s -m "Start Gemma with prefix cache and RAM KV"
+git push
+git rev-parse HEAD
+```
+
+В Argo откройте `hardfest-gemma-b`, проверьте diff и выполните **Sync**
+этого SHA без общего Prune. Дождитесь применения SHA и готовности нового Pod.
+Проверьте ответ B, затем разрешите её маршрут участникам.
+Во всех следующих переходах порядок тот же: изменённый файл → проверка →
+commit/push → Sync нужного Application → ответ → чат.
+
+</details>
+
+Для offload смотрим CPU→GPU bytes и external-prefix hits при повторе
+вытесненного префикса. Только запись GPU→CPU ещё не доказывает возврат из RAM.
 Если RAM не хватает двум процессам, остановите A через Git и пометьте замер B
 как последовательный. Не сравнивайте его с одновременным A/B без оговорки.
 
@@ -451,7 +520,18 @@ CUDA graphs и отдельная Gemma assistant. Прежде чем меня�
 подключим подготовленную привязку assistant и запустим **тот же Application B**.
 A не меняем. В Pod проверим две модели
 из ai-models и параметры runtime; после ответа API снова откроем `Gemma B — Tune` в чате.
-[Команды перехода](labs/03-speculation.md) фиксируют и остановку, и новый профиль.
+В рабочем `gemma-b.yaml` сначала поставьте `replicaCount: 0` и примените остановку.
+Затем замените профиль целиком:
+
+```bash
+cp "$DEMO_DIR/values/gemma-b-spec.yaml" "$DEMO_DIR/values/gemma-b.yaml"
+```
+
+Верните в нём `replicaCount: 1`, а второй `valueFiles` Application B измените
+на `../../site/gemma-assistant.yaml`. Подготовленный site-файл содержит обе Model.
+Проверьте render с ним, отправьте оба изменённых файла в Git и примените source
+Application и новый commit. При App-of-Apps сначала синхронизируется родитель,
+иначе обновляется подготовленный манифест Application.
 
 Повторим те же запросы: сначала заметим темп текста, затем посмотрим ITL,
 throughput, acceptance и число принятых draft-токенов. Окно A/B всё ещё 16K.
@@ -475,7 +555,10 @@ vllm:
 Зафиксируйте KV-пул, расход RAM и успешный длинный ответ. Для нового контрольного
 сравнения с A верните `max-model-len: 16384`. В следующем платформенном опыте
 можно оставить B на 128K, но автоматический запуск должен получить то же окно.
-Подробности — [расширение окна](labs/02-kv-ram.md#отдельный-опыт-большее-окно-после-второй-итерации).
+Для ступеней 64K и 128K подайте соответственно 57 344 и 122 880 входных
+токенов с выходом 512. В команде нагрузки выше поменяйте эти длины,
+число запросов и параллельность на 1; задайте отдельное имя серии.
+Успех — completed=1, failed=0 и полная заданная длина, не просто Ready.
 
 <a id="platform"></a>
 ## 6. Gemma через AI Inference
@@ -509,15 +592,70 @@ Kubernetes и DRA затем выделяют конкретные устрой�
 Сопоставляем три колонки: наш расчёт `W + KV(N,S) + R`, план платформы
 и параметры реально запущенного контейнера. Если не совпадает окно,
 assistant, offload или нагрузка, это сравнение разных режимов, а не качества
-автоматизации. После совпадения повторяем ту же серию и смотрим TTFT, ITL,
-throughput и ошибки. Платформа не обязана ускорять одинаковый vLLM — её задача
+автоматизации. После совпадения задаём одинаковые вопросы в WebUI и смотрим
+TTFT, ITL и ошибки. Платформа не обязана ускорять одинаковый vLLM — её задача
 автоматически воспроизвести согласованный запуск и управлять его жизненным циклом.
 
 После ответа API включим подготовленный маршрут `Gemma A — DP` для сервиса
 `hf-platform-gemma`. Откроем её рядом с ручной B, зададим одинаковые вопросы
-и повторим замер при совпадающих параметрах. На дашборде сменится выбранный
-Service, но не набор показателей. [Лабораторная 4](labs/04-deckhouse.md)
-содержит команды для цепочки Model → план → claim → workload → API → чат.
+и сравним поведение при совпадающих параметрах. На дашборде сменится выбранный
+Service, но не набор показателей.
+
+В подготовленном `platform/gemma.yaml` включите `order.enabled: true`.
+Это Helm values, не сырой Kubernetes-манифест:
+
+```bash
+set -o pipefail
+helm template hf-platform-gemma "$DEMO_DIR/charts/inference-service" \
+  -n hardfest-demo -f "$DEMO_DIR/platform/gemma.yaml" |
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f -
+```
+
+После проверки — commit/push этого файла и Sync `hardfest-gemma-platform`.
+В консоли открываем `hf-platform-gemma`: Model → план → claim → Pod.
+В плане и контейнере должны совпасть окно, кеши и assistant последней ручной B.
+
+<details>
+<summary>Проверить API платформенной Gemma; затем тем же способом Qwen</summary>
+
+В консоли найдите Service созданного заказа и его порт.
+В отдельном терминале откройте port-forward на локальный 18005:
+
+```bash
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo get service hf-platform-gemma
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo port-forward svc/hf-platform-gemma 18005:80
+```
+
+Если Service публикует другой порт, замените 80 фактическим.
+В основном терминале введите ключ этого сервиса из менеджера секретов:
+
+```bash
+set +x
+IFS= read -r -s MODEL_API_KEY
+curl --fail --max-time 30 \
+  --header @<(printf 'Authorization: Bearer %s\n' "$MODEL_API_KEY") \
+  http://127.0.0.1:18005/v1/models
+```
+
+Скопируйте ID из ответа в поле `model`, затем отправьте вопрос:
+
+```bash
+curl --fail-with-body --max-time 180 \
+  --header @<(printf 'Authorization: Bearer %s\n' "$MODEL_API_KEY") \
+  -H 'Content-Type: application/json' http://127.0.0.1:18005/v1/chat/completions \
+  -d '{"model":"REPLACE_SERVED_MODEL_ID","max_tokens":512,"temperature":0,"messages":[{"role":"user","content":"Зачем нужен KV-кеш?"}]}'
+unset MODEL_API_KEY
+```
+
+Нужен законченный текст без ошибки. После проверки закройте port-forward.
+Для Qwen повторите с `hf-qwen-platform`, его портом, ID и ключом.
+Секрет не попадает в аргументы curl или Git.
+
+</details>
+
+Это функциональное сравнение с наблюдением задержек. Для числового сравнения
+производительности нужен общий CPU-клиент с авторизацией; команда ручного A/B
+выше не применяется к платформенному StatefulSet без адаптации.
 
 <a id="placement"></a>
 ## 7. Три сервиса на A30
@@ -564,14 +702,23 @@ MPS делит вычисления внутри партиции, но не п�
 Для опыта динамического создания исходно нужна свободная поддерживаемая
 геометрия и включённый MIG mode. Если нужные MIG уже существовали, мы показали
 их выделение, а не создание. Работающие чужие партиции не переразмечаем.
-[Порядок наблюдения и проверка UUID](labs/05-mig-mps.md).
+В уже открытом терминале ноды A30 до и после запуска:
+
+```bash
+nvidia-smi -L
+nvidia-smi mig -lgi
+nvidia-smi mig -lci
+```
 
 ![Индексация документов, поиск и reranking подготавливают контекст для выбранной LLM](assets/16-rag.svg)
 
 Для этого этапа модели подготовлены через `catalog/a30.yaml`, заказы — через
 `platform/embedding.yaml`, `platform/reranker.yaml`, `platform/whisper.yaml`.
-Проверьте реальные embeddings, ранжирование и транскрипцию по
-[лабораторной 5](labs/05-mig-mps.md), затем подключите их в WebUI.
+В трёх подготовленных values включите `order.enabled: true`, проверьте
+Helm render и отправьте commit. В Argo последовательно синхронизируйте
+`hardfest-embedding-platform`, `hardfest-reranker-platform`,
+`hardfest-whisper-platform`. Их destination — кластер A30.
+В его консоли дождитесь готовности всех трёх InferenceService.
 
 При смене Gemma на Qwen индекс сохраняется. При смене эмбеддера индекс
 нужно перестроить с сохранением документов и ACL.
@@ -606,10 +753,22 @@ runtime, рецепта и класса. Скройте обе Gemma в WebUI и
 
 ![Tensor Parallel делит вычисления модели между двумя GPU и требует межкарточного обмена](assets/10-tp2.svg)
 
-[Лабораторная 6](labs/06-tp2.md) проверяет размещение, эффективные параметры,
-`/v1/models`, законченный ответ `/v1/chat/completions`, затем путь через
-Virtual Key и WebUI. Наличие NVLink в топологии само по себе не доказывает
-скорость реального обмена.
+В подготовленном `$DEMO_DIR/platform/qwen.yaml` меняем только
+`order.enabled: true`; Model, класс и стратегия уже заданы. Не заменяем
+этот values сырым InferenceService.
+
+```bash
+set -o pipefail
+helm template hf-qwen-platform "$DEMO_DIR/charts/inference-service" \
+  -n hardfest-demo -f "$DEMO_DIR/platform/qwen.yaml" |
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f -
+```
+
+После успешной проверки — commit/push и Sync `hardfest-qwen-platform`.
+В консоли проверяем готовность `hf-qwen-platform`, две разные GPU в claim
+и `tensor-parallel-size: 2` в Pod. Затем `/v1/models`, законченный ответ
+`/v1/chat/completions` и тот же вопрос через Virtual Key в WebUI.
+Наличие NVLink само по себе не доказывает скорость обмена.
 
 ![Qwen использует собственные MTP-головы без отдельной модели assistant](assets/18-qwen-mtp.svg)
 
@@ -691,7 +850,7 @@ chunking меняет обслуживание очереди, speculation — �
 Пройдите [подготовку инфраструктуры и запуск A](docs/SETUP.md),
 [GitOps](docs/GITOPS.md), [каталог моделей](catalog/README.md),
 [подключение чата](docs/CHAT_AND_ACCESS.md) и [мониторинг](docs/OBSERVABILITY.md).
-Контексты и переменные лабораторных работ определены в подготовке.
+Контексты и переменные команд определены в подготовке.
 Все публичные workload-профили остаются выключенными; запускать их нужно
 адресно из частного Git, не включая всё одновременно.
 

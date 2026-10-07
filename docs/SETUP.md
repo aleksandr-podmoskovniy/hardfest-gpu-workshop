@@ -4,7 +4,7 @@
 Выполните эту подготовку заранее: инфраструктура, модели, рецепты, доступы,
 мониторинг и первый запуск A. Участники начинают с чата, а не с установки стенда.
 Развёртывание чартов описано в [GitOps](GITOPS.md).
-Для RTX используйте [отдельную подготовку](../labs/rtx5060.md#setup).
+Для RTX ниже есть [параметры и стартовые файлы](#rtx).
 
 ## Перед началом
 
@@ -133,8 +133,11 @@ CPU KV и assistant. Рецепт подготовьте, соберите и п
 Проверьте выбранный InferenceServiceClass через `kubectl get ... -o yaml`.
 Не используйте `default-llm` вслепую: его штатный вариант допускает
 масштабирование до двух реплик, но ограничивает каждую одной GPU.
-Точные поля и условия — в [Gemma](../labs/04-deckhouse.md) и
-[Qwen](../labs/06-tp2.md).
+В классе Qwen проверьте `acceleratorPolicy.maxAcceleratorCount` не меньше `2`,
+`scalingPolicy.minReplicas` и `scalingPolicy.maxReplicas` — оба `1`.
+Для H100 используйте `exposurePolicy.authentication: Token`;
+ключ API хранится в менеджере секретов. Не освобождайте работающие GPU
+до успешной проверки модели, рецепта и класса следующего запуска.
 
 ## 5. Подготовить подключения
 
@@ -180,10 +183,23 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo rollout status deployment/hf-g
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims -o wide
 ```
 
-Проверьте выбранный GPU, mount ai-models и логи. Затем выполните короткий
-запрос API из [первой лабораторной](../labs/01-ab.md#2-выполнить-серию)
-и тот же вопрос в WebUI. `helm template`, server dry-run и `Model Ready`
-не являются проверкой CUDA или генерации.
+Проверьте выбранный GPU, mount ai-models и логи. В отдельном терминале:
+
+```bash
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo port-forward svc/hf-gemma-a 18001:8000
+```
+
+В основном терминале:
+
+```bash
+curl --fail http://127.0.0.1:18001/v1/models
+curl --fail-with-body --max-time 180 http://127.0.0.1:18001/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"gemma-4-31b","max_tokens":512,"temperature":0,"messages":[{"role":"user","content":"Объясни KV-кеш двумя предложениями."}]}'
+```
+
+Проверьте тот же вопрос в WebUI. `helm template`, server dry-run и `Model Ready`
+не являются проверкой CUDA или генерации. Закройте port-forward после проверки.
 
 ## 7. Оставить готовое стартовое состояние
 
@@ -195,9 +211,88 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pods,resourceclaims -o wid
 - После регистрации и одобрения тестовый пользователь получил личный VK
   и ответ A; общий ключ вместо персонального не используется.
 - Дашборд видит ручную A: после запроса выросли счётчики, единицы и фильтры проверены.
-- Для A30 подготовлены модели, заказы и начальное состояние геометрии по
-  [лабораторной](../labs/05-mig-mps.md). Не останавливайте чужие сервисы ради опыта.
+- Для A30 подготовлены модели и три заказа. MIG mode уже включён;
+  начальная свободная геометрия позволяет создать две `2g.12gb`.
+  Не останавливайте чужие сервисы ради опыта. Для повторного показа существующие
+  MIG можно выделить заново, но не называть это созданием геометрии.
 
 После этой проверки оставьте A включённой. [Основное руководство](../README.md#ab)
 начинается с её использования. Полные A/B-серии выполняются отдельно от
 свободных вопросов пользователей; условия прогрева фиксируются в результатах.
+
+<a id="rtx"></a>
+## RTX 5060 Ti: подготовить тот же старт
+
+Нужны две RTX 5060 Ti по 16 GiB на одной ноде, доступная RAM для двух
+Gemma и системы, ai-models NodeCache на этой ноде и vLLM 0.31.
+Профили ручных Gemma ограничены 18 GiB RAM каждый; shm входит в этот лимит.
+Настройку дисков, DRA и модулей выполняем до занятия.
+
+Рабочая директория — частный `k8s-config`. Задайте реальные контексты площадки:
+
+```bash
+export GPU_CONTEXT=gpu-cluster ARGO_CONTEXT=management ARGO_NAMESPACE=argocd
+export MIG_CONTEXT=a30-cluster
+export RTX_DIR=argo-projects/gpu-cluster/hardfest-rtx
+export NS=hardfest-rtx
+set -o pipefail
+```
+
+В новый каталог перенесите из публичной копии:
+
+| Что | Куда в `$RTX_DIR` |
+| --- | --- |
+| `charts/vllm-runtime`, `charts/inference-service`, `charts/model-catalog` | `charts/` |
+| `values/rtx/gemma-base.yaml`, `gemma-cache.yaml`, `gemma-spec.yaml` | `values/` |
+| `catalog/rtx.yaml` | `catalog/rtx.yaml` |
+| `platform/rtx-gemma.yaml`, `platform/rtx-qwen.yaml` | `platform/` |
+| `argocd/rtx/*.yaml` | `argo-app/` |
+
+В существующем стенде переносите diff, не перезаписывайте привязки.
+Заполните `REPLACE_*`, repoURL, ветку, destination, DeviceClass, ноду и registry.
+Runtime digest ручных профилей закреплён; образ должен быть доступен ноде.
+Классы сервисов разрешают одну GPU для Gemma и две для Qwen, одну реплику,
+namespace опыта и нужный DeviceClass. Для закрытых моделей Secret с HF-токеном
+доставляется менеджером секретов, не открытым YAML в Git.
+
+1. Через `rtx-models` импортируйте Gemma, assistant и Qwen.
+   Дождитесь Model Ready и готовой доставки на RTX; проверьте три записи в каталоге.
+2. Заранее проверьте выбор рецептов: Gemma 128K с assistant, FP8 KV и RAM KV 4 GiB;
+   Qwen 128K, TP2, MTP, FP8 KV, RAM KV 16 GiB, `max-num-seqs=8`.
+   Не собирайте и не обновляйте модуль посреди показа.
+3. Подготовьте маршруты ниже и мониторинг ручных и платформенных сервисов.
+4. В `values/gemma-base.yaml` поставьте `replicaCount: 1`; Cache/Tune оставьте 0,
+   заказы — `order.enabled: false`. Проверьте render, commit/push и Sync только A.
+
+```bash
+helm template rtx-gemma-base "$RTX_DIR/charts/vllm-runtime" -n "$NS" \
+  -f "$RTX_DIR/values/gemma-base.yaml" |
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f -
+```
+
+После успешной проверки отправьте профиль подписанным commit и примените
+этот SHA в Application `rtx-gemma-base`. Дождитесь Ready и выполните
+запрос через API и обычный одобренный аккаунт WebUI.
+
+| Название в WebUI | Маршрут | Service:порт | Имя upstream |
+| --- | --- | --- | --- |
+| Gemma A — Base | `vllm/rtx-gemma-base` | `rtx-gemma-base:8000` | `rtx-gemma-base` |
+| Gemma B — Cache | `vllm/rtx-gemma-cache` | `rtx-gemma-cache:8000` | `rtx-gemma-cache` |
+| Gemma B — Tune | `vllm/rtx-gemma-tune` | `rtx-gemma-tune:8000` | `rtx-gemma-tune` |
+| Gemma A — DP | `vllm/rtx-gemma-base` | `rtx-gemma-platform:80` | `rtx-gemma-e2b` |
+| Qwen 9B — TP2 | `vllm/rtx-qwen35-tp2` | `rtx-qwen35-tp2:80` | `rtx-qwen35-9b` |
+
+Все эти Service — в `hardfest-rtx`. До занятия показываем только Base.
+Разрешения VK и тарифы учитывают реальные upstream-имена; ключи и расход
+при переключении сохраняются. Fallback и кеш готовых ответов шлюза выключены.
+Для одинаковых A/B-запросов `chat_template_kwargs.enable_thinking` одинаков.
+
+В длинном чате оставьте до 8192 токенов на ответ; для большего выхода
+соответственно уменьшайте вход. Вход с шаблоном плюс лимит выхода не должен
+превышать окно. `finish_reason: length` у обычного вопроса — обрыв по лимиту,
+не доказательство законченного ответа. Контрольному A с окном 4K длинные
+настройки не назначайте.
+
+A30 готовится так же, как в основном варианте, и остаётся в соседнем кластере.
+На старте A отвечает, вторая RTX свободна, метрики видны. Дальше —
+[единый сценарий RTX](../RTX5060.md), без дополнительных упражнений.

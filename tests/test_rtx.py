@@ -67,7 +67,7 @@ class RTXProfiles(unittest.TestCase):
         self.assertIn('transfer_type="CPU_to_GPU"} 1.0518528e+07', diagnostic["after_replay"])
 
     def test_distroless_benchmark_results_are_returned_on_stdout(self):
-        for name in ("RTX5060.md", "labs/rtx5060.md", "labs/01-ab.md"):
+        for name in ("RTX5060.md", "README.md"):
             text = (ROOT / name).read_text()
             self.assertIn("--result-dir /dev --result-filename stdout", text)
             self.assertIn("--num-warmups 0", text)
@@ -186,9 +186,8 @@ class RTXProfiles(unittest.TestCase):
             deployment = next(d for d in yaml.safe_load_all(result.stdout) if d["kind"] == "Deployment")
             self.assertEqual(deployment["metadata"]["annotations"]["ai.deckhouse.io/model"], expected)
 
-    def test_full_rtx_guide_has_ordered_stages_and_working_lab_anchors(self):
+    def test_full_rtx_guide_has_ordered_stages_and_inline_commands(self):
         guide = (ROOT / "RTX5060.md").read_text()
-        lab = (ROOT / "labs/rtx5060.md").read_text()
         self.assertIn("(RTX5060.md)", (ROOT / "README.md").read_text())
         stages = ["topology", "ab", "monitoring", "latency", "memory", "ram",
                   "speculation", "platform", "placement", "tp2", "conclusion", "results", "cleanup", "setup"]
@@ -196,16 +195,15 @@ class RTXProfiles(unittest.TestCase):
         self.assertEqual(positions, sorted(positions))
         for target in re.findall(r"\]\(#([^)]+)\)", guide):
             self.assertIn(f'<a id="{target}"></a>', guide)
-        for target in re.findall(r"labs/rtx5060.md#([^)]*)", guide):
-            self.assertIn(f'<a id="{target}"></a>', lab)
+        self.assertNotIn("labs/", guide)
         self.assertGreaterEqual(len(re.findall(r"!\[.+?\]\(assets/", guide)), 10)
         for term in ("ai-models", "InferenceService", "16 GiB", "assistant", "TP2", "MTP",
                      "NodeCache"):
-            self.assertIn(term.lower(), (guide + lab).lower())
+            self.assertIn(term.lower(), guide.lower())
         self.assertNotIn("·", guide)
 
     def test_participant_guides_do_not_contain_preparation_status(self):
-        for filename in ("RTX5060.md", "labs/rtx5060.md"):
+        for filename in ("RTX5060.md", "README.md"):
             text = (ROOT / filename).read_text()
             for fragment in ("Состояние проверки на", "условия полного показа",
                              "во время выступления", "графики проверены визуально",
@@ -217,14 +215,16 @@ class RTXProfiles(unittest.TestCase):
         self.assertIn("rtx5060-nodecache-20261006.json", guide)
         self.assertIn("общий лимит расходов", guide)
 
-    def test_catalog_chat_examples_use_served_model_names(self):
-        lab = (ROOT / "labs/rtx5060.md").read_text()
-        for name in ("rtx-gemma-e2b", "rtx-qwen35-9b"):
-            self.assertIn('"model":"' + name + '"', lab)
-        for old in ("google/gemma-4-E2B-it", "Qwen/Qwen3.5-9B"):
-            self.assertNotIn('"model":"' + old + '"', lab)
-        self.assertIn("18001/v1/models", lab)
-        self.assertIn("18003/v1/models", lab)
+    def test_catalog_chat_routing_uses_served_model_names(self):
+        preparation = (ROOT / "docs/SETUP.md").read_text().split('id="rtx"', 1)[1]
+        for service, served in (("rtx-gemma-platform", "rtx-gemma-e2b"),
+                                ("rtx-qwen35-tp2", "rtx-qwen35-9b")):
+            row = next(line for line in preparation.splitlines() if f"`{service}:80`" in line)
+            self.assertTrue(row.endswith(f"`{served}` |"))
+        guide = (ROOT / "RTX5060.md").read_text()
+        self.assertIn("--model rtx-qwen35-9b", guide)
+        self.assertIn("не меняем рецепт", guide)
+        self.assertIn("simple_kv_offload_load_blocks_total", guide)
 
     def test_preload_is_inert_and_refuses_unbound_images(self):
         command = ["helm", "template", "rtx", str(ROOT / "charts/model-preload"),

@@ -46,7 +46,7 @@ class KVTeaching(unittest.TestCase):
         for term in ("65536", "131072", "57344", "122880", "assistant",
                      "27-rtx-long-context.svg", "completed=1", "failed=0"):
             self.assertIn(term, stage)
-        qwen = (ROOT / "labs/rtx5060.md").read_text().split('id="qwen-long-context"', 1)[1]
+        qwen = (ROOT / "RTX5060.md").read_text().split('id="qwen-long-context"', 1)[1]
         self.assertIn("--endpoint /v1/completions --model rtx-qwen35-9b", qwen)
         self.assertIn("Длинный Qwen", qwen)
         self.assertIn("122880", qwen)

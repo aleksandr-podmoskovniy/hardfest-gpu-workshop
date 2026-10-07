@@ -196,7 +196,7 @@ RAM и выключите A через её values.
 
 Для второй итерации с assistant дополнительно смените второй `valueFiles`
 у Application B на `../../site/gemma-assistant.yaml`.
-Подробные изменения движка — в [лабораторной](../labs/03-speculation.md).
+Переход разобран прямо в [основном сценарии](../README.md#speculation).
 
 После каждой правки повторяйте: **lint → server dry-run → diff → commit/push →
 sync конкретного commit → Ready и запрос API**.

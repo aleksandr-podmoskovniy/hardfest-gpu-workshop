@@ -92,13 +92,26 @@ class Guide(unittest.TestCase):
             with self.subTest(path=path.relative_to(ROOT)):
                 self.assertNotRegex(shell, r"(?m)(?:^|[|;])\s*(?:jq|yq|python3?)(?:\s|$)")
 
-    def test_labs_expose_preconditions_numbered_steps_and_completion_checks(self):
-        for path in (ROOT / "labs").glob("*.md"):
-            text = path.read_text()
-            with self.subTest(path=path.name):
-                self.assertIn("## Перед началом", text)
-                self.assertIn("## Проверка", text)
-                self.assertGreaterEqual(len(re.findall(r"^## \d+\. ", text, re.M)), 3)
+    def test_walkthroughs_do_not_send_readers_to_separate_labs(self):
+        self.assertEqual(list((ROOT / "labs").glob("*.md")), [])
+        for name in ("README.md", "RTX5060.md"):
+            text = (ROOT / name).read_text()
+            self.assertNotIn("labs/", text)
+            self.assertNotIn("лаборатор", text.lower())
+            self.assertIn("<summary>", text)
+            self.assertIn("helm template", text)
+            self.assertIn("vllm bench serve", text)
+            self.assertIn("nvidia-smi mig -lgi", text)
+
+    def test_inline_commands_keep_auth_and_collapsible_sections(self):
+        for name in ("README.md", "RTX5060.md"):
+            text = (ROOT / name).read_text()
+            self.assertEqual(text.count("<details>"), text.count("</details>"))
+            self.assertEqual(text.count("<details>"), text.count("<summary>"))
+            self.assertIn("IFS= read -r -s MODEL_API_KEY", text)
+            self.assertIn("--header @<(printf 'Authorization: Bearer %s", text)
+            self.assertNotIn('--header "Authorization: Bearer $', text)
+            self.assertIn("unset MODEL_API_KEY", text)
 
     def test_helm_profiles_are_safe_and_complete(self):
         profiles = list((ROOT / "values").glob("*.yaml"))
@@ -148,14 +161,13 @@ class Guide(unittest.TestCase):
     def test_platform_chapter_describes_recipe_workflow(self):
         readme = (ROOT / "README.md").read_text()
         chapter = readme.split('id="platform"', 1)[1].split('id="placement"', 1)[0]
-        lab = (ROOT / "labs/04-deckhouse.md").read_text()
         for term in ("Gemma 64K", "CPU KV", "assistant", "hf-platform-gemma", "Gemma A — DP"):
             self.assertIn(term, chapter)
         for term in ("charts/inference-service", "order.enabled: true", "model", "Ready",
-                     "полный ответ"):
-            self.assertIn(term, lab)
-        self.assertIn("Не входят в этот базовый рецепт", lab)
-        self.assertIn("Короткий вариант: A вручную, B через платформу", lab)
+                     "helm template"):
+            self.assertIn(term, readme)
+        self.assertIn("не сырой Kubernetes-манифест", chapter)
+        self.assertIn("вместо", chapter)
 
     def test_original_teaching_chain_is_preserved_for_current_models(self):
         for name in ("README.md", "RTX5060.md"):
@@ -191,35 +203,30 @@ class Guide(unittest.TestCase):
         self.assertLess(readme.index('id="tp2"'), readme.index('id="cleanup"'))
         for term in ("AI Inference", "DeviceClass", "tensor-parallel-size: 2",
                      "acceleratorCount=2", "/v1/chat/completions",
-                     "Virtual Key", "OIDC", "MTP", "labs/06-tp2.md"):
+                     "Virtual Key", "OIDC", "MTP", "order.enabled: true"):
             self.assertIn(term, chapter)
         for filename in ("17-qwen-transition.svg", "18-qwen-mtp.svg", "19-qwen-capacity.svg"):
             self.assertIn(filename, chapter)
-        lab = (ROOT / "labs/06-tp2.md").read_text()
-        self.assertIn("acceleratorCount=2", lab)
-        self.assertIn("MTP", lab)
-        self.assertIn("## 2. Освободить обе H100", lab)
+        self.assertIn('helm template hf-qwen-platform', chapter)
+        self.assertIn('charts/inference-service', chapter)
+        self.assertNotIn('kind: InferenceService', chapter)
 
     def test_platform_preflight_precedes_releasing_working_gpus(self):
-        gemma = (ROOT / "labs/04-deckhouse.md").read_text()
-        preflight = gemma.split("## 2. Освободить GPU и RAM", 1)[0]
+        preflight = (ROOT / "docs/SETUP.md").read_text()
         for term in ("inference-readiness", "до успешной проверки", "authentication: Token"):
-            self.assertIn(term, preflight.lower() if term.startswith("до ") else preflight)
-        qwen = (ROOT / "labs/06-tp2.md").read_text()
-        preflight = qwen.split("## 2. Освободить обе H100", 1)[0]
+            self.assertIn(term, preflight)
         for field in ("acceleratorPolicy.maxAcceleratorCount", "scalingPolicy.minReplicas",
                       "scalingPolicy.maxReplicas", "exposurePolicy.authentication"):
             self.assertIn(field, preflight)
-        self.assertIn("Не меньше `2`", preflight)
-        self.assertIn("Оба `1`", preflight)
+        self.assertIn("не меньше `2`", preflight)
+        self.assertIn("оба `1`", preflight)
 
     def test_context_extension_preserves_second_iteration(self):
-        lab = (ROOT / "labs/02-kv-ram.md").read_text()
-        extension = lab.split("## Отдельный опыт:", 1)[1].split("## Проверка", 1)[0]
-        for setting in ("vllm.max-model-len", "speculative-config", "prefill 2048",
-                        "site/gemma-assistant.yaml", "65536"):
+        doc = (ROOT / "README.md").read_text()
+        extension = doc.split("### Затем — отдельная проверка большего контекста", 1)[1].split('id="platform"', 1)[0]
+        for setting in ("max-model-len", "все настройки второй итерации", "65 536", "131072"):
             self.assertIn(setting, extension)
-        self.assertIn("Не заменяйте весь профиль", extension)
+        self.assertIn("не подменяйте его другим набором flags", extension)
 
     def test_chat_path_is_present_from_manual_to_platform_stages(self):
         readme = (ROOT / "README.md").read_text()
@@ -257,16 +264,12 @@ class Guide(unittest.TestCase):
 
     def test_initial_launch_commands_live_in_preparation(self):
         setup = (ROOT / "docs/SETUP.md").read_text()
-        lab = (ROOT / "labs/01-ab.md").read_text()
         self.assertIn("## 6. Заранее запустить A", setup)
         self.assertIn("Prepare running Gemma baseline", setup)
-        self.assertIn("A уже запущена", lab)
-        self.assertNotIn("Start manual Gemma baseline", lab)
-        rtx = (ROOT / "labs/rtx5060.md").read_text()
-        preparation, exercises = rtx.split('<a id="base"></a>', 1)
-        self.assertIn("Prepare running RTX Gemma baseline", preparation)
-        self.assertIn("A уже запущена", exercises)
-        self.assertNotIn("Prepare running RTX Gemma baseline", exercises)
+        rtx = setup.split('id="rtx"', 1)[1]
+        self.assertIn("replicaCount: 1", rtx)
+        self.assertIn("rtx-gemma-base", rtx)
+        self.assertIn("заказы — `order.enabled: false`", rtx)
 
     def test_readme_has_no_decorative_tagline_or_boilerplate_labels(self):
         readme = (ROOT / "README.md").read_text()

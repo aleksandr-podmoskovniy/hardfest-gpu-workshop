@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -11,6 +12,25 @@ CHART = ROOT / "charts/inference-service"
 
 
 class InferenceOrders(unittest.TestCase):
+    def test_inline_launch_commands_use_real_helm_values(self):
+        # Exercise the filenames shown in the walkthroughs, not a separate lab.
+        expected = {"README.md": {"gemma", "qwen"},
+                    "RTX5060.md": {"rtx-gemma", "rtx-qwen"}}
+        for filename, orders in expected.items():
+            text = (ROOT / filename).read_text()
+            commands = re.findall(r"helm template [^`]*?\|\n\s+kubectl[^\n]*", text)
+            found = set()
+            for command in commands:
+                if "/charts/inference-service" not in command:
+                    continue
+                name = re.search(r'/platform/([\w-]+)\.yaml', command)[1]
+                self.assertNotIn('apply --dry-run=server -f "$', command)
+                self.assertIn("apply --dry-run=server -f -", command)
+                rendered = self.render(name, overrides=self.enabled())
+                self.assertEqual([doc["kind"] for doc in rendered], ["InferenceService"])
+                found.add(name)
+            self.assertEqual(found, orders)
+
     def render(self, name, enabled=False, overrides=None, success=True):
         with tempfile.TemporaryDirectory() as tmp:
             flags = Path(tmp) / "values.yaml"

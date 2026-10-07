@@ -17,7 +17,7 @@ class BenchmarkResult(unittest.TestCase):
             ({**success, "total_input_tokens": 65535}, False),
             ({}, False),
         ]
-        text = (ROOT / "labs/01-ab.md").read_text()
+        text = (ROOT / "README.md").read_text()
         # The reader checks an explicit field/value table, not a hidden parser.
         # Tie those requirements to the actual command's workload dimensions.
         requirements = {key: int(value) for key, value in re.findall(
@@ -34,7 +34,7 @@ class BenchmarkResult(unittest.TestCase):
             with self.subTest(result=result):
                 self.assertEqual(all(result.get(key) == value
                                      for key, value in requirements.items()), accepted)
-        self.assertIn("labs/01-ab.md", (ROOT / "README.md").read_text())
+        self.assertIn("<summary>Команда одинаковой нагрузки", text)
 
 
 if __name__ == "__main__":

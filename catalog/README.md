@@ -144,7 +144,7 @@ model:
 
 Для Gemma меняется только `name: gemma-4-31b`. Источник задаёт веса, но не заменяет
 рецепт, DeviceClass и число GPU. Следующие шаги —
-[Gemma через AI Inference](../labs/04-deckhouse.md) и [Qwen TP2](../labs/06-tp2.md).
+[Gemma через AI Inference](../README.md#platform) и [Qwen TP2](../README.md#tp2).
 
 ### В ручном Deployment
 
@@ -187,7 +187,7 @@ source.path должен вести к `$A30_DIR/charts/model-catalog`.
 Qwen3 Reranker 4B W4A16 и Whisper large-v3.
 В Console откройте **кластер A30 → hardfest-demo → AI-модели**.
 Каталог H100-кластера не показывает Models из соседнего кластера.
-После импорта переходите к [трём сервисам](../labs/05-mig-mps.md).
+После импорта переходите к [трём сервисам](../README.md#placement).
 
 ## Каталог RTX 5060 Ti
 
@@ -195,7 +195,7 @@ Qwen3 Reranker 4B W4A16 и Whisper large-v3.
 Gemma 4 E2B, её отдельный assistant и Qwen3.5-9B с нативным MTP.
 Модель из другого namespace не заменяет локальный `Model` для заказа.
 Команды, Argo Application и отдельные условия готовности доставки/assistant —
-в [лабораторной работе RTX](../labs/rtx5060.md#setup).
+в [подготовке RTX](../docs/SETUP.md#rtx).
 Теория и полный порядок опытов — в [сценарии RTX](../RTX5060.md).
 
 ## Обновление ревизии
