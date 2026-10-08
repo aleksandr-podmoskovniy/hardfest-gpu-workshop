@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
-<title id="title">Каталог и сервис — одна цепочка</title><desc id="desc">Целевой путь RTX: ai-models → InferenceService → GPU → ответ в чате.</desc>
+<title id="title">Каталог и сервис — одна цепочка</title><desc id="desc">ai-models доставляет веса; AI Inference выбирает запуск; шлюз открывает доступ.</desc>
 <defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
-<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}.formula{font-family:"DejaVu Sans Mono",Menlo,Consolas,monospace}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
 <text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
 <tspan x="70" dy="0">Каталог и сервис — одна цепочка</tspan>
 </text>
 <text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">Целевой путь RTX: ai-models → InferenceService → GPU → ответ в чате.</tspan>
+<tspan x="48" dy="0">ai-models доставляет веса; AI Inference выбирает запуск; шлюз открывает доступ.</tspan>
 </text>
 <path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <rect x="48" y="175" width="320" height="136" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
@@ -66,13 +66,13 @@
 <path d="M992.0 317 L992.0 388" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
 <rect x="48" y="577" width="1104" height="100" rx="12" fill="#fff5e4" stroke="#d9e2ee" stroke-width="1.5"/>
 <text x="72" y="610" font-size="24" fill="#946017" text-anchor="start" font-weight="700" data-max-width="1056">
-<tspan x="72" dy="0">Перед запуском: два независимых условия</tspan>
+<tspan x="72" dy="0">Проверяем три разных результата</tspan>
 </text>
 <text x="72" y="646" font-size="22" fill="#17243b" text-anchor="start" data-max-width="1056">
-<tspan x="72" dy="0">Доставка на RTX; для Gemma — ещё поддержка отдельного assistant.</tspan>
+<tspan x="72" dy="0">Модель в каталоге → файлы на RTX → ответ сервиса через личный ключ.</tspan>
 </text>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">Каталог Ready ≠ сервис Ready. Предыдущий HF/PVC-прогон не проверяет эту цепочку.</tspan>
+<tspan x="48" dy="0">Gemma с MTP получает два артефакта: основную модель и совместимый assistant.</tspan>
 </text>
 </svg>

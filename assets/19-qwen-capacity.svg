@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
-<title id="title">Сколько запросов выдерживает Qwen</title><desc id="desc">Одинаковые вход, выход, TP2, MTP и состояние кэша на каждой ступени нагрузки.</desc>
+<title id="title">Наращиваем нагрузку: 1 → 2 → 4 → 8</title><desc id="desc">Одинаковые вход, выход, TP2, MTP и состояние кэша на каждой ступени нагрузки.</desc>
 <defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
-<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}.formula{font-family:"DejaVu Sans Mono",Menlo,Consolas,monospace}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
 <text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
-<tspan x="70" dy="0">Сколько запросов выдерживает Qwen</tspan>
+<tspan x="70" dy="0">Наращиваем нагрузку: 1 → 2 → 4 → 8</tspan>
 </text>
 <text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
 <tspan x="48" dy="0">Одинаковые вход, выход, TP2, MTP и состояние кэша на каждой ступени нагрузки.</tspan>
@@ -14,39 +14,24 @@
 <text x="48" y="180" font-size="19" fill="#536278" text-anchor="start" font-weight="700">
 <tspan x="48" dy="0">ОДНОВРЕМЕННЫЕ ЗАПРОСЫ</tspan>
 </text>
-<rect x="48" y="207" width="124" height="78" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="110" y="260" font-size="39" fill="#1554dc" text-anchor="middle" font-weight="700">
-<tspan x="110" dy="0">1</tspan>
+<rect x="48" y="207" width="240" height="78" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="168" y="260" font-size="42" fill="#1554dc" text-anchor="middle" font-weight="700" class="formula">
+<tspan x="168" dy="0">1</tspan>
 </text>
-<path d="M178 246.0 L204 246.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
-<rect x="210" y="207" width="124" height="78" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="272" y="260" font-size="39" fill="#1554dc" text-anchor="middle" font-weight="700">
-<tspan x="272" dy="0">2</tspan>
+<path d="M294 246.0 L330 246.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="336" y="207" width="240" height="78" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="456" y="260" font-size="42" fill="#1554dc" text-anchor="middle" font-weight="700" class="formula">
+<tspan x="456" dy="0">2</tspan>
 </text>
-<path d="M340 246.0 L366 246.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
-<rect x="372" y="207" width="124" height="78" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="434" y="260" font-size="39" fill="#1554dc" text-anchor="middle" font-weight="700">
-<tspan x="434" dy="0">4</tspan>
+<path d="M582 246.0 L618 246.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="624" y="207" width="240" height="78" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="744" y="260" font-size="42" fill="#1554dc" text-anchor="middle" font-weight="700" class="formula">
+<tspan x="744" dy="0">4</tspan>
 </text>
-<path d="M502 246.0 L528 246.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
-<rect x="534" y="207" width="124" height="78" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="596" y="260" font-size="39" fill="#1554dc" text-anchor="middle" font-weight="700">
-<tspan x="596" dy="0">8</tspan>
-</text>
-<path d="M664 246.0 L690 246.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
-<rect x="696" y="207" width="124" height="78" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="758" y="260" font-size="39" fill="#1554dc" text-anchor="middle" font-weight="700">
-<tspan x="758" dy="0">16</tspan>
-</text>
-<path d="M826 246.0 L852 246.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
-<rect x="858" y="207" width="124" height="78" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="920" y="260" font-size="39" fill="#1554dc" text-anchor="middle" font-weight="700">
-<tspan x="920" dy="0">32</tspan>
-</text>
-<path d="M988 246.0 L1014 246.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
-<rect x="1020" y="207" width="124" height="78" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="1082" y="260" font-size="39" fill="#1554dc" text-anchor="middle" font-weight="700">
-<tspan x="1082" dy="0">50</tspan>
+<path d="M870 246.0 L906 246.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<rect x="912" y="207" width="240" height="78" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="1032" y="260" font-size="42" fill="#1554dc" text-anchor="middle" font-weight="700" class="formula">
+<tspan x="1032" dy="0">8</tspan>
 </text>
 <rect x="48" y="331" width="258" height="140" rx="12" fill="#fff5e4" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="72" y="373" font-size="25" fill="#946017" text-anchor="start" font-weight="700" data-max-width="210">
@@ -96,6 +81,6 @@
 </text>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">Окно 256K не означает, что сервис выдержит 50 одновременных историй по 256K.</tspan>
+<tspan x="48" dy="0">Восемь активных запросов ≠ восемь полностью заполненных контекстных окон.</tspan>
 </text>
 </svg>

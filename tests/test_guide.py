@@ -78,7 +78,11 @@ class Guide(unittest.TestCase):
         for command in ("apply --dry-run=server -f", "git commit -S -s", "git push"):
             self.assertIn(command, (ROOT / "docs/GITOPS.md").read_text())
         self.assertNotIn("kustomize", readme.lower())
-        self.assertNotIn("```text", readme)
+        # Copyable equations may use text fences; paragraphs belong in prose.
+        for formula in re.findall(r"```text\n(.*?)```", readme, re.S):
+            lines = [line for line in formula.splitlines() if line.strip()]
+            self.assertLessEqual(len(lines), 3)
+            self.assertTrue(all(re.search(r"KV(?:_bytes|\(S\)) =", line) for line in lines))
         gitops = (ROOT / "docs/GITOPS.md").read_text()
         for term in ("ARGO_CONTEXT", "GPU_CONTEXT", '--type merge --patch',
                      r'\"operation\"', r'\"revision\":\"$REVISION\"', r'\"prune\":false'):
@@ -223,7 +227,7 @@ class Guide(unittest.TestCase):
 
     def test_context_extension_preserves_second_iteration(self):
         doc = (ROOT / "README.md").read_text()
-        extension = doc.split("### Затем — отдельная проверка большего контекста", 1)[1].split('id="platform"', 1)[0]
+        extension = doc.split('id="long-context"', 1)[1].split('id="platform"', 1)[0]
         for setting in ("max-model-len", "все настройки второй итерации", "65 536", "131072"):
             self.assertIn(setting, extension)
         self.assertIn("не подменяйте его другим набором flags", extension)
@@ -251,7 +255,8 @@ class Guide(unittest.TestCase):
         for name in ("README.md", "RTX5060.md"):
             text = (ROOT / name).read_text()
             with self.subTest(name=name):
-                self.assertIn("Gemma A — Base уже запущена", text)
+                intro = " ".join(re.sub(r"[*`]", "", text.split('id="contents"', 1)[0]).split())
+                self.assertRegex(intro, r"Gemma A — Base.{0,10}уже (?:запущена|работает)")
                 baseline = text.split('id="ab"', 1)[1].split('id="latency"', 1)[0]
                 self.assertIn("Argo CD", baseline)
                 self.assertIn("ещё не", baseline)

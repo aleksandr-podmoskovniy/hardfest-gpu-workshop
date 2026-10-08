@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
-<title id="title">Один чат — несколько моделей</title><desc id="desc">WebUI и A30 — в одном кластере; шлюз и H100 — в другом.</desc>
+<title id="title">Один чат — несколько моделей</title><desc id="desc">Синий маршрут — чат. Зелёный — поиск по документам и распознавание речи.</desc>
 <defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
-<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}.formula{font-family:"DejaVu Sans Mono",Menlo,Consolas,monospace}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
 <text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
 <tspan x="70" dy="0">Один чат — несколько моделей</tspan>
 </text>
 <text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">WebUI и A30 — в одном кластере; шлюз и H100 — в другом.</tspan>
+<tspan x="48" dy="0">Синий маршрут — чат. Зелёный — поиск по документам и распознавание речи.</tspan>
 </text>
 <path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <rect x="48" y="160" width="428" height="518" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
@@ -46,24 +46,19 @@
 <path d="M458 281.0 L534 281.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
 <rect x="540" y="414" width="258" height="108" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="564" y="450" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="210">
-<tspan x="564" dy="0">Gemma A — Base</tspan>
+<tspan x="564" dy="0">Gemma A</tspan>
 </text>
 <text x="564" y="484" font-size="20" fill="#17243b" text-anchor="start" data-max-width="210">
-<tspan x="564" dy="0">H100 №1</tspan>
+<tspan x="564" dy="0">Base</tspan>
+<tspan x="564" dy="28.0">H100 №1</tspan>
 </text>
 <rect x="870" y="414" width="258" height="108" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="894" y="450" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="210">
-<tspan x="894" dy="0">Gemma B — Tune</tspan>
+<tspan x="894" dy="0">Gemma B</tspan>
 </text>
 <text x="894" y="484" font-size="20" fill="#17243b" text-anchor="start" data-max-width="210">
-<tspan x="894" dy="0">H100 №2</tspan>
-</text>
-<rect x="870" y="554" width="258" height="108" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="894" y="590" font-size="24" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="210">
-<tspan x="894" dy="0">Kubernetes MCP</tspan>
-</text>
-<text x="894" y="624" font-size="20" fill="#17243b" text-anchor="start" data-max-width="210">
-<tspan x="894" dy="0">Администратор</tspan>
+<tspan x="894" dy="0">Tune</tspan>
+<tspan x="894" dy="28.0">H100 №2</tspan>
 </text>
 <rect x="72" y="536" width="380" height="126" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="96" y="578" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="332">
@@ -76,8 +71,14 @@
 <path d="M834.0 352 L834 382" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" data-connector="true"/>
 <path d="M834 382 L677.0 382.0 Q669.0 382 669.0 390.0 L669.0 408" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
 <path d="M834 382 L991.0 382.0 Q999.0 382 999.0 390.0 L999.0 408" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
-<path d="M834 382 L834.0 600.0 Q834 608 842.0 608.0 L864 608.0" fill="none" stroke="#7041b8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-7041b8)" stroke-dasharray="6 5" data-connector="true"/>
 <path d="M534 320.0 L504.0 320.0 Q496 320 496.0 328.0 L496.0 591.0 Q496 599 488.0 599.0 L458 599.0" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
+<rect x="540" y="554" width="588" height="108" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="564" y="590" font-size="24" fill="#536278" text-anchor="start" font-weight="700" data-max-width="540">
+<tspan x="564" dy="0">Финал: Qwen вместо двух Gemma</tspan>
+</text>
+<text x="564" y="624" font-size="20" fill="#17243b" text-anchor="start" data-max-width="540">
+<tspan x="564" dy="0">Один сервис использует обе карты</tspan>
+</text>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
 <tspan x="48" dy="0">Gemma сменяется на Qwen TP2. Чат, пользователи и базы знаний остаются.</tspan>

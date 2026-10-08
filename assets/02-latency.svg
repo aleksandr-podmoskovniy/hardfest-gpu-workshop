@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
 <title id="title">Из чего складывается время ответа</title><desc id="desc">Очередь, обработка входа и генерация — разные части задержки.</desc>
 <defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
-<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}</style>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}.formula{font-family:"DejaVu Sans Mono",Menlo,Consolas,monospace}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
 <text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
@@ -11,6 +11,9 @@
 <tspan x="48" dy="0">Очередь, обработка входа и генерация — разные части задержки.</tspan>
 </text>
 <path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="880" y="179" font-size="20" fill="#7041b8" text-anchor="middle" font-weight="700">
+<tspan x="880" dy="0">DECODE — ГЕНЕРАЦИЯ ТОКЕНОВ</tspan>
+</text>
 <rect x="48" y="220" width="220" height="88" rx="0" fill="#fff5e4" stroke="#ffffff" stroke-width="1.5"/>
 <text x="158.0" y="274" font-size="25" fill="#946017" text-anchor="middle" font-weight="700">
 <tspan x="158.0" dy="0">Очередь</tspan>
@@ -39,13 +42,9 @@
 <text x="848" y="359" font-size="20" fill="#536278" text-anchor="start">
 <tspan x="848" dy="0">Первое слово ответа</tspan>
 </text>
-<path d="M608 380 V390 H1152 V380" fill="none" stroke="#7041b8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="880" y="418" font-size="21" fill="#7041b8" text-anchor="middle">
-<tspan x="880" dy="0">Decode: reasoning + финальный текст</tspan>
-</text>
 <path d="M48 424 V434 H608 V424" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="328.0" y="416" font-size="25" fill="#1554dc" text-anchor="middle" font-weight="700">
-<tspan x="328.0" dy="0">TTFT</tspan>
+<tspan x="328.0" dy="0">TTFT — до первого токена</tspan>
 </text>
 <path d="M48 493 V503 H848 V493" fill="none" stroke="#7041b8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="448.0" y="485" font-size="25" fill="#7041b8" text-anchor="middle" font-weight="700">
@@ -55,11 +54,11 @@
 <text x="600.0" y="554" font-size="25" fill="#087d78" text-anchor="middle" font-weight="700">
 <tspan x="600.0" dy="0">Полное время запроса</tspan>
 </text>
-<text x="48" y="654" font-size="30" fill="#17243b" text-anchor="start" font-weight="700">
-<tspan x="48" dy="0">p95(TTFT) − p95(очереди) ≠ p95(prefill)</tspan>
+<text x="48" y="654" font-size="27" fill="#17243b" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">Длинный вход увеличивает prefill; длинный ответ — decode.</tspan>
 </text>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">Шкала условная. Сеть и движок добавляют накладные расходы.</tspan>
+<tspan x="48" dy="0">Шкала условная. Рассуждение есть не у всех моделей; сеть и движок тоже добавляют время.</tspan>
 </text>
 </svg>
