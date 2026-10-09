@@ -1,4 +1,4 @@
-# Alternative to PVC site/gemma.yaml. Never layer both files.
+# Copy to the private GitOps repository as site/gemma.yaml.
 # ai-models injects the read-only cache mount from the workload annotation.
 nodeSelector:
   kubernetes.io/hostname: REPLACE_H100_NODE

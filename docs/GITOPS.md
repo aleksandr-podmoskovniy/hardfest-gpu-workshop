@@ -106,9 +106,8 @@ helm:
 Значения из `site/` перекрывают профиль, поэтому настройки производительности
 туда не переносите. Списки Helm заменяет целиком: assistant site содержит оба `modelRefs`.
 
-Вариант с заранее подготовленным PVC остаётся в `examples/site-gemma.yaml`
-и `examples/site-gemma-assistant.yaml`. Выберите один источник весов:
-`modelRefs` (ai-models) или `modelVolumes` (PVC), не оба сразу.
+В этом сценарии веса доставляет ai-models: в site-файле задаются `modelRefs`.
+Отдельный загрузчик моделей и вручную подготовленные PVC не нужны.
 
 Все профили пока оставьте с `replicaCount: 0`. Autosync и общий prune не включайте.
 

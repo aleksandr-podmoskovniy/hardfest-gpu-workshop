@@ -5,9 +5,18 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 GUIDES = (ROOT / "README.md", ROOT / "RTX5060.md")
+TALK_TITLE = "Инференс без простоя GPU: чиним LLM-сервис руками и делим карту на живом кластере"
 
 
 class Readability(unittest.TestCase):
+    def test_both_hardware_routes_keep_the_official_talk_title(self):
+        for path in (*GUIDES, ROOT / "WORKSHOP.md"):
+            with self.subTest(guide=path.name):
+                prose = re.sub(r"(?ms)^```[^\n]*\n.*?^```\s*$", "", path.read_text())
+                headings = re.findall(r"^# (.+)$", prose, re.M)
+                self.assertEqual(headings, [TALK_TITLE])
+        self.assertEqual((ROOT / "NOTICE").read_text().splitlines()[0], TALK_TITLE)
+
     def test_disclosures_are_balanced_named_and_not_nested(self):
         for path in GUIDES:
             text = path.read_text()

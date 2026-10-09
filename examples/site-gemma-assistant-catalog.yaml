@@ -1,4 +1,5 @@
-# Complete replacement for site/gemma-assistant.yaml, not an extra overlay.
+# Copy as site/gemma-assistant.yaml; includes both ai-models references.
+# Use instead of site/gemma.yaml, not as an extra overlay.
 nodeSelector:
   kubernetes.io/hostname: REPLACE_H100_NODE
 tolerations: []

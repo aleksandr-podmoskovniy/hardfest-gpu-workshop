@@ -197,9 +197,10 @@ class Guide(unittest.TestCase):
                 mib = 2 * element_bytes * (3 * 512 * 131072 + 12 * 256 * 512) * histories / 2**20
                 self.assertIn(f"{mib:g} MiB", rtx)
 
-    def test_workshop_has_one_canonical_source(self):
+    def test_workshop_redirects_to_guides_without_a_duplicate_scenario(self):
         alias = (ROOT / "WORKSHOP.md").read_text()
-        self.assertIn("[README.md](README.md)", alias)
+        self.assertIn("](README.md)", alias)
+        self.assertIn("](RTX5060.md)", alias)
         self.assertNotIn("## ", alias)
         self.assertNotIn("```", alias)
 

@@ -1,6 +1,6 @@
 # vLLM runtime
 
-Один чарт для ручных запусков Gemma и проверочного Qwen TP2.
+Чарт для ручных запусков Gemma A, B Cache и B Tune.
 Он создаёт ConfigMap, Deployment, ResourceClaimTemplate, Service и NetworkPolicy.
 AI Inference использует собственный контроллер и рецепты: его дочерние ресурсы этот чарт не захватывает.
 
@@ -32,10 +32,9 @@ helm template hf-gemma-b charts/vllm-runtime -n hardfest-demo -f values/gemma-b.
 [пример ai-models](../../examples/site-gemma-catalog.yaml). При нулевых репликах placeholders
 разрешены для просмотра; перед запуском их нужно заменить.
 
-Другие привязки: [ai-models с assistant](../../examples/site-gemma-assistant-catalog.yaml),
-[готовый PVC](../../examples/site-gemma.yaml), [PVC с assistant](../../examples/site-gemma-assistant.yaml),
-[ручной Qwen](../../examples/site-qwen-tp2.yaml). Выбирайте один источник весов,
-а не объединяйте варианты ai-models и PVC.
+Для B Tune используйте [ai-models с assistant](../../examples/site-gemma-assistant-catalog.yaml):
+эта привязка содержит обе модели. Финальный Qwen запускается через
+[заказ AI Inference](../../platform/qwen.yaml), а не через этот чарт.
 
 ## Контракт values
 
