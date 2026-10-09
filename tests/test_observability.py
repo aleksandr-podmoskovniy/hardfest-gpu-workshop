@@ -67,15 +67,10 @@ class Observability(unittest.TestCase):
         self.assertIn("histogram_quantile", self.panels[202]["targets"][0]["expr"])
 
     def test_offload_semantics_and_node_scope_are_explicit(self):
-        self.assertIn("pending_store_blocks", self.panels[244]["targets"][0]["expr"])
-        self.assertIn("capacity_blocks", self.panels[245]["targets"][0]["expr"])
         for query in self.queries:
             self.assertNotIn("kv_offload_store_bytes_total", query)
             self.assertNotIn("kv_offload_load_bytes_total", query)
         self.assertIn("не атрибуция сервису", self.panels[104]["title"])
-        for target in self.panels[221]["targets"]:
-            self.assertIn("$gateway_namespace", target["expr"])
-            self.assertNotIn("$inference_service", target["expr"])
 
     def test_named_service_ports(self):
         paths = list((ROOT / "values").glob("*.yaml"))
@@ -83,16 +78,19 @@ class Observability(unittest.TestCase):
         for path in paths:
             self.assertEqual(render(path)["Service"]["spec"]["ports"][0]["name"], "http")
 
-    def test_simple_cpu_offload_uses_block_metrics_without_faking_byte_counts(self):
-        for panel_id, metric in ((241, "simple_kv_offload_load_blocks_total"),
-                                 (242, "simple_kv_offload_used_blocks"),
-                                 (243, "simple_kv_offload_save_outcomes_total")):
-            panel = self.panels[panel_id]
-            self.assertIn(metric, panel["targets"][0]["expr"])
-            self.assertNotIn("bytes", panel["fieldConfig"]["defaults"]["unit"])
-            self.assertIn("$inference_service", panel["targets"][0]["expr"])
-        self.assertIn("ноль не означает пустой", self.panels[242]["description"])
-        self.assertIn("outcome", self.panels[243]["targets"][0]["expr"])
+    def test_removed_sections_and_their_queries_are_absent(self):
+        removed = {220, 221, 222, 223, 230, 231, 240, 241, 242, 243, 244, 245}
+        self.assertFalse(removed.intersection(self.panels))
+        serialized = json.dumps(self.dashboard, ensure_ascii=False)
+        for fragment in ("simple_kv_offload", "SimpleCPUOffload", "Gateway:",
+                         "Last Xid",
+                         "gateway_namespace", "gateway_model"):
+            self.assertNotIn(fragment, serialized)
+        self.assertNotIn("DCGM_FI_DEV_XID_ERRORS", " ".join(self.queries))
+        for panel_id in (250, 251, 252, 253, 260, 261, 262, 263):
+            self.assertIn(panel_id, self.panels)
+        self.assertEqual(self.panels[250]["gridPos"]["y"], 103)
+        self.assertEqual(self.panels[260]["gridPos"]["y"], 112)
 
     def test_scoped_monitoring_policy(self):
         monitor = (ROOT / "observability/monitoring.yaml").read_text()
@@ -118,7 +116,7 @@ class Observability(unittest.TestCase):
         self.assertEqual(mapping["-1"]["color"], "gray")
 
     def test_gpu_diagnostics_do_not_depend_on_runtime_health(self):
-        for panel_id in (27, 28, 29, 30, 31, 32, 231):
+        for panel_id in (27, 28, 29, 30, 31, 32):
             for target in self.panels[panel_id]["targets"]:
                 self.assertNotIn("cache_config_info", target["expr"])
                 self.assertIn("$node", target["expr"])
@@ -126,7 +124,6 @@ class Observability(unittest.TestCase):
             self.assertIn("GPU_I_ID", target["expr"])
             self.assertIn("GPU_I_PROFILE", target["expr"])
         self.assertIn("DCGM_FI_PROF_GR_ENGINE_ACTIVE", self.panels[31]["targets"][2]["expr"])
-        self.assertIn("не счётчик ECC", self.panels[231]["description"])
 
     def test_manual_runtime_is_discoverable_before_metrics_are_ready(self):
         variables = {v["name"]: v for v in self.dashboard["templating"]["list"]}
@@ -149,12 +146,6 @@ class Observability(unittest.TestCase):
             self.assertEqual(pod_labels["app.kubernetes.io/component"], "llm-runtime")
             self.assertEqual(pod_labels["app.kubernetes.io/name"], service_name)
             self.assertNotIn("ai-inference.deckhouse.io/managed", pod_labels)
-
-    def test_gateway_is_discoverable_when_only_errors_exist(self):
-        variables = {v["name"]: v for v in self.dashboard["templating"]["list"]}
-        for name in ("gateway_namespace", "gateway_model"):
-            self.assertIn("error_requests_total", variables[name]["definition"])
-            self.assertIn("upstream_requests_total", variables[name]["definition"])
 
     def test_dashboard_is_shared_across_clusters_and_model_families(self):
         self.assertEqual(self.dashboard["title"], "AI Inference / Service performance")
