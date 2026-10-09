@@ -42,7 +42,7 @@ class KVTeaching(unittest.TestCase):
     def test_rtx_long_context_is_required_before_platform_stage(self):
         doc = (ROOT / "RTX5060.md").read_text()
         self.assertLess(doc.index('id="long-context"'), doc.index('id="platform"'))
-        stage = doc.split('id="long-context"', 1)[1].split('id="platform"', 1)[0]
+        stage = doc.split('id="speculation"', 1)[1].split('id="platform"', 1)[0]
         # The current route uses a single 128K server window and two input
         # lengths. 65536 was an older run's window, not a required restart.
         for term in ("131072", "57344", "122880", "assistant", "completed=1", "failed=0"):

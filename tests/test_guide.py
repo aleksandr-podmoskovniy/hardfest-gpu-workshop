@@ -36,7 +36,7 @@ class Guide(unittest.TestCase):
         self.assertIn('width="250" height="250"', top)
         self.assertIn(f'href="{url}"', top)
         for section in ('<a id="contents"></a>', '<a id="setup"></a>',
-                        "## 1.", "## 2.", "## Остановка"):
+                        "## 1.", "## 2.", '<a id="cleanup"></a>'):
             self.assertIn(section, readme)
         svg = ET.parse(ROOT / "assets/workshop-qr.svg").getroot()
         self.assertEqual(svg.find("{http://www.w3.org/2000/svg}desc").text, url)
@@ -68,7 +68,8 @@ class Guide(unittest.TestCase):
         self.assertNotIn("max-model-len: 131072", ram)
         self.assertIn("max-model-len: 131072", second)
         self.assertNotIn("возврат к `16384`", second)
-        self.assertIn("сравнение целых профилей", second)
+        self.assertRegex(second, r"сравнение \*\*набора настроек\*\*")
+        self.assertIn("не измерение вклада одного MTP", second)
         self.assertIn("122 880", second)
         self.assertIn("cpu_bytes_to_use: 34359738368", ram)
         self.assertRegex(ram, r"128 GiB[\s\S]{0,200}A останавливается через Git/Argo")
@@ -86,7 +87,7 @@ class Guide(unittest.TestCase):
         for formula in re.findall(r"```text\n(.*?)```", readme, re.S):
             lines = [line for line in formula.splitlines() if line.strip()]
             self.assertLessEqual(len(lines), 3)
-            self.assertTrue(all(re.search(r"KV(?:_bytes|\(S\)) =", line) for line in lines))
+            self.assertTrue(all(re.search(r"(?:=|≈)", line) for line in lines))
         gitops = (ROOT / "docs/GITOPS.md").read_text()
         for term in ("ARGO_CONTEXT", "GPU_CONTEXT", '--type merge --patch',
                      r'\"operation\"', r'\"revision\":\"$REVISION\"', r'\"prune\":false'):
@@ -169,24 +170,25 @@ class Guide(unittest.TestCase):
     def test_platform_chapter_describes_recipe_workflow(self):
         readme = (ROOT / "README.md").read_text()
         chapter = readme.split('id="platform"', 1)[1].split('id="conclusion"', 1)[0]
-        for term in ("128K", "CPU KV", "assistant", "hf-platform-gemma", "Gemma A — DP"):
+        for term in ("128K", "RAM-offload", "assistant", "hf-platform-gemma", "Gemma A — DP"):
             self.assertIn(term, chapter)
         for term in ("charts/inference-service", "order.enabled: true", "model", "Ready",
                      "helm template"):
             self.assertIn(term, readme)
         self.assertIn("charts/inference-service", chapter)
         self.assertIn("`replicaCount: 0`", chapter)
-        self.assertIn("исчезновения Pod A", chapter)
+        self.assertIn("исчезновения Pod", chapter)
         self.assertIn("192 GiB RAM", chapter)
-        self.assertIn("На 128 GiB B тоже останавливается", chapter)
-        self.assertLess(chapter.index("исчезновения Pod A"), chapter.index("order.enabled: true"))
+        self.assertRegex(chapter, r"128 GiB[\s\S]{0,100}результат B сохраняется до её остановки")
+        self.assertLess(chapter.index("исчезновения Pod"), chapter.index("order.enabled: true"))
 
     def test_original_teaching_chain_is_preserved_for_current_models(self):
         for name in ("README.md", "RTX5060.md"):
             text = (ROOT / name).read_text()
-            for term in ("https://ai.ap4y.ru", "GQA", "Kpool", "TTFT", "max-num-batched-tokens",
+            for term in ("https://ai.ap4y.ru", "GQA", "TTFT", "max-num-batched-tokens",
                          "reasoning", "CPU", "MTP", "InferenceService"):
                 self.assertIn(term, text, name)
+            self.assertIn("docs/MEMORY_BUDGET.md#verify-kv", text)
             self.assertLess(text.index('id="ab"'), text.index('id="latency"'))
             self.assertLess(text.index('id="memory"'), text.index('id="ram"'))
         readme = (ROOT / "README.md").read_text()
@@ -213,8 +215,8 @@ class Guide(unittest.TestCase):
 
     def test_qwen_is_a_required_final_stage_with_operational_checks(self):
         readme = (ROOT / "README.md").read_text()
-        chapter = readme.split('id="results"', 1)[1].split('id="cleanup"', 1)[0]
-        self.assertRegex(chapter, r"## 6\.")
+        chapter = readme.split('id="tp2"', 1)[1].split('id="cleanup"', 1)[0]
+        self.assertRegex(chapter, r"## 8\.")
         self.assertNotIn("бонус", chapter.lower())
         self.assertLess(readme.index('id="tp2"'), readme.index('id="cleanup"'))
         for term in ("tensor-parallel-size: 2", "acceleratorCount=2",
@@ -240,7 +242,7 @@ class Guide(unittest.TestCase):
         extension = doc.split('id="long-context"', 1)[1].split('id="platform"', 1)[0]
         for setting in ("max-model-len", "131072", "Tune", "8192"):
             self.assertIn(setting, extension)
-        self.assertIn("Меняется нагрузка, а не окно сервиса", extension)
+        self.assertIn("Tune уже настроен на 128K", extension)
         self.assertNotIn("max-model-len: 65536", extension)
 
     def test_kv_visuals_are_in_both_main_stories_before_optimization(self):
@@ -265,10 +267,11 @@ class Guide(unittest.TestCase):
         rtx = (ROOT / "RTX5060.md").read_text()
         long_context = rtx.split('id="long-context"', 1)[1].split('id="placement"', 1)[0]
         self.assertIn('--random-output-len "$OUTPUT_TOKENS"', long_context)
-        self.assertIn("OUTPUT_TOKENS=8192", long_context)
-        self.assertIn("RUN_NAME=gemma-long-output", long_context)
+        self.assertIn("| Длинный ответ | 122880 | 8192 | `gemma-long-output` |", long_context)
+        for variable in ("INPUT_TOKENS", "OUTPUT_TOKENS", "RUN_NAME"):
+            self.assertIn(variable, long_context)
         cleanup = rtx.split('id="cleanup"', 1)[1].split('id="setup"', 1)[0]
-        self.assertIn("Tune сохраняет 128K", cleanup)
+        self.assertIn("Tune сохраняет окно 128K", cleanup)
         self.assertNotIn("0.90", cleanup)
         h100 = (ROOT / "README.md").read_text()
         self.assertIn("| Длинный ответ | 122 880 | 8192 | 1 / 1 |", h100)
@@ -328,7 +331,7 @@ class Guide(unittest.TestCase):
                 self.assertRegex(setup, r"выключен")
                 self.assertIn("(#a30-orders)", text)
                 self.assertLess(text.index('id="platform"'), text.index('id="a30-orders"'))
-                self.assertRegex(text, r"(?:части существовали раньше|Sync существующих частей)")
+                self.assertRegex(text, r"(?:части существовали раньше|Sync готовых частей не доказывает их создание)")
 
     def test_readme_has_no_decorative_tagline_or_boilerplate_labels(self):
         readme = (ROOT / "README.md").read_text()

@@ -259,5 +259,7 @@ class RTXProfiles(unittest.TestCase):
             self.assertTrue(row.endswith(f"`{served}` |"))
         guide = (ROOT / "RTX5060.md").read_text()
         self.assertIn("--model rtx-qwen35-9b", guide)
-        self.assertIn("окно сервиса остаётся 128K", guide)
-        self.assertIn("simple_kv_offload_load_blocks_total", guide)
+        self.assertIn("Tune сохраняет окно 128K", guide)
+        self.assertIn("docs/MEASUREMENTS.md#offload-replay", guide)
+        self.assertIn("simple_kv_offload_load_blocks_total",
+                      (ROOT / "docs/MEASUREMENTS.md").read_text())
