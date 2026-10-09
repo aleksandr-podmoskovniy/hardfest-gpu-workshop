@@ -13,6 +13,13 @@ SVG = "{http://www.w3.org/2000/svg}"
 
 
 class DiagramConnections(unittest.TestCase):
+    def test_tp2_explains_its_exchange_library_without_an_unrelated_mode(self):
+        for name in ("10-tp2", "24-rtx-tp2"):
+            with self.subTest(diagram=name):
+                text = " ".join(ET.parse(ROOT / f"assets/{name}.svg").getroot().itertext())
+                self.assertIn("NCCL (NVIDIA Collective Communications Library)", text)
+                self.assertNotIn("PP делит", text)
+
     def test_shared_design_and_readable_footnotes(self):
         for path in (ROOT / "assets").glob("[0-9][0-9]-*.svg"):
             with self.subTest(file=path.name):

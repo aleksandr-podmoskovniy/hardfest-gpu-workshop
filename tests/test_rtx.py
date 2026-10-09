@@ -217,10 +217,15 @@ class RTXProfiles(unittest.TestCase):
     def test_full_rtx_guide_has_ordered_stages_and_inline_commands(self):
         guide = (ROOT / "RTX5060.md").read_text()
         self.assertIn("(RTX5060.md)", (ROOT / "README.md").read_text())
-        stages = ["topology", "ab", "monitoring", "latency", "memory", "ram",
-                  "speculation", "platform", "placement", "tp2", "conclusion", "results", "cleanup", "setup"]
+        stages = ["ab", "memory", "ram", "speculation", "platform",
+                  "placement", "tp2", "conclusion", "cleanup", "setup"]
         positions = [guide.index(f'id="{name}"') for name in stages]
         self.assertEqual(positions, sorted(positions))
+        for name in ("monitoring", "latency"):
+            self.assertLess(guide.index('id="ab"'), guide.index(f'id="{name}"'))
+            self.assertLess(guide.index(f'id="{name}"'), guide.index('id="memory"'))
+        self.assertLess(guide.index('id="tp2"'), guide.index('id="results"'))
+        self.assertLess(guide.index('id="results"'), guide.index('id="cleanup"'))
         for target in re.findall(r"\]\(#([^)]+)\)", guide):
             self.assertIn(f'<a id="{target}"></a>', guide)
         self.assertNotIn("labs/", guide)
@@ -239,7 +244,7 @@ class RTXProfiles(unittest.TestCase):
                              "не бонус после показа"):
                 self.assertNotIn(fragment, text, (filename, fragment))
         guide = (ROOT / "RTX5060.md").read_text()
-        self.assertIn("## Результаты измерений", guide)
+        self.assertIn('<a id="results"></a>', guide)
         self.assertIn("rtx5060-nodecache-20261006.json", guide)
         self.assertIn("общий лимит расходов", guide)
 

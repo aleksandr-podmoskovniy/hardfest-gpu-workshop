@@ -66,6 +66,7 @@
 | --- | --- |
 | [NVIDIA MIG deployment considerations](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/deployment-considerations.html) | Ограничения MIG и MPS |
 | [NVIDIA SMI](https://docs.nvidia.com/deploy/nvidia-smi/) | Топологию и показатели работы GPU |
+| [NCCL — NVIDIA Collective Communications Library](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/overview.html) | Библиотеку обмена данными между GPU на схеме TP2 |
 | [Kubernetes DRA](https://kubernetes.io/docs/concepts/resource-management/dynamic-resource-allocation/) | Заявки, классы устройств и выделение ресурсов |
 | [Device plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/) | Публикацию устройств через extended resources |
 

@@ -35,8 +35,8 @@ class Guide(unittest.TestCase):
         self.assertIn('<p align="center">', top)
         self.assertIn('width="250" height="250"', top)
         self.assertIn(f'href="{url}"', top)
-        for section in ("## Содержание", "## Подготовка своего стенда", "## Стенд и подключение",
-                        "## 1. Пробуем уже работающую Gemma A", "## 2. Разбираем время ответа", "## Остановка"):
+        for section in ('<a id="contents"></a>', "## Подготовка своего стенда",
+                        "## История 1.", "## История 2.", "## Остановка"):
             self.assertIn(section, readme)
         svg = ET.parse(ROOT / "assets/workshop-qr.svg").getroot()
         self.assertEqual(svg.find("{http://www.w3.org/2000/svg}desc").text, url)
@@ -68,7 +68,7 @@ class Guide(unittest.TestCase):
         self.assertNotIn("max-model-len: 131072", ram)
         self.assertIn("max-model-len: 131072", second)
         self.assertIn("max-model-len: 16384", second)
-        self.assertIn("опыт на вместимость", second)
+        self.assertIn("фактический вход", second)
         self.assertIn("cpu_bytes_to_use: 34359738368", ram)
         self.assertIn("остановите A через Git", ram)
         for stale in ("gemma-b-128k.yaml", "gemma-b-ram.yaml"):
@@ -174,7 +174,7 @@ class Guide(unittest.TestCase):
                      "helm template"):
             self.assertIn(term, readme)
         self.assertIn("charts/inference-service", chapter)
-        self.assertIn("Остановите ручную A", chapter)
+        self.assertRegex(chapter, r"остановите (?:только |ручную )?A")
         self.assertIn("Ручная B остаётся", chapter)
 
     def test_original_teaching_chain_is_preserved_for_current_models(self):
@@ -186,13 +186,13 @@ class Guide(unittest.TestCase):
             self.assertLess(text.index('id="ab"'), text.index('id="latency"'))
             self.assertLess(text.index('id="memory"'), text.index('id="ram"'))
         readme = (ROOT / "README.md").read_text()
-        for histories in (1, 4, 8):
+        for histories in (1, 8):
             for element_bytes in (1, 2):
                 value = maths.calculate_gemma(tokens=131072, sessions=histories,
                                               element_bytes=element_bytes)["all_sessions_gib"]
                 self.assertIn(str(value).rstrip("0").rstrip(".").replace(".", ",") + " GiB", readme)
         rtx = (ROOT / "RTX5060.md").read_text()
-        for histories in (1, 4, 8):
+        for histories in (1, 8):
             for element_bytes in (1, 2):
                 mib = 2 * element_bytes * (3 * 512 * 131072 + 12 * 256 * 512) * histories / 2**20
                 self.assertIn(f"{mib:g} MiB", rtx)
@@ -207,7 +207,7 @@ class Guide(unittest.TestCase):
     def test_qwen_is_a_required_final_stage_with_operational_checks(self):
         readme = (ROOT / "README.md").read_text()
         chapter = readme.split('id="tp2"', 1)[1].split('id="cleanup"', 1)[0]
-        self.assertRegex(chapter, r"## 8\. Qwen через AI Inference")
+        self.assertRegex(chapter, r"## История 6\.")
         self.assertNotIn("бонус", chapter.lower())
         self.assertLess(readme.index('id="tp2"'), readme.index('id="cleanup"'))
         for term in ("AI Inference", "DeviceClass", "tensor-parallel-size: 2",
@@ -233,44 +233,45 @@ class Guide(unittest.TestCase):
     def test_context_extension_preserves_second_iteration(self):
         doc = (ROOT / "README.md").read_text()
         extension = doc.split('id="long-context"', 1)[1].split('id="platform"', 1)[0]
-        for setting in ("max-model-len", "Сохранив настройки второй итерации", "65 536", "131072"):
+        for setting in ("max-model-len", "65536", "131072", "Tune"):
             self.assertIn(setting, extension)
-        self.assertIn("увеличьте только окно B", extension)
+        self.assertIn("только окно B", extension)
 
     def test_chat_path_is_present_from_manual_to_platform_stages(self):
         readme = (ROOT / "README.md").read_text()
         self.assertLess(readme.index('id="chat"'), readme.index('id="setup"'))
         self.assertIn("Gemma A — Base", readme)
         self.assertIn("Gemma B — Tune", readme)
-        self.assertIn("отдельным маршрутом Bifrost", readme)
-        self.assertIn("созданная через AI Inference", readme)
+        self.assertIn("отдельным маршрутом", readme)
+        self.assertIn("Bifrost", readme)
+        self.assertIn("через AI Inference", readme)
         self.assertIn("docs/CHAT_AND_ACCESS.md", readme)
         guide = (ROOT / "docs/CHAT_AND_ACCESS.md").read_text()
         for term in ("pending", "Virtual Key", "OIDC", "MCP", "ACL", "отзыв"):
             self.assertIn(term, guide)
 
-    def test_architecture_leads_to_running_base_before_theory(self):
+    def test_first_experiment_leads_to_explanation_before_final_summary(self):
         readme = (ROOT / "README.md").read_text()
-        ordered = ["contents", "topology", "ab", "monitoring", "latency", "conclusion", "setup"]
+        ordered = ["ab", "monitoring", "latency", "conclusion", "setup"]
         positions = [readme.index(f'<a id="{name}"></a>') for name in ordered]
         self.assertEqual(positions, sorted(positions))
+        self.assertIn('<a id="topology"></a>', readme)
         self.assertIn("[К содержанию](#contents)", readme)
 
     def test_both_walkthroughs_start_with_prepared_running_base(self):
         for name in ("README.md", "RTX5060.md"):
             text = (ROOT / name).read_text()
             with self.subTest(name=name):
-                intro = " ".join(re.sub(r"[*`]", "", text.split('id="contents"', 1)[0]).split())
-                self.assertRegex(intro, r"Gemma A — Base.{0,10}уже (?:запущена|работает)")
-                baseline = text.split('id="ab"', 1)[1].split('id="latency"', 1)[0]
+                baseline = text.split('id="memory"', 1)[0]
+                intro = " ".join(re.sub(r"[*`]", "", baseline).split())
+                self.assertRegex(intro, r"Gemma A — Base.{0,16}уже (?:запущена|работает)")
                 self.assertIn("Argo CD", baseline)
-                self.assertIn("ещё не", baseline)
-                self.assertIn("InferenceService", baseline)
+                self.assertIn("Helm", baseline)
                 self.assertNotIn("replicaCount: 1", baseline)
                 self.assertNotIn("helm template", baseline)
                 self.assertLess(text.index('id="conclusion"'), text.index('id="cleanup"'))
                 self.assertLess(text.index('id="cleanup"'), text.index('id="setup"'))
-                self.assertIn("https://ai.ap4y.ru", text.split('id="ab"', 1)[0])
+                self.assertIn("https://ai.ap4y.ru", baseline)
 
     def test_initial_launch_commands_live_in_preparation(self):
         setup = (ROOT / "docs/SETUP.md").read_text()

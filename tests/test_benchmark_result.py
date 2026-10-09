@@ -34,7 +34,9 @@ class BenchmarkResult(unittest.TestCase):
             with self.subTest(result=result):
                 self.assertEqual(all(result.get(key) == value
                                      for key, value in requirements.items()), accepted)
-        self.assertIn("<summary>Команда одинаковой нагрузки", text)
+        disclosures = re.findall(r"<details>.*?</details>", text, re.S)
+        self.assertTrue(any("vllm bench serve" in block and "`failed`" in block
+                            for block in disclosures))
 
 
 if __name__ == "__main__":

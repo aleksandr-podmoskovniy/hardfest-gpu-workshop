@@ -43,11 +43,13 @@ class KVTeaching(unittest.TestCase):
         doc = (ROOT / "RTX5060.md").read_text()
         self.assertLess(doc.index('id="long-context"'), doc.index('id="platform"'))
         stage = doc.split('id="long-context"', 1)[1].split('id="platform"', 1)[0]
-        for term in ("65536", "131072", "57344", "122880", "assistant",
+        # The current route uses a single 128K server window and two input
+        # lengths. 65536 was an older run's window, not a required restart.
+        for term in ("131072", "57344", "122880", "assistant",
                      "27-rtx-long-context.svg", "completed=1", "failed=0"):
             self.assertIn(term, stage)
         qwen = (ROOT / "RTX5060.md").read_text().split('id="qwen-long-context"', 1)[1]
         self.assertIn("--endpoint /v1/completions --model rtx-qwen35-9b", qwen)
-        self.assertIn("Длинный Qwen", qwen)
+        self.assertIn("--max-concurrency 8", qwen)
         self.assertIn("122880", qwen)
-        self.assertIn("состояние linear attention", qwen)
+        self.assertRegex(qwen, r"(?i)linear attention.{0,30}состояние")

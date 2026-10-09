@@ -8,7 +8,49 @@ GUIDES = (ROOT / "README.md", ROOT / "RTX5060.md")
 TALK_TITLE = "Инференс без простоя GPU: чиним LLM-сервис руками и делим карту на живом кластере"
 
 
+def main_path(text):
+    """Closed disclosures leave their labels, not the supporting material.
+
+    This is a structural regression check, not a measure of comprehension.
+    The separate disclosure test rejects nested blocks.
+    """
+    return re.sub(r"<details>\s*<summary>(.*?)</summary>.*?</details>",
+                  r"\1", text, flags=re.S)
+
+
 class Readability(unittest.TestCase):
+    def test_closed_route_keeps_six_stories_and_every_practical_stage(self):
+        for path in GUIDES:
+            with self.subTest(guide=path.name):
+                visible = main_path(path.read_text())
+                headings = re.findall(r"^## История (\d+)\. (.+)$", visible, re.M)
+                self.assertEqual([n for n, _ in headings], list("123456"))
+                parts = re.split(r"(?m)^## История \d+\. .+$", visible)[1:]
+                parts[0] = visible.split("## История 1.", 1)[0] + parts[0]
+                stages = ("Gemma A", "Cache", "Tune", "InferenceService", "A30", "Qwen")
+                for stage, part in zip(stages, parts):
+                    self.assertIn(stage, part)
+                # The listener reaches the first experiment before the terms
+                # needed for sharing a card or automating an allocation.
+                for later_term in ("MIG", "MPS", "DRA", "OIDC", "ResourceClaim"):
+                    self.assertNotRegex(parts[0], rf"\b{later_term}\b")
+
+    def test_long_context_arithmetic_is_not_hidden_with_operator_commands(self):
+        for path in GUIDES:
+            with self.subTest(guide=path.name):
+                visible = main_path(path.read_text())
+                memory = visible.split('id="memory"', 1)[1].split('id="speculation"', 1)[0]
+                self.assertIn("128K", memory)
+                self.assertRegex(memory, r"(?:GiB|MiB)")
+                self.assertIn("8", memory)
+                self.assertIn("KV", memory)
+                if path.name == "README.md":
+                    self.assertIn("256K", memory)
+                else:
+                    # The layer-by-layer derivation remains in its disclosure,
+                    # not between the short formula and its worked example.
+                    self.assertNotIn("26-rtx-kv.svg", memory)
+
     def test_both_hardware_routes_keep_the_official_talk_title(self):
         for path in (*GUIDES, ROOT / "WORKSHOP.md"):
             with self.subTest(guide=path.name):

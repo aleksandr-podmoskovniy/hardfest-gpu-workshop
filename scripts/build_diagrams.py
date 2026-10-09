@@ -347,7 +347,7 @@ def tp2(name='10-tp2', gpu='H100', interconnect='NCCL', memory='HBM'):
     d.text(600, 491, 'DRA выделяет два устройства; vLLM распределяет модель.', 23, anchor='middle')
     d.band(565, 'TP2 не равно двум репликам',
            f'Обе GPU участвуют в одном запросе. {memory} не становится прозрачным общим пулом.', MINT, TEAL)
-    d.footer('PP делит слои по стадиям. TP делит тензоры внутри слоёв.')
+    d.footer('NCCL (NVIDIA Collective Communications Library) — библиотека обмена между GPU.')
     d.save()
 
 
