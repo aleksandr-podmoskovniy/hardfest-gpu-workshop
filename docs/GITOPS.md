@@ -6,6 +6,18 @@
 Argo CD в управляющем кластере читает её и создаёт ресурсы в GPU-кластере.
 Helm здесь рендерит YAML; отдельного Helm release нет.
 
+## Что меняем и что получаем
+
+| Понятие | Назначение |
+| --- | --- |
+| GitOps | Желаемое состояние хранится в Git, контроллер применяет выбранную версию |
+| Helm chart | Шаблоны Kubernetes-ресурсов |
+| Values | Настройки модели и площадки для этих шаблонов |
+| Argo CD Application | Указывает репозиторий, версию, путь и кластер назначения |
+| Sync | Применяет выбранную версию ресурсов к кластеру |
+| PVC — PersistentVolumeClaim | Заявка Kubernetes на постоянное хранилище |
+| DRA — Dynamic Resource Allocation | Выделение устройств через заявки и драйвер Kubernetes |
+
 ## Перед началом
 
 - Пройдена [проверка стенда](SETUP.md): namespace, PVC, DRA и доступы готовы.
@@ -82,11 +94,17 @@ helm:
     - ../../site/gemma.yaml
 ```
 
-В `site/` находятся привязки площадки. Не добавляйте туда `replicaCount`,
-параметры производительности, `resources` или `shmSize`: они перекроют профиль.
-Допустимые переопределения `vllm` здесь — только пути `model` и
-`speculative-config.model`. Используйте **один полный профиль и один site-файл**.
-Списки Helm заменяет целиком: assistant site содержит оба `modelRefs`.
+### Профиль отдельно, площадка отдельно
+
+Используйте **один полный профиль и один site-файл**.
+
+| В профиль | В `site/` |
+| --- | --- |
+| `replicaCount`, параметры производительности, `resources`, `shmSize` | Нода, DeviceClass, Model и пути к весам |
+| Настройки vLLM | Из `vllm` переопределяются только `model` и `speculative-config.model` |
+
+Значения из `site/` перекрывают профиль, поэтому настройки производительности
+туда не переносите. Списки Helm заменяет целиком: assistant site содержит оба `modelRefs`.
 
 Вариант с заранее подготовленным PVC остаётся в `examples/site-gemma.yaml`
 и `examples/site-gemma-assistant.yaml`. Выберите один источник весов:
@@ -113,9 +131,11 @@ git commit -S -s -m "Add HardFest Helm chart and profiles"
 git push -u origin hardfest-demo
 ```
 
-До commit проверьте **полный staged diff**, а не только stat. В нём не должно
-быть токенов и Secret с открытыми значениями. `-S -s` использует ваш настроенный
-ключ подписи и добавляет DCO sign-off.
+До commit проверьте **полный staged diff**, а не только stat.
+В нём не должно быть токенов и Secret с открытыми значениями.
+
+`-S -s` использует настроенный ключ подписи и добавляет DCO
+(Developer Certificate of Origin) sign-off — подтверждение происхождения вклада.
 
 Чарт создаёт runtime-ресурсы с нулём реплик. Namespace, PVC, GPUClass и DeviceClass
 он не создаёт. Server dry-run не проверяет наличие весов и работу CUDA.
@@ -143,7 +163,13 @@ kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get applications \
   -o custom-columns='NAME:.metadata.name,SYNC:.status.sync.status,HEALTH:.status.health.status,OPERATION:.status.operationState.phase,REVISION:.status.sync.revision'
 ```
 
-Проверьте `Synced`, `Healthy`, `Succeeded` и совпадение `REVISION` с commit.
+| Проверка | Ожидаемое значение |
+| --- | --- |
+| Синхронизация | `Synced` |
+| Здоровье ресурсов | `Healthy` |
+| Результат операции | `Succeeded` |
+| Применённая версия | `REVISION` совпадает с commit |
+
 Не запускайте следующую sync-операцию, пока предыдущая не закончилась.
 Первый sync не должен занимать GPU — обе реплики выключены.
 
@@ -193,6 +219,9 @@ RAM и выключите A через её values.
 > [!IMPORTANT]
 > На ноде с 128 GiB сначала синхронизируйте остановку A и дождитесь удаления Pod.
 > Только затем включайте B. Смена значений в Git сама по себе память не освобождает.
+
+**Assistant** — отдельная черновая модель: она предлагает токены,
+а основная модель проверяет их.
 
 Для второй итерации с assistant дополнительно смените второй `valueFiles`
 у Application B на `../../site/gemma-assistant.yaml`.
@@ -245,12 +274,18 @@ for SERVICE in embedding reranker whisper; do
 done
 ```
 
-В каждом Application заполните репозиторий, ветку, проект и destination.
-`source.path` заканчивается на `charts/inference-service`;
-`valueFiles` содержит только `../../platform/ИМЯ.yaml`.
-В каждом values укажите существующие Model, InferenceServiceClass и DeviceClass.
-Пока сохраняйте `order.enabled: false`. Пустой render выключенного заказа
-не проверяет его поля в Kubernetes: server dry-run выполняется при включении.
+### Связать заказ с моделью и классом
+
+| Где | Что заполнить |
+| --- | --- |
+| Application | Репозиторий, ветка, проект и destination |
+| `source.path` | Путь, заканчивающийся на `charts/inference-service` |
+| `valueFiles` | Только `../../platform/ИМЯ.yaml` |
+| Values | Существующие Model, InferenceServiceClass и DeviceClass |
+
+Пока сохраняйте `order.enabled: false`.
+Пустой render выключенного заказа не проверяет его поля в Kubernetes:
+server dry-run выполняется при включении.
 
 Отправьте файлы отдельным подписанным commit и зарегистрируйте Applications
 через родительский Application либо по шагу 5.
@@ -272,16 +307,24 @@ helm template hf-platform-gemma "$DEMO_DIR/charts/inference-service" \
 
 ## Остановка
 
-У ручного профиля задайте `replicaCount: 0`, отправьте и синхронизируйте commit.
-У платформенного заказа установите `order.enabled: false` и отправьте commit.
+### Ручной профиль
+
+Задайте `replicaCount: 0`, отправьте и синхронизируйте commit.
+
+### Платформенный заказ
+
+Установите `order.enabled: false` и отправьте commit.
 Теперь в desired state нет InferenceService, но обычный sync с `prune: false`
 **не удалит** работающий заказ.
 
-В Argo откройте **его отдельный Application**, обновите diff до этого commit.
-Убедитесь, что на удаление показан только нужный InferenceService.
-Выполните выборочный sync этого ресурса с Prune. Не выбирайте Force,
-Replace или общий prune проекта. Если diff содержит Model, PVC или
-чужие ресурсы — остановитесь и разберите ownership.
+1. В Argo откройте **его отдельный Application**, обновите diff до этого commit.
+2. Убедитесь, что на удаление показан только нужный InferenceService.
+3. Выполните выборочный sync этого ресурса с Prune — удалением ресурса,
+   которого больше нет в Git.
+
+> [!WARNING]
+> Не выбирайте Force, Replace или общий prune проекта.
+> Если diff содержит Model, PVC или чужие ресурсы — остановитесь и разберите ownership.
 
 Дождитесь удаления заказа и принадлежащих ему Pod. Проверьте освобождение
 ResourceClaim и GPU. Удаление Application без finalizer не заменяет эту процедуру.

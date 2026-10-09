@@ -3,6 +3,17 @@
 Начинайте с первого неработающего участка: Git/Argo → размещение Pod →
 загрузка модели → API → шлюз → чат. Следующий слой не исправляет предыдущий.
 
+## С чего начать
+
+| Симптом | Первая проверка |
+| --- | --- |
+| Новый commit не применён | [Argo и версия Git](#argo-не-применяет-коммит) |
+| Pod не назначен на ноду | [Ресурсы и заявки](#pod-остаётся-pending) |
+| Нет весов или доставка не завершена | [Готовность ai-models](#модель-не-готова-в-ai-models) |
+| Запуск остановился или слишком долгий | [Этап загрузки](#загрузка-идёт-долго-или-срабатывает-timeout) |
+| Процесс завершён по памяти | [Бюджеты GPU, RAM и shared memory](#oom-или-ошибка-shared-memory) |
+| Прямой запрос успешен, чат не работает | [Маршрут и персональные права](#api-работает-но-модель-недоступна-в-open-webui) |
+
 ## Argo не применяет коммит
 
 Из корня `k8s-config`:
@@ -32,10 +43,10 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo describe pod REPLACE_POD_NAME
 
 | Возможная причина | Где проверить |
 | --- | --- |
-| Нет свободной GPU/DRA-ёмкости | ResourceClaim и статус GPUClass/GPUPool |
+| Нет свободной GPU/DRA-ёмкости | ResourceClaim и статус GPUClass/GPUPool; DRA (Dynamic Resource Allocation) — выделение устройств по заявкам Kubernetes |
 | Не хватает CPU/RAM | `kubectl describe node`, раздел Allocated resources |
 | Не подходит нода | Ready, nodeSelector, taint/toleration |
-| PVC доступен на другой ноде | PVC/PV и node affinity |
+| PVC доступен на другой ноде | PersistentVolumeClaim — заявка на хранилище; проверьте связанный PersistentVolume и node affinity |
 | Карта ещё занята предыдущим этапом | Pod и ResourceClaim владельца |
 
 Не обходите чужой cordon и не удаляйте активные claims.
@@ -48,8 +59,12 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo get models.ai.deckhouse.io
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo describe model REPLACE_MODEL_NAME
 ```
 
-Проверьте source/revision, условия готовности, доступ к источнику,
-Secret для закрытой модели и реальную свободную ёмкость хранилища.
+Проверьте:
+
+- `source/revision` и условия готовности;
+- доступ к источнику и Secret для закрытой модели;
+- реальную свободную ёмкость хранилища.
+
 Квота бакета не равна свободному месту на диске.
 Не переключайте runtime на новый путь до завершения доставки.
 
@@ -63,16 +78,25 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo describe deployment hf-gemma-b
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get events --sort-by=.lastTimestamp
 ```
 
-Разделяйте скачивание образа, чтение весов, компиляцию и захват CUDA graphs.
-Сверьте startup probe и progress deadline с реальным холодным запуском.
+Разделите холодный запуск на этапы:
+
+1. Скачивание контейнерного образа.
+2. Чтение весов модели.
+3. Компиляция.
+4. Захват CUDA graphs — запись последовательностей GPU-операций для повторного запуска.
+
+Сверьте startup probe и progress deadline с длительностью реального холодного запуска.
 Увеличение таймера помогает только когда процесс действительно продвигается,
 а не повторяет ошибку.
 
 ## OOM или ошибка shared memory
 
+**OOM (Out of Memory)** — отказ из-за нехватки памяти.
+Свободная память в одном месте не компенсирует лимит в другом.
+
 | Область | Что проверить |
 | --- | --- |
-| GPU | Веса, KV-пул, окно контекста и архитектура модели |
+| GPU | Веса, KV-пул (Key–Value cache — сохранённое состояние attention), окно контекста и архитектура модели |
 | RAM контейнера | cgroup limit, процессы движка, CPU KV, page cache |
 | `/dev/shm` | Размер tmpfs и бюджет коннектора |
 | Нода | Allocatable и суммарные requests других Pod |
@@ -92,9 +116,16 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo get statefulsets,deployments \
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get resourceclaims -o yaml
 ```
 
-Для Qwen должны совпасть три вещи: `acceleratorCount=2` в плане,
-две разные GPU в claim и TP2 в движке. MTP, assistant и CPU KV также
-подтверждаются реальной конфигурацией и логами.
+Для Qwen должны совпасть три вещи:
+
+1. `acceleratorCount=2` в плане.
+2. Две разные GPU в claim.
+3. **TP2 (Tensor Parallelism на двух GPU)** в движке — распределение вычислений
+   одной модели между двумя картами.
+
+**MTP (Multi-Token Prediction)**, предложение нескольких токенов за шаг,
+assistant — отдельную черновую модель — и CPU KV тоже проверьте
+по реальной конфигурации и логам.
 
 Если рецепт не попал в установленный модуль, исправьте штатную поставку.
 Не патчите дочерний Deployment/StatefulSet: это расходится с заказом
@@ -107,13 +138,14 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo get resourceclaims -o yaml
 1. Прямой запрос к Service vLLM.
 2. Сеть от ai-mcp-gateway до этого Service.
 3. Точный provider/model route шлюза.
-4. Личный Virtual Key, его разрешения и лимиты.
+4. Личный VK (Virtual Key), ключ шлюза с разрешениями и лимитами пользователя.
 5. Подключение и видимость модели в Open WebUI.
 
 У A и B одинаковый upstream model ID, но разные Service и provider keys.
 Общий балансируемый маршрут смешивает A/B.
 
-Локальный пользователь не имеет OIDC-токена. Ему нужна серверная
+Локальный пользователь не имеет **OIDC (OpenID Connect)** токена внешней системы входа.
+Ему нужна серверная
 авторизация inference без передачи сервисного ключа браузеру.
 Сохранённая конфигурация WebUI может иметь приоритет над env/Helm values.
 
@@ -133,15 +165,21 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo get resourceclaims -o yaml
 
 ## Появились новые uncorrectable ECC/Xid
 
+**ECC (Error-Correcting Code)** — механизм контроля ошибок памяти.
+Uncorrectable означает, что исправить ошибку не удалось.
+**Xid** — диагностический код драйвера NVIDIA, не синоним ECC.
+
 > [!WARNING]
 > Остановите нагрузку на затронутой карте и сохраните время ошибки,
 > GPU UUID, логи движка и доступные диагностические счётчики.
 > Перезапуск Pod не является ремонтом GPU.
 
-Сопоставляйте ошибки по GPU UUID: после перезапуска VM индексы карт могут
-поменяться. Полный Stop/Start VM не доказывает аппаратный сброс GPU на хосте,
-а обнуление volatile-счётчика не означает устранения причины. Сохраняйте
-также aggregate-счётчик до и после восстановления.
+Сопоставляйте ошибки по **UUID (Universally Unique Identifier)** GPU,
+постоянному идентификатору карты: после перезапуска VM индексы могут поменяться.
+
+- Полный Stop/Start VM не доказывает аппаратный сброс GPU на хосте.
+- Обнуление volatile-счётчика не означает устранения причины.
+- Сохраните также aggregate-счётчик до и после восстановления.
 
 После восстановления проверяйте законченный ответ модели, а не только
 Ready или `/health` 200: процесс API может продолжать отвечать на проверки

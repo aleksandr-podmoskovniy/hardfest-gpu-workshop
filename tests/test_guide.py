@@ -24,8 +24,11 @@ class Guide(unittest.TestCase):
     def test_readme_is_workshop_with_local_qr_at_top(self):
         readme = (ROOT / "README.md").read_text()
         url = "https://github.com/aleksandr-podmoskovniy/hardfest-gpu-workshop"
-        title = "Инференс без простоя GPU: чиним LLM-сервис руками и делим карту на живом кластере"
-        self.assertIn("# " + title + "\n", readme)
+        prose = re.sub(r"(?ms)^```[^\n]*\n.*?^```\s*$", "", readme)
+        titles = re.findall(r"^# (.+)$", prose, re.M)
+        self.assertEqual(len(titles), 1)
+        title = titles[0]
+        self.assertTrue(title.startswith("Инференс без простоя"))
         self.assertIn("Александр Подмосковный, Флант / Deckhouse Platform", readme)
         top = readme.split("# " + title, 1)[0]
         self.assertIn('src="assets/workshop-qr.svg"', top)
@@ -170,8 +173,9 @@ class Guide(unittest.TestCase):
         for term in ("charts/inference-service", "order.enabled: true", "model", "Ready",
                      "helm template"):
             self.assertIn(term, readme)
-        self.assertIn("не сырой Kubernetes-манифест", chapter)
-        self.assertIn("вместо", chapter)
+        self.assertIn("charts/inference-service", chapter)
+        self.assertIn("Остановите ручную A", chapter)
+        self.assertIn("Ручная B остаётся", chapter)
 
     def test_original_teaching_chain_is_preserved_for_current_models(self):
         for name in ("README.md", "RTX5060.md"):
@@ -207,7 +211,7 @@ class Guide(unittest.TestCase):
         self.assertLess(readme.index('id="tp2"'), readme.index('id="cleanup"'))
         for term in ("AI Inference", "DeviceClass", "tensor-parallel-size: 2",
                      "acceleratorCount=2", "/v1/chat/completions",
-                     "Virtual Key", "OIDC", "MTP", "order.enabled: true"):
+                     "личный VK", "MTP", "order.enabled: true"):
             self.assertIn(term, chapter)
         for filename in ("17-qwen-transition.svg", "18-qwen-mtp.svg", "19-qwen-capacity.svg"):
             self.assertIn(filename, chapter)
@@ -228,9 +232,9 @@ class Guide(unittest.TestCase):
     def test_context_extension_preserves_second_iteration(self):
         doc = (ROOT / "README.md").read_text()
         extension = doc.split('id="long-context"', 1)[1].split('id="platform"', 1)[0]
-        for setting in ("max-model-len", "все настройки второй итерации", "65 536", "131072"):
+        for setting in ("max-model-len", "Сохранив настройки второй итерации", "65 536", "131072"):
             self.assertIn(setting, extension)
-        self.assertIn("не подменяйте его другим набором flags", extension)
+        self.assertIn("увеличьте только окно B", extension)
 
     def test_chat_path_is_present_from_manual_to_platform_stages(self):
         readme = (ROOT / "README.md").read_text()

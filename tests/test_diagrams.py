@@ -116,6 +116,18 @@ class DiagramConnections(unittest.TestCase):
                 value = calculate_gemma_e2b(tokens, element_bytes=element_bytes)["one_session_gib"]
                 self.assertIn(f"{value * 1024:.0f} MiB", rtx)
 
+    def test_main_kv_example_uses_long_context_not_local_attention_window(self):
+        h100 = " ".join(ET.parse(ROOT / "assets/11-gemma-kv.svg").getroot().itertext())
+        self.assertIn("Контекст S — 128K или 256K", h100)
+        self.assertIn("1024 — окно только локальных слоёв", h100)
+        rtx = " ".join(ET.parse(ROOT / "assets/26-rtx-kv.svg").getroot().itertext())
+        self.assertIn("считаем KV для 128K", rtx)
+        self.assertIn("S = 131072", rtx)
+        for element_bytes in (1, 2):
+            for sessions in (1, 8):
+                value = calculate_gemma_e2b(131072, sessions=sessions, element_bytes=element_bytes)
+                self.assertIn(f"{value['all_sessions_gib'] * 1024:.0f} MiB", rtx)
+
     def test_ports_follow_card_bounds_with_equal_clearance(self):
         card = Box(40, 80, 240, 120)
         self.assertEqual(card.port("left"), (34, 140))

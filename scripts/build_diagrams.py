@@ -353,7 +353,7 @@ def tp2(name='10-tp2', gpu='H100', interconnect='NCCL', memory='HBM'):
 
 def gemma_formula():
     d = Diagram('11-gemma-kv', 'KV-кэш Gemma: считаем память',
-                '10 слоёв полного внимания + 50 локальных слоёв с окном 1024 токена.')
+                'Контекст S — 128K или 256K; 1024 — окно только локальных слоёв.')
     d.rect(48, 160, 1104, 120, PALE)
     d.text(600, 237, 'KV(S) = 2 × b × [ G(S) + L(S) ]', 43, BLUE, True, 'middle',
            width=1056, formula=True)
@@ -364,7 +364,7 @@ def gemma_formula():
         d.text(x+266, 417, lines, 32, bold=True, anchor='middle', width=484, formula=True)
     for x, title, body in [(48, '2', ['Ключи K', 'и значения V']),
             (424, 'b', ['Байт на элемент', 'BF16: 2 / FP8: 1']),
-            (800, 'S', ['Длина истории', 'Вход + ответ'])]:
+            (800, 'S / полный контекст', ['Вход + ответ', '128K или 256K'])]:
         d.card(x, 554, 352, 126, title, body, GRAY, BLUE)
     d.footer('Слои × KV-головы × размерность × токены. Для перевода байтов в GiB делим на 2³⁰.')
     d.save()
@@ -390,25 +390,25 @@ def kv_derivation():
 
 
 def rtx_kv_formula():
-    d = Diagram('26-rtx-kv', 'Gemma E2B: считаем KV для 4K',
+    d = Diagram('26-rtx-kv', 'Gemma E2B: считаем KV для 128K',
                 '35 слоёв; последние 20 переиспользуют KV. Свой кеш: 3 full + 12 sliding.')
     d.rect(48, 160, 1104, 96, PALE)
     d.text(600, 222, 'KV(S) = 2 × b × [ G(S) + L(S) ]', 40, BLUE, True, 'middle',
            width=1056, formula=True)
     for x, title, formula, result, color, fill in [
-            (48, 'G / вся история', '3 × 1 × 512 × 4096', 'BF16: 24 MiB', BLUE, PALE),
+            (48, 'G / вся история', '3 × 1 × 512 × 131072', 'BF16: 768 MiB', BLUE, PALE),
             (620, 'L / окно 512', '12 × 1 × 256 × 512', 'BF16: 6 MiB', TEAL, MINT)]:
         d.card(x, 288, 532, 156, title, (), fill, color)
         d.text(x+266, 376, formula, 30, bold=True, anchor='middle', width=484, formula=True)
         d.text(x+266, 415, result, 24, color, anchor='middle', width=484)
     for x, title, result, both, fill, color in [
-            (48, 'BF16 / b = 2', '30 MiB', 'Две независимые истории: 60 MiB', PALE, BLUE),
-            (620, 'FP8 / b = 1', '15 MiB', 'Две независимые истории: 30 MiB', MINT, TEAL)]:
+            (48, 'BF16 / b = 2', '774 MiB', '8 независимых историй: 6192 MiB', PALE, BLUE),
+            (620, 'FP8 / b = 1', '387 MiB', '8 независимых историй: 3096 MiB', MINT, TEAL)]:
         d.card(x, 480, 532, 156, title, (), fill, color)
         d.text(x+266, 577, result, 46, color, True, 'middle', width=484)
         d.text(x+266, 614, both, 22, anchor='middle', width=484)
     d.text(48, 676, '2 = K и V; b = байт на элемент. Считаем одну KV-голову, не восемь Q-голов.', 22, width=1104)
-    d.footer('Полезные KV при S = 4096. Реальный пул: блоки, padding и резерв; проверяем логи vLLM.')
+    d.footer('S = 131072; локальное окно = 512. Это расчёт KV, не проверка вместимости GPU.')
     d.save()
 
 

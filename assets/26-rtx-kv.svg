@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
-<title id="title">Gemma E2B: считаем KV для 4K</title><desc id="desc">35 слоёв; последние 20 переиспользуют KV. Свой кеш: 3 full + 12 sliding.</desc>
+<title id="title">Gemma E2B: считаем KV для 128K</title><desc id="desc">35 слоёв; последние 20 переиспользуют KV. Свой кеш: 3 full + 12 sliding.</desc>
 <defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}.formula{font-family:"DejaVu Sans Mono",Menlo,Consolas,monospace}</style>
 <rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
 <text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
-<tspan x="70" dy="0">Gemma E2B: считаем KV для 4K</tspan>
+<tspan x="70" dy="0">Gemma E2B: считаем KV для 128K</tspan>
 </text>
 <text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
 <tspan x="48" dy="0">35 слоёв; последние 20 переиспользуют KV. Свой кеш: 3 full + 12 sliding.</tspan>
@@ -20,10 +20,10 @@
 <tspan x="72" dy="0">G / вся история</tspan>
 </text>
 <text x="314" y="376" font-size="30" fill="#17243b" text-anchor="middle" font-weight="700" data-max-width="484" class="formula">
-<tspan x="314" dy="0">3 × 1 × 512 × 4096</tspan>
+<tspan x="314" dy="0">3 × 1 × 512 × 131072</tspan>
 </text>
 <text x="314" y="415" font-size="24" fill="#1554dc" text-anchor="middle" data-max-width="484">
-<tspan x="314" dy="0">BF16: 24 MiB</tspan>
+<tspan x="314" dy="0">BF16: 768 MiB</tspan>
 </text>
 <rect x="620" y="288" width="532" height="156" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="644" y="330" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="484">
@@ -40,26 +40,26 @@
 <tspan x="72" dy="0">BF16 / b = 2</tspan>
 </text>
 <text x="314" y="577" font-size="46" fill="#1554dc" text-anchor="middle" font-weight="700" data-max-width="484">
-<tspan x="314" dy="0">30 MiB</tspan>
+<tspan x="314" dy="0">774 MiB</tspan>
 </text>
 <text x="314" y="614" font-size="22" fill="#17243b" text-anchor="middle" data-max-width="484">
-<tspan x="314" dy="0">Две независимые истории: 60 MiB</tspan>
+<tspan x="314" dy="0">8 независимых историй: 6192 MiB</tspan>
 </text>
 <rect x="620" y="480" width="532" height="156" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
 <text x="644" y="522" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="484">
 <tspan x="644" dy="0">FP8 / b = 1</tspan>
 </text>
 <text x="886" y="577" font-size="46" fill="#087d78" text-anchor="middle" font-weight="700" data-max-width="484">
-<tspan x="886" dy="0">15 MiB</tspan>
+<tspan x="886" dy="0">387 MiB</tspan>
 </text>
 <text x="886" y="614" font-size="22" fill="#17243b" text-anchor="middle" data-max-width="484">
-<tspan x="886" dy="0">Две независимые истории: 30 MiB</tspan>
+<tspan x="886" dy="0">8 независимых историй: 3096 MiB</tspan>
 </text>
 <text x="48" y="676" font-size="22" fill="#17243b" text-anchor="start" data-max-width="1104">
 <tspan x="48" dy="0">2 = K и V; b = байт на элемент. Считаем одну KV-голову, не восемь Q-голов.</tspan>
 </text>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">Полезные KV при S = 4096. Реальный пул: блоки, padding и резерв; проверяем логи vLLM.</tspan>
+<tspan x="48" dy="0">S = 131072; локальное окно = 512. Это расчёт KV, не проверка вместимости GPU.</tspan>
 </text>
 </svg>
