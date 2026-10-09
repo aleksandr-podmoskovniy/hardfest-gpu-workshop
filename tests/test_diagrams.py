@@ -7,7 +7,6 @@ import xml.etree.ElementTree as ET
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from build_diagrams import Box, Diagram
-from kv_math import calculate_gemma, calculate_gemma_e2b
 
 SVG = "{http://www.w3.org/2000/svg}"
 
@@ -32,11 +31,6 @@ class DiagramConnections(unittest.TestCase):
                 self.assertEqual(footer.attrib["font-size"], "20")
                 self.assertEqual(footer.attrib["data-max-width"], "1104")
 
-    def test_qwen_gpu_gate_comes_before_launch(self):
-        root = ET.parse(ROOT / "assets" / "17-qwen-transition.svg").getroot()
-        text = " ".join(root.itertext())
-        self.assertLess(text.index("обе H100 свободны"), text.index("Рецепт Qwen"))
-
     def test_a30_stays_with_webui_and_includes_whisper(self):
         root = ET.parse(ROOT / "assets" / "01-topology.svg").getroot()
         nodes = {" ".join(n.itertext()).strip(): n for n in root.iter(SVG + "text")}
@@ -49,56 +43,30 @@ class DiagramConnections(unittest.TestCase):
     def test_a30_target_has_two_partitions_and_three_services(self):
         root = ET.parse(ROOT / "assets" / "08-mig-mps.svg").getroot()
         text = " ".join(root.itertext())
-        for label in ("Эмбеддер 4B", "Реранкер 4B", "Whisper large-v3", "три InferenceService"):
+        for label in ("Эмбеддер 4B", "Реранкер 4B", "Whisper large-v3",
+                      "Multi-Instance GPU", "Multi-Process Service"):
             self.assertIn(label, text)
+        # This image explains placement before the automation chapter.
+        self.assertNotIn("InferenceService", text)
+        self.assertNotIn("GPUClass", text)
         self.assertEqual(text.count("2g.12gb"), 2)
         self.assertNotIn("1g.6gb", text)
 
     def test_rtx_diagrams_do_not_inherit_h100_memory_or_interconnect(self):
-        topology = " ".join(ET.parse(ROOT / "assets/21-rtx-topology.svg").getroot().itertext())
-        self.assertIn("КЛАСТЕР RTX 5060 Ti + ШЛЮЗ", topology)
-        self.assertIn("КЛАСТЕР WEBUI + A30", topology)
         tp2 = " ".join(ET.parse(ROOT / "assets/24-rtx-tp2.svg").getroot().itertext())
         self.assertIn("RTX 5060 Ti / rank 0", tp2)
         self.assertIn("RTX 5060 Ti / rank 1", tp2)
         for wrong in ("NVLink", "H100", "HBM"):
             self.assertNotIn(wrong, tp2)
-        budget = " ".join(ET.parse(ROOT / "assets/22-rtx-memory.svg").getroot().itertext())
-        for term in ("16 GiB", "4K", "128K", "17,13 GiB", "4 GiB"):
-            self.assertIn(term, budget)
 
-    def test_session_count_is_named_and_cannot_be_read_as_eight(self):
-        root = ET.parse(ROOT / "assets/25-kv-derivation.svg").getroot()
-        text = " ".join(root.itertext())
-        self.assertIn("N — число историй", text)
-        self.assertIn("Mkv = N × (2 × S × L × Hkv × D × b)", text)
-        self.assertNotIn("B НЕЗАВИСИМЫХ ИСТОРИЙ", text)
-        self.assertIn("Hkv = KV-головы", text)
-        self.assertIn("L = число слоёв", text)
-        self.assertEqual(len([n for n in root.iter(SVG + "text")
-                              if n.attrib.get("class") == "formula"]), 3)
-
-    def test_rtx_sequence_keeps_independent_cache_and_tune_stages(self):
-        text = " ".join(ET.parse(ROOT / "assets/20-rtx-sequence.svg").getroot().itertext())
-        self.assertIn("Уже запущена", text)
-        self.assertIn("rtx-gemma-cache", text)
-        self.assertIn("rtx-gemma-tune", text)
-        self.assertIn("Перед Tune останавливаем Cache", text)
-        self.assertIn("Перед Qwen — обе Gemma", text)
-
-    def test_rtx_window_is_not_a_concurrency_promise(self):
-        text = " ".join(ET.parse(ROOT / "assets/22-rtx-memory.svg").getroot().itertext())
-        self.assertIn("окно 128K", text)
-        self.assertIn("До 8 активных последовательностей", text)
-        self.assertIn("Окно 128K не означает 8 полных историй", text)
-        self.assertNotIn("/ 8K", text)
+    def test_rtx_window_and_concurrency_are_distinct_in_the_recorded_profile(self):
         profile = json.loads((ROOT / "results/rtx5060-rehearsal-20261008.json").read_text())
         self.assertEqual(profile["profiles"]["qwen-128k"]["max_model_len"], 131072)
         self.assertEqual(profile["profiles"]["qwen-128k"]["max_num_seqs"], 8)
         self.assertEqual(profile["profiles"]["qwen-128k"]["kv_offloading_gib"], 16)
 
     def test_topology_does_not_mix_admin_control_with_inference(self):
-        for name in ("01-topology", "21-rtx-topology"):
+        for name in ("01-topology",):
             root = ET.parse(ROOT / f"assets/{name}.svg").getroot()
             text = " ".join(root.itertext())
             self.assertNotIn("Kubernetes MCP", text)
@@ -112,28 +80,10 @@ class DiagramConnections(unittest.TestCase):
         self.assertIn("DECODE — ГЕНЕРАЦИЯ ТОКЕНОВ", text)
         self.assertIn("Рассуждение есть не у всех моделей", text)
 
-    def test_memory_tables_match_the_architecture_calculations(self):
-        h100 = " ".join(ET.parse(ROOT / "assets/03-memory.svg").getroot().itertext())
-        rtx = " ".join(ET.parse(ROOT / "assets/27-rtx-long-context.svg").getroot().itertext())
-        for element_bytes in (1, 2):
-            for tokens in (65536, 131072, 262144):
-                value = calculate_gemma(tokens, element_bytes=element_bytes)["one_session_gib"]
-                self.assertIn(f"{value:.2f}".replace(".", ",") + " GiB", h100)
-            for tokens in (4096, 65536, 131072):
-                value = calculate_gemma_e2b(tokens, element_bytes=element_bytes)["one_session_gib"]
-                self.assertIn(f"{value * 1024:.0f} MiB", rtx)
-
     def test_main_kv_example_uses_long_context_not_local_attention_window(self):
         h100 = " ".join(ET.parse(ROOT / "assets/11-gemma-kv.svg").getroot().itertext())
         self.assertIn("Контекст S — 128K или 256K", h100)
         self.assertIn("1024 — окно только локальных слоёв", h100)
-        rtx = " ".join(ET.parse(ROOT / "assets/26-rtx-kv.svg").getroot().itertext())
-        self.assertIn("считаем KV для 128K", rtx)
-        self.assertIn("S = 131072", rtx)
-        for element_bytes in (1, 2):
-            for sessions in (1, 8):
-                value = calculate_gemma_e2b(131072, sessions=sessions, element_bytes=element_bytes)
-                self.assertIn(f"{value['all_sessions_gib'] * 1024:.0f} MiB", rtx)
 
     def test_ports_follow_card_bounds_with_equal_clearance(self):
         card = Box(40, 80, 240, 120)

@@ -18,15 +18,17 @@ class BenchmarkResult(unittest.TestCase):
             ({}, False),
         ]
         text = (ROOT / "README.md").read_text()
-        # The reader checks an explicit field/value table, not a hidden parser.
+        disclosures = re.findall(r"<details>.*?</details>", text, re.S)
+        control = next(block for block in disclosures if "vllm bench serve" in block)
+        # The reader checks explicit field=value criteria, not a hidden parser.
         # Tie those requirements to the actual command's workload dimensions.
         requirements = {key: int(value) for key, value in re.findall(
-            r"^\| `(failed|completed|total_input_tokens|total_output_tokens)` \| `(\d+)` \|$",
-            text, re.M)}
+            r"`(failed|completed|total_input_tokens|total_output_tokens)=(\d+)`",
+            control, re.M)}
         self.assertEqual(requirements, success)
-        prompts = int(re.search(r"--num-prompts (\d+)", text)[1])
-        input_tokens = int(re.search(r"--random-input-len (\d+)", text)[1])
-        output_tokens = int(re.search(r"--random-output-len (\d+)", text)[1])
+        prompts = int(re.search(r"--num-prompts (\d+)", control)[1])
+        input_tokens = int(re.search(r"--random-input-len (\d+)", control)[1])
+        output_tokens = int(re.search(r"--random-output-len (\d+)", control)[1])
         self.assertEqual(requirements["completed"], prompts)
         self.assertEqual(requirements["total_input_tokens"], prompts * input_tokens)
         self.assertEqual(requirements["total_output_tokens"], prompts * output_tokens)
@@ -34,8 +36,7 @@ class BenchmarkResult(unittest.TestCase):
             with self.subTest(result=result):
                 self.assertEqual(all(result.get(key) == value
                                      for key, value in requirements.items()), accepted)
-        disclosures = re.findall(r"<details>.*?</details>", text, re.S)
-        self.assertTrue(any("vllm bench serve" in block and "`failed`" in block
+        self.assertTrue(any("vllm bench serve" in block and "`failed=0`" in block
                             for block in disclosures))
 
 

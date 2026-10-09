@@ -34,8 +34,8 @@ class KVTeaching(unittest.TestCase):
 
     def test_derivation_remains_in_both_main_guides(self):
         for name in ("README.md", "RTX5060.md"):
-            doc = (ROOT / name).read_text().split('id="memory"', 1)[1].split('id="ab"', 1)[0]
-            for term in ("25-kv-derivation.svg", "KV-голов", "query", "awk -v S=",
+            doc = (ROOT / name).read_text().split('id="memory"', 1)[1].split('id="ram"', 1)[0]
+            for term in ("KV-голов", "GQA", "Hkv", "awk -v S=", "min(S,",
                          "BF16", "FP8", "docs/MEMORY_BUDGET.md#verify-kv"):
                 self.assertIn(term, doc)
 
@@ -45,11 +45,10 @@ class KVTeaching(unittest.TestCase):
         stage = doc.split('id="long-context"', 1)[1].split('id="platform"', 1)[0]
         # The current route uses a single 128K server window and two input
         # lengths. 65536 was an older run's window, not a required restart.
-        for term in ("131072", "57344", "122880", "assistant",
-                     "27-rtx-long-context.svg", "completed=1", "failed=0"):
+        for term in ("131072", "57344", "122880", "assistant", "completed=1", "failed=0"):
             self.assertIn(term, stage)
         qwen = (ROOT / "RTX5060.md").read_text().split('id="qwen-long-context"', 1)[1]
         self.assertIn("--endpoint /v1/completions --model rtx-qwen35-9b", qwen)
         self.assertIn("--max-concurrency 8", qwen)
         self.assertIn("122880", qwen)
-        self.assertRegex(qwen, r"(?i)linear attention.{0,30}состояние")
+        self.assertRegex(qwen, r"(?i)Состояние linear attention")
