@@ -156,6 +156,81 @@ histogram_quantile(0.95,
 > к разным запросам. Для вычитания нужны отметки одного запроса из трассировки.
 > При вытеснении возможны дополнительные интервалы ожидания.
 
+<a id="mixed-prefill"></a>
+### Два разных входа в одном запуске клиента
+
+Для сравнения Cache/Tune используется штатный `timed_trace` vLLM 0.31:
+длинный запрос в момент 0, короткий через 50 мс. Один клиент исключает разницу
+в запуске двух процессов. Входы синтетические, это не проверка качества текста.
+
+| Стенд | Длинный / короткий вход | Выход каждого | Окно обоих профилей |
+| --- | ---: | ---: | ---: |
+| H100 | 8192 / 128 | 512 | 16K |
+| RTX | 3072 / 128 | 128 | 4K |
+
+Пример для H100. Для RTX: `NS=hardfest-rtx`,
+`SERVICE=rtx-gemma-cache`, `MODEL=rtx-gemma-cache`,
+`TOKENIZER_PATH=/data/modelcache/models/rtx-gemma-e2b`, `LONG_INPUT=3072`, `OUTPUT=128`.
+Команды выполняются в Bash:
+
+```bash
+export NS=hardfest-demo SERVICE=hf-gemma-b MODEL=gemma-4-31b
+export TOKENIZER_PATH=/data/modelcache/models/gemma-4-31b
+export LONG_INPUT=8192 OUTPUT=512 PHASE=cache
+export TRACE_ID=$(date +%s)
+export TRACE="results/mixed-$TRACE_ID.jsonl"
+mkdir -p results
+printf '{"timestamp":0,"input_length":%s,"output_length":%s,"hash_ids":[%s]}\n' \
+  "$LONG_INPUT" "$OUTPUT" "$TRACE_ID" > "$TRACE"
+printf '{"timestamp":0.05,"input_length":128,"output_length":%s,"hash_ids":[%s]}\n' \
+  "$OUTPUT" "$((TRACE_ID + 1))" >> "$TRACE"
+```
+
+Trace создаётся **один раз для пары**. На Cache выполняется блок ниже;
+после переключения профиля тот же блок повторяется с `PHASE=tune`.
+В RTX дополнительно меняются `SERVICE=rtx-gemma-tune MODEL=rtx-gemma-tune`.
+
+```bash
+export RESULT="mixed-$TRACE_ID-$PHASE.json"
+set -o pipefail
+kubectl --context "$GPU_CONTEXT" -n "$NS" exec -i "deployment/$SERVICE" -c vllm -- \
+  env PYTHONHASHSEED=0 vllm bench serve \
+    --backend vllm --base-url "http://$SERVICE.$NS.svc.cluster.local:8000" \
+    --endpoint /v1/completions --model "$MODEL" --tokenizer "$TOKENIZER_PATH" \
+    --dataset-name timed_trace --dataset-path /dev/stdin \
+    --timed-trace-chunk-hash-size "$LONG_INPUT" --self-timed \
+    --num-prompts 2 --max-concurrency 2 --temperature 0 --ignore-eos \
+    --ready-check-timeout-sec 0 --num-warmups 0 \
+    --save-result --save-detailed --result-dir /tmp --result-filename "$RESULT" \
+  < "$TRACE" 2>&1 | tee "results/mixed-$TRACE_ID-$PHASE.log"
+kubectl --context "$GPU_CONTEXT" -n "$NS" exec "deployment/$SERVICE" -c vllm -- \
+  cat "/tmp/$RESULT" > "results/$RESULT"
+```
+
+`PYTHONHASHSEED=0`, одинаковый trace и токенизатор воспроизводят те же входы.
+Для следующей пары создаётся **новый** trace, чтобы не повторить уже кешированный
+prefill. На исследуемых запросах не должно быть prefix-cache hits.
+
+В подробном JSON проверяются два успешных ответа, заданные `input_lens` /
+`output_lens`, пустые `errors` и реальные времена:
+
+```text
+end[i] = start_times[i] + latencies[i]
+overlap = min(end[0], end[1]) − max(start_times[0], start_times[1])
+```
+
+`overlap > 0` подтверждает перекрытие запросов у клиента. Короткий должен
+начаться до первого токена длинного:
+`start_times[1] < start_times[0] + ttfts[0]`. Если условия не выполнены,
+результат не показывает нужную конкуренцию; следующая пара использует меньшую
+задержку и новый trace. Клиентские отметки не являются границами GPU-prefill.
+
+Сравниваются TTFT короткого запроса, ITL и полное время **обоих** ответов.
+Переход Cache → Tune меняет несколько настроек: результат относится ко всему
+профилю, не только к chunked prefill.
+[Формат TimedTrace](https://github.com/vllm-project/vllm/blob/db9527a46873454610df6dbedf79a36d6bf1a7f6/vllm/benchmarks/datasets/datasets.py),
+[подробные результаты клиента](https://github.com/vllm-project/vllm/blob/db9527a46873454610df6dbedf79a36d6bf1a7f6/vllm/benchmarks/serve.py).
+
 ## 5. Проверить кэш и speculative decoding отдельно
 
 | Утверждение | Необходимое подтверждение |
@@ -171,6 +246,87 @@ histogram_quantile(0.95,
 
 **MTP (Multi-Token Prediction)** предлагает несколько будущих токенов за шаг.
 Assistant — отдельная черновая модель; её затраты тоже входят во время запроса.
+
+<a id="offload-replay"></a>
+### Возврат конкретного префикса из RAM
+
+Этот отдельный опыт выполняется на **ручной B Cache**, без чужих запросов.
+Он проверяет механизм переноса, а не ускорение рабочего профиля.
+Чтобы ограниченное число запросов вытеснило GPU-кеш, в её `vllm:` временно
+добавляется [`kv-cache-memory-bytes`](https://docs.vllm.ai/en/v0.31.0/configuration/engine_args/#--kv-cache-memory-bytes):
+
+| Стенд | GPU KV-пул, байт | Вход запроса | Штатный RAM KV |
+| --- | ---: | ---: | ---: |
+| H100 | `2147483648` (2 GiB) | 8192 | 32 GiB |
+| RTX | `268435456` (256 MiB) | 3072 | 4 GiB |
+
+Поле явно задаёт GPU-пул вместо его автоматического расчёта по доле памяти.
+Окно остаётся 16K / 4K, формат KV — FP8. Изменение проходит Git/Argo;
+запуск продолжается только после Ready и проверки в логах, что пул вмещает
+один такой запрос. Если проверка ёмкости не прошла, рабочий профиль возвращается,
+а результат опыта не объявляется успешным.
+
+Последовательность: исходный префикс → 32 независимых префикса → тот же исходный.
+Для H100 параметры такие; в RTX меняются `NS=hardfest-rtx`,
+`SERVICE=rtx-gemma-cache`, `MODEL=rtx-gemma-cache`,
+`TOKENIZER=/data/modelcache/models/rtx-gemma-e2b`, `INPUT=3072`.
+На клиентской машине для проверки JSON нужен `jq`.
+
+```bash
+export NS=hardfest-demo SERVICE=hf-gemma-b MODEL=gemma-4-31b
+export TOKENIZER=/data/modelcache/models/gemma-4-31b INPUT=8192
+mkdir -p results/offload
+set -o pipefail
+offload_request() {
+  kubectl --context "$GPU_CONTEXT" -n "$NS" exec "deployment/$SERVICE" -c vllm -- \
+    vllm bench serve --backend vllm \
+      --base-url "http://$SERVICE.$NS.svc.cluster.local:8000" \
+      --endpoint /v1/completions --model "$MODEL" --tokenizer "$TOKENIZER" \
+      --dataset-name random --seed "$1" \
+      --random-input-len "$INPUT" --random-output-len 1 --random-range-ratio 0 \
+      --num-prompts 1 --max-concurrency 1 --ignore-eos --temperature 0 \
+      --ready-check-timeout-sec 0 --num-warmups 0 \
+      --save-result --save-detailed --result-dir /tmp --result-filename "offload-$2.json" \
+    2>&1 | tee "results/offload/$2.txt" || return 1
+  kubectl --context "$GPU_CONTEXT" -n "$NS" exec "deployment/$SERVICE" -c vllm -- \
+    cat "/tmp/offload-$2.json" > "results/offload/$2.json" || return 1
+  jq -e --argjson input "$INPUT" \
+    '.completed == 1 and .failed == 0 and .total_input_tokens == $input and .total_output_tokens == 1' \
+    "results/offload/$2.json" > /dev/null
+}
+offload_request 9001 original || exit 1
+for SEED in $(seq 9002 9033); do
+  offload_request "$SEED" "evict-$SEED" || exit 1
+done
+```
+
+У каждого ответа должны быть `completed=1`, `failed=0`, заданный вход и один
+выходной токен. При любой неполной серии опыт останавливается. Исходный префикс
+между вытесняющими запросами **не повторяется**. Другой seed меняет начало входа.
+
+В отдельном терминале открывается доступ к метрикам этой же B:
+
+```bash
+kubectl --context "$GPU_CONTEXT" -n "$NS" port-forward "svc/$SERVICE" 18002:8000
+```
+
+В основном терминале сохраняется состояние непосредственно вокруг повтора:
+
+```bash
+curl --fail --max-time 10 http://127.0.0.1:18002/metrics > results/offload/before.prom || exit 1
+offload_request 9001 replay || exit 1
+curl --fail --max-time 10 http://127.0.0.1:18002/metrics > results/offload/after.prom || exit 1
+```
+
+У **OffloadingConnector** подтверждение — приращение `CPU_to_GPU` в метриках
+передачи и external-prefix hits именно на повторе. Нулевое приращение означает,
+что возврат не показан: префикс мог остаться на GPU либо исчезнуть и из RAM.
+Фактическая ёмкость и округление блоков берутся из runtime, не только из формулы.
+Счётчики Simple CPU относятся к другому backend и здесь не требуются.
+
+В конце временное поле `kv-cache-memory-bytes` удаляется через Git/Argo.
+После Ready сверяется восстановленный штатный пул; только затем продолжаются
+сравнения Cache/Tune. NodeCache с весами этот опыт не очищает.
 
 ## 6. Найти ёмкость Qwen
 

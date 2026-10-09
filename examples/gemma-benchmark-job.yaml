@@ -1,0 +1,182 @@
+# One CPU client: BENCH_TARGET=both runs manual Tune first/repeat, then platform first/repeat.
+# On a 128 GiB H100 node, use separate Jobs with BENCH_TARGET=manual and platform:
+# measure manual before stopping B, then platform after its replacement is ready.
+# Configure the CPU node, HF Secret and selected targets before unsuspending.
+# Stop background requests; keep the same weights, context limit and runtime settings.
+# "first" means no client warmup, not an empty server cache. No cache reset is performed.
+# Export each selected target's two RESULT_JSON_BEGIN/END blocks before the Job TTL expires.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gemma-benchmark
+  namespace: hardfest-demo
+  labels:
+    app.kubernetes.io/name: gemma-benchmark
+spec:
+  suspend: true
+  backoffLimit: 0
+  activeDeadlineSeconds: 3600
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gemma-benchmark
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: REPLACE_CPU_NODE
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: benchmark
+          image: vllm/vllm-openai@sha256:c1c9f6fd5c109ba7f0546a59f5b2f15fb87f64c77782e90a27b648b42a8e67c3
+          imagePullPolicy: IfNotPresent
+          workingDir: /work
+          command: ["/bin/bash", "-euc"]
+          args:
+            - |
+              : "${HF_TOKEN:?HF_TOKEN must come from the gated-model access Secret}"
+              case "$BENCH_TARGET" in
+                both|manual|platform) ;;
+                *) printf 'BENCH_TARGET must be both, manual or platform.\n' >&2; exit 1 ;;
+              esac
+              validate_target() {
+                local setting
+                for setting in "$@"; do
+                  case "$setting" in
+                    ""|*REPLACE_*) printf 'Configure the selected target URL and served model ID before starting.\n' >&2; exit 1 ;;
+                  esac
+                done
+              }
+              if [ "$BENCH_TARGET" != platform ]; then
+                validate_target "${MANUAL_BASE_URL:-}" "${MANUAL_MODEL:-}"
+              fi
+              if [ "$BENCH_TARGET" != manual ]; then
+                validate_target "${PLATFORM_BASE_URL:-}" "${PLATFORM_MODEL:-}"
+                : "${PLATFORM_API_KEY:?PLATFORM_API_KEY must come from the runtime Secret}"
+              fi
+              mkdir -p results
+              hf download "$TOKENIZER_ID" --revision "$TOKENIZER_REVISION" \
+                --include 'tokenizer*' 'config.json' 'special_tokens_map.json' 'chat_template*' \
+                --local-dir "$PWD/tokenizer"
+
+              run_target() {
+                local target="$1" base_url="$2" model="$3" api_key="$4" pass result
+                if [ -n "$api_key" ]; then
+                  export OPENAI_API_KEY="$api_key"
+                else
+                  unset OPENAI_API_KEY
+                fi
+                for pass in first repeat; do
+                  result="results/${target}-${pass}.json"
+                  vllm bench serve \
+                    --backend vllm --base-url "$base_url" --endpoint /v1/completions \
+                    --model "$model" --tokenizer "$PWD/tokenizer" \
+                    --dataset-name random --seed 42 \
+                    --random-input-len "$INPUT_TOKENS" --random-output-len "$OUTPUT_TOKENS" \
+                    --random-range-ratio 0 --num-prompts "$NUM_PROMPTS" \
+                    --max-concurrency "$CONCURRENCY" --ignore-eos --temperature 0 \
+                    --ready-check-timeout-sec 0 --num-warmups 0 \
+                    --percentile-metrics ttft,tpot,itl --metric-percentiles 95,99 \
+                    --save-result --save-detailed --result-dir results --result-filename "${target}-${pass}.json"
+                  printf 'RESULT_JSON_BEGIN target=%s pass=%s\n' "$target" "$pass"
+                  cat "$result"
+                  printf '\nRESULT_JSON_END target=%s pass=%s\n' "$target" "$pass"
+                  python3 - "$result" "$NUM_PROMPTS" "$INPUT_TOKENS" "$OUTPUT_TOKENS" <<'PY'
+              import json
+              import sys
+              from pathlib import Path
+
+              result = json.loads(Path(sys.argv[1]).read_text())
+              prompts, inputs, outputs = map(int, sys.argv[2:])
+              expected = {"completed": prompts, "failed": 0,
+                          "total_input_tokens": prompts * inputs,
+                          "total_output_tokens": prompts * outputs}
+              mismatches = {key: {"expected": value, "actual": result.get(key)}
+                            for key, value in expected.items() if result.get(key) != value}
+              if mismatches:
+                  raise SystemExit(f"Incomplete benchmark {sys.argv[1]}: {mismatches}")
+              PY
+                done
+              }
+
+              if [ "$BENCH_TARGET" != platform ]; then
+                run_target manual "$MANUAL_BASE_URL" "$MANUAL_MODEL" "${MANUAL_API_KEY:-}"
+              fi
+              if [ "$BENCH_TARGET" != manual ]; then
+                run_target platform "$PLATFORM_BASE_URL" "$PLATFORM_MODEL" "$PLATFORM_API_KEY"
+              fi
+          env:
+            - name: BENCH_TARGET
+              value: both
+            - name: MANUAL_BASE_URL
+              value: http://hf-gemma-b.hardfest-demo.svc.cluster.local:8000
+            - name: MANUAL_MODEL
+              value: gemma-4-31b
+            - name: PLATFORM_BASE_URL
+              value: http://hf-platform-gemma.hardfest-demo.svc.cluster.local:80
+            - name: PLATFORM_MODEL
+              value: REPLACE_PLATFORM_SERVED_MODEL_ID
+            - name: TOKENIZER_ID
+              value: google/gemma-4-31B-it
+            - name: TOKENIZER_REVISION
+              value: 842da3794eaa0b77d5f08bae87a17459d91ff475
+            # For a manual runtime with authentication=None, leave this Secret absent.
+            - name: MANUAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: replace-manual-runtime-api-secret
+                  key: REPLACE_MANUAL_RUNTIME_API_SECRET_KEY
+                  optional: true
+            - name: PLATFORM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: replace-platform-runtime-api-secret
+                  key: REPLACE_PLATFORM_RUNTIME_API_SECRET_KEY
+                  optional: true
+            # Existing Secret in this namespace; account must have accepted Gemma terms.
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: REPLACE_HF_TOKEN_SECRET
+                  key: REPLACE_HF_TOKEN_SECRET_KEY
+            - name: HF_HOME
+              value: /work/huggingface
+            - name: XDG_CACHE_HOME
+              value: /work/cache
+            - name: TOKENIZERS_PARALLELISM
+              value: "false"
+            - name: INPUT_TOKENS
+              value: "8192"
+            - name: OUTPUT_TOKENS
+              value: "2048"
+            - name: NUM_PROMPTS
+              value: "8"
+            - name: CONCURRENCY
+              value: "4"
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+              ephemeral-storage: 2Gi
+            limits:
+              cpu: "4"
+              memory: 8Gi
+              ephemeral-storage: 8Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: work
+              mountPath: /work
+      volumes:
+        - name: work
+          emptyDir:
+            sizeLimit: 6Gi
