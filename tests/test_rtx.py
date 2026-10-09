@@ -217,13 +217,10 @@ class RTXProfiles(unittest.TestCase):
     def test_full_rtx_guide_has_ordered_stages_and_inline_commands(self):
         guide = (ROOT / "RTX5060.md").read_text()
         self.assertIn("(RTX5060.md)", (ROOT / "README.md").read_text())
-        stages = ["ab", "memory", "ram", "speculation", "platform",
-                  "placement", "tp2", "conclusion", "cleanup", "setup"]
+        stages = ["ab", "monitoring", "memory", "ram", "speculation", "latency",
+                  "placement", "platform", "conclusion", "tp2", "cleanup", "setup"]
         positions = [guide.index(f'id="{name}"') for name in stages]
         self.assertEqual(positions, sorted(positions))
-        for name in ("monitoring", "latency"):
-            self.assertLess(guide.index('id="ab"'), guide.index(f'id="{name}"'))
-            self.assertLess(guide.index(f'id="{name}"'), guide.index('id="memory"'))
         self.assertLess(guide.index('id="tp2"'), guide.index('id="results"'))
         self.assertLess(guide.index('id="results"'), guide.index('id="cleanup"'))
         for target in re.findall(r"\]\(#([^)]+)\)", guide):
@@ -257,5 +254,5 @@ class RTXProfiles(unittest.TestCase):
             self.assertTrue(row.endswith(f"`{served}` |"))
         guide = (ROOT / "RTX5060.md").read_text()
         self.assertIn("--model rtx-qwen35-9b", guide)
-        self.assertIn("не меняем рецепт", guide)
+        self.assertIn("рецепт не меняется", guide)
         self.assertIn("simple_kv_offload_load_blocks_total", guide)

@@ -19,21 +19,50 @@ def main_path(text):
 
 
 class Readability(unittest.TestCase):
-    def test_closed_route_keeps_six_stories_and_every_practical_stage(self):
+    def test_closed_route_keeps_six_sections_and_every_practical_stage(self):
         for path in GUIDES:
             with self.subTest(guide=path.name):
                 visible = main_path(path.read_text())
-                headings = re.findall(r"^## История (\d+)\. (.+)$", visible, re.M)
+                headings = re.findall(r"^## (\d+)\. (.+)$", visible, re.M)
                 self.assertEqual([n for n, _ in headings], list("123456"))
-                parts = re.split(r"(?m)^## История \d+\. .+$", visible)[1:]
-                parts[0] = visible.split("## История 1.", 1)[0] + parts[0]
-                stages = ("Gemma A", "Cache", "Tune", "InferenceService", "A30", "Qwen")
+                parts = re.split(r"(?m)^## \d+\. .+$", visible)[1:]
+                parts[0] = visible.split("## 1.", 1)[0] + parts[0]
+                stages = ("Gemma A", "Cache", "Tune", "A30", "InferenceService", "Qwen")
                 for stage, part in zip(stages, parts):
                     self.assertIn(stage, part)
-                # The listener reaches the first experiment before the terms
+                # Base behavior is explained before the terms
                 # needed for sharing a card or automating an allocation.
                 for later_term in ("MIG", "MPS", "DRA", "OIDC", "ResourceClaim"):
                     self.assertNotRegex(parts[0], rf"\b{later_term}\b")
+
+    def test_automation_is_introduced_after_memory_compute_and_placement(self):
+        for path in GUIDES:
+            with self.subTest(guide=path.name):
+                text = path.read_text()
+                manual = text.split('<a id="platform"></a>', 1)[0]
+                self.assertNotIn("InferenceService", manual)
+                self.assertNotRegex(main_path(manual), r"(?i)платформенн\w+ (?:сервис|запуск)")
+                positions = [text.index(f'<a id="{stage}"></a>') for stage in
+                             ("ab", "monitoring", "memory", "ram", "speculation",
+                              "latency", "placement", "platform", "conclusion", "tp2")]
+                self.assertEqual(positions, sorted(positions))
+                baseline = main_path(text).split('<a id="memory"></a>', 1)[0]
+                for symptom in ("Waiting", "памят", "GPU"):
+                    self.assertIn(symptom, baseline)
+
+    def test_guides_are_manuals_not_audience_or_presenter_scripts(self):
+        for path in GUIDES:
+            with self.subTest(guide=path.name):
+                prose = re.sub(r"(?ms)^```[^\n]*\n.*?^```\s*$", "", path.read_text())
+                # Narrow regression guard for the rejected narrative. It does
+                # not pretend to judge clarity or replace editorial review.
+                direction = re.search(
+                    r"(?i)договоритесь|соседями|проверьте себя|"
+                    r"администратор (?:открывает|показывает)|"
+                    r"(?:посмотрите|смотрите|попросите|предскажите)\b",
+                    prose,
+                )
+                self.assertIsNone(direction, f"Stage direction: {direction.group() if direction else ''}")
 
     def test_long_context_arithmetic_is_not_hidden_with_operator_commands(self):
         for path in GUIDES:
@@ -70,7 +99,7 @@ class Readability(unittest.TestCase):
                 for token in tokens:
                     if token.startswith("<details"):
                         self.assertFalse(opened, "Nested disclosures hide the reading path")
-                        self.assertNotIn(" open", token, "Answers must not be revealed in advance")
+                        self.assertNotIn(" open", token, "Supporting details are collapsed by default")
                         opened, named = True, False
                     elif token.startswith("<summary>"):
                         self.assertTrue(opened)

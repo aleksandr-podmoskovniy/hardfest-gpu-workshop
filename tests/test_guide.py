@@ -36,7 +36,7 @@ class Guide(unittest.TestCase):
         self.assertIn('width="250" height="250"', top)
         self.assertIn(f'href="{url}"', top)
         for section in ('<a id="contents"></a>', "## Подготовка своего стенда",
-                        "## История 1.", "## История 2.", "## Остановка"):
+                        "## 1.", "## 2.", "## Остановка"):
             self.assertIn(section, readme)
         svg = ET.parse(ROOT / "assets/workshop-qr.svg").getroot()
         self.assertEqual(svg.find("{http://www.w3.org/2000/svg}desc").text, url)
@@ -70,7 +70,7 @@ class Guide(unittest.TestCase):
         self.assertIn("max-model-len: 16384", second)
         self.assertIn("фактический вход", second)
         self.assertIn("cpu_bytes_to_use: 34359738368", ram)
-        self.assertIn("остановите A через Git", ram)
+        self.assertRegex(ram, r"128 GiB[\s\S]{0,200}A останавливается через Git/Argo")
         for stale in ("gemma-b-128k.yaml", "gemma-b-ram.yaml"):
             self.assertNotIn(stale, readme)
 
@@ -158,8 +158,8 @@ class Guide(unittest.TestCase):
         targets = re.findall(r"\]\(#([^)]+)\)", readme)
         self.assertGreaterEqual(len(targets), 10)
         self.assertTrue(set(targets).issubset(anchors))
-        stages = ['ab', 'monitoring', 'latency', 'memory', 'ram', 'speculation',
-                  'platform', 'placement', 'tp2', 'conclusion', 'cleanup', 'setup']
+        stages = ['ab', 'monitoring', 'memory', 'ram', 'speculation', 'latency',
+                  'placement', 'platform', 'conclusion', 'tp2', 'cleanup', 'setup']
         positions = [readme.index(f'id="{stage}"') for stage in stages]
         self.assertEqual(positions, sorted(positions))
         self.assertEqual(readme.count('<a id="speculation">'), 1)
@@ -167,15 +167,16 @@ class Guide(unittest.TestCase):
 
     def test_platform_chapter_describes_recipe_workflow(self):
         readme = (ROOT / "README.md").read_text()
-        chapter = readme.split('id="platform"', 1)[1].split('id="placement"', 1)[0]
+        chapter = readme.split('id="platform"', 1)[1].split('id="conclusion"', 1)[0]
         for term in ("Gemma 64K", "CPU KV", "assistant", "hf-platform-gemma", "Gemma A — DP"):
             self.assertIn(term, chapter)
         for term in ("charts/inference-service", "order.enabled: true", "model", "Ready",
                      "helm template"):
             self.assertIn(term, readme)
         self.assertIn("charts/inference-service", chapter)
-        self.assertRegex(chapter, r"остановите (?:только |ручную )?A")
-        self.assertIn("Ручная B остаётся", chapter)
+        self.assertIn("ручная A останавливается", chapter)
+        self.assertIn("При достаточном RAM ручная B остаётся", chapter)
+        self.assertIn("на 128 GiB B также останавливается после сохранения результата", chapter)
 
     def test_original_teaching_chain_is_preserved_for_current_models(self):
         for name in ("README.md", "RTX5060.md"):
@@ -206,8 +207,8 @@ class Guide(unittest.TestCase):
 
     def test_qwen_is_a_required_final_stage_with_operational_checks(self):
         readme = (ROOT / "README.md").read_text()
-        chapter = readme.split('id="tp2"', 1)[1].split('id="cleanup"', 1)[0]
-        self.assertRegex(chapter, r"## История 6\.")
+        chapter = readme.split('id="results"', 1)[1].split('id="cleanup"', 1)[0]
+        self.assertRegex(chapter, r"## 6\.")
         self.assertNotIn("бонус", chapter.lower())
         self.assertLess(readme.index('id="tp2"'), readme.index('id="cleanup"'))
         for term in ("AI Inference", "DeviceClass", "tensor-parallel-size: 2",
@@ -250,7 +251,7 @@ class Guide(unittest.TestCase):
         for term in ("pending", "Virtual Key", "OIDC", "MCP", "ACL", "отзыв"):
             self.assertIn(term, guide)
 
-    def test_first_experiment_leads_to_explanation_before_final_summary(self):
+    def test_baseline_leads_to_explanation_before_final_summary(self):
         readme = (ROOT / "README.md").read_text()
         ordered = ["ab", "monitoring", "latency", "conclusion", "setup"]
         positions = [readme.index(f'<a id="{name}"></a>') for name in ordered]
@@ -282,6 +283,17 @@ class Guide(unittest.TestCase):
         self.assertIn("rtx-gemma-base", rtx)
         self.assertIn("заказы — `order.enabled: false`", rtx)
 
+    def test_a30_is_prepared_before_placement_and_creation_is_explained_later(self):
+        for name in ("README.md", "RTX5060.md"):
+            with self.subTest(guide=name):
+                text = (ROOT / name).read_text()
+                setup = text.split('id="setup"', 1)[1]
+                self.assertIn("Gemma/Qwen", setup)
+                self.assertIn("Три сервиса A30 уже отвечают", setup)
+                self.assertIn("(#a30-orders)", setup)
+                self.assertLess(text.index('id="platform"'), text.index('id="a30-orders"'))
+                self.assertIn("Повторный Sync без изменения конфигурации", text)
+
     def test_readme_has_no_decorative_tagline_or_boilerplate_labels(self):
         readme = (ROOT / "README.md").read_text()
         self.assertNotIn("·", readme)
@@ -311,6 +323,13 @@ class Guide(unittest.TestCase):
             for element_bytes in (1, 2):
                 value = maths.calculate_gemma(tokens=tokens, element_bytes=element_bytes)["one_session_gib"]
                 self.assertIn(f"{value:.2f}".replace(".", ",") + " GiB", svg)
+
+    def test_platform_illustration_matches_the_long_context_target(self):
+        svg = (ROOT / "assets/09-platform.svg").read_text()
+        self.assertIn("Gemma: целевой профиль", svg)
+        self.assertIn("128K, FP8 KV", svg)
+        self.assertIn("RAM offload, chunked prefill, MTP", svg)
+        self.assertNotIn("64K", svg)
 
     def test_all_theory_diagrams_are_local_svg_without_external_content(self):
         diagrams = list((ROOT / "assets").glob("[0-9][0-9]-*.svg"))

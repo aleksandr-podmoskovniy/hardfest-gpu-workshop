@@ -325,8 +325,8 @@ def platform():
         d.text(x+16, 460, body, 21)
         if x < 912:
             d.connect(node, Box(x+288, 374, 240, 120))
-    d.card(48, 542, 528, 126, 'Рецепт Gemma',
-           ['64K, FP8 KV, prefix cache', 'Chunked prefill и CUDA graphs'], MINT, TEAL)
+    d.card(48, 542, 528, 126, 'Gemma: целевой профиль',
+           ['128K, FP8 KV, prefix cache', 'RAM offload, chunked prefill, MTP'], MINT, TEAL)
     d.card(624, 542, 528, 126, 'Рецепт Qwen',
            ['Две H100, TP2 и MTP', 'Кэши и параметры движка'], LILAC, PURPLE)
     d.footer('Все настройки эксперимента — в рецепте. Проверяем план, GPU и ответ API.')

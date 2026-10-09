@@ -70,6 +70,13 @@
 | [Kubernetes DRA](https://kubernetes.io/docs/concepts/resource-management/dynamic-resource-allocation/) | Заявки, классы устройств и выделение ресурсов |
 | [Device plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/) | Публикацию устройств через extended resources |
 
+Авторский разбор Александра Подмосковного:
+[«DRAматургия GPU в Kubernetes»](https://habr.com/ru/companies/flant/articles/1020276/)
+— ограничения device-plugin-модели и причины перехода к заявкам;
+[«DRAйверы для GPU»](https://habr.com/ru/companies/flant/articles/1038000/)
+— устройство DRA-драйвера. Возможности API и поддержка конкретного оборудования
+проверяются отдельно по документации Kubernetes и драйвера.
+
 ## Что ещё существует, но не разворачивается в этой работе
 
 ### Cache-aware routing
