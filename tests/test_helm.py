@@ -52,11 +52,13 @@ class HelmProfiles(unittest.TestCase):
         first = yaml.safe_load((ROOT / "values/gemma-b.yaml").read_text())
         second = yaml.safe_load((ROOT / "values/gemma-b-spec.yaml").read_text())
         a, b = first["vllm"], second["vllm"]
-        for key in ("model", "max-model-len", "dtype", "kv-cache-dtype",
+        for key in ("model", "dtype", "kv-cache-dtype",
                     "attention-backend", "enable-prefix-caching", "kv-transfer-config",
                     "max-num-seqs", "gpu-memory-utilization"):
             self.assertEqual(a[key], b[key], key)
         self.assertTrue(a["enforce-eager"])
+        self.assertEqual(a["max-model-len"], 16384)
+        self.assertEqual(b["max-model-len"], 131072)
         self.assertNotIn("speculative-config", a)
         self.assertEqual(a["max-num-batched-tokens"], 16384)
         self.assertEqual(b["max-num-batched-tokens"], 2048)

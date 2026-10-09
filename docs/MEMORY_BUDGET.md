@@ -23,8 +23,8 @@ H100**. Для одновременного запуска нужен больш
 | Режим | requests RAM | limits RAM | /dev/shm | CPU requests |
 | --- | ---: | ---: | ---: | ---: |
 | A | 24 GiB | 48 GiB | 8 GiB | 4 |
-| B, итерации 1 и 2, 16K и CPU KV 32 GiB | 56 GiB | 80 GiB | 40 GiB | 4 |
-| B, опыт 128K и CPU KV 32 GiB | 56 GiB | 80 GiB | 40 GiB | 4 |
+| B Cache, 16K и CPU KV 32 GiB | 56 GiB | 80 GiB | 40 GiB | 4 |
+| B Tune, 128K и CPU KV 32 GiB | 56 GiB | 80 GiB | 40 GiB | 4 |
 
 ### Какие профили можно разместить вместе
 

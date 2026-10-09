@@ -1,7 +1,7 @@
 fullnameOverride: rtx-gemma-tune
 replicaCount: 0
 image: REPLACE_RUNTIME_IMAGE@sha256:f7cb9820c7e92eb78a4b3f60033e240c87a16bf99117471aba347fdd69eaca2d
-profile: gemma-spec-4k
+profile: gemma-spec-128k
 nodeSelector:
   kubernetes.io/hostname: REPLACE_RTX_NODE
 tolerations: []
@@ -29,9 +29,9 @@ vllm:
   language-model-only: true
   safetensors-load-strategy: lazy
   tensor-parallel-size: 1
-  max-model-len: 4096
+  max-model-len: 131072
   max-num-seqs: 2
-  gpu-memory-utilization: 0.9
+  gpu-memory-utilization: 0.95
   enforce-eager: false
   enable-prefix-caching: true
   enable-chunked-prefill: true

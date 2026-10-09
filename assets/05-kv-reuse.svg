@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
+<title id="title">Два способа повторно использовать KV</title><desc id="desc">Prefix caching — не пересчитывать начало. RAM offload — сохранить блоки вне GPU.</desc>
+<defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}.formula{font-family:"DejaVu Sans Mono",Menlo,Consolas,monospace}</style>
+<rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
+<text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
+<tspan x="70" dy="0">Два способа повторно использовать KV</tspan>
+</text>
+<text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Prefix caching — не пересчитывать начало. RAM offload — сохранить блоки вне GPU.</tspan>
+</text>
+<path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="48" y="182" width="440" height="176" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="224" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="392">
+<tspan x="72" dy="0">Одинаковое начало двух чатов</tspan>
+</text>
+<text x="72" y="264" font-size="22" fill="#17243b" text-anchor="start" data-max-width="392">
+<tspan x="72" dy="0">Те же начальные токены</tspan>
+<tspan x="72" dy="30.799999999999997">→ общие блоки KV</tspan>
+</text>
+<rect x="680" y="158" width="472" height="102" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="704" y="194" font-size="24" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="424">
+<tspan x="704" dy="0">Вопрос A → своё продолжение</tspan>
+</text>
+<rect x="680" y="294" width="472" height="102" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="704" y="330" font-size="24" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="424">
+<tspan x="704" dy="0">Вопрос B → своё продолжение</tspan>
+</text>
+<path d="M494 270.0 L562.0 270.0 Q570 270 570.0 262.0 L570.0 217.0 Q570 209 578.0 209.0 L674 209.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M494 270.0 L598.0 270.0 Q606 270 606.0 278.0 L606.0 337.0 Q606 345 614.0 345.0 L674 345.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<text x="48" y="443" font-size="27" fill="#17243b" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">Если блоки больше не удерживаются в GPU</tspan>
+</text>
+<rect x="48" y="491" width="264" height="154" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="533" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="216">
+<tspan x="72" dy="0">GPU</tspan>
+</text>
+<text x="72" y="573" font-size="22" fill="#17243b" text-anchor="start" data-max-width="216">
+<tspan x="72" dy="0">Веса модели</tspan>
+<tspan x="72" dy="30.799999999999997">Вычисления и KV</tspan>
+</text>
+<rect x="888" y="491" width="264" height="154" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="912" y="533" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="216">
+<tspan x="912" dy="0">RAM узла</tspan>
+</text>
+<text x="912" y="573" font-size="22" fill="#17243b" text-anchor="start" data-max-width="216">
+<tspan x="912" dy="0">Сохранённые</tspan>
+<tspan x="912" dy="30.799999999999997">блоки KV</tspan>
+</text>
+<path d="M318 537.2 L882 537.2" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
+<text x="600" y="518" font-size="23" fill="#087d78" text-anchor="middle" data-max-width="548">
+<tspan x="600" dy="0">Сохранить для повторного запроса</tspan>
+</text>
+<path d="M882 614.2 L318 614.2" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<text x="600" y="596" font-size="23" fill="#1554dc" text-anchor="middle" data-max-width="548">
+<tspan x="600" dy="0">Вернуть перед вычислением на GPU</tspan>
+</text>
+<path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">RAM не увеличивает активный KV-пул GPU. Перенос имеет цену; ускорение проверяется замером.</tspan>
+</text>
+</svg>

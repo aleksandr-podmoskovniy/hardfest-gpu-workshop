@@ -61,13 +61,14 @@ class Guide(unittest.TestCase):
                     self.assertNotIn(node.tag.rsplit("}", 1)[-1], ("script", "foreignObject", "image"))
                     self.assertFalse(any(k.rsplit("}", 1)[-1] == "href" for k in node.attrib))
 
-    def test_expanded_context_is_separate_from_ab(self):
+    def test_tune_long_context_is_not_applied_to_strict_cache(self):
         readme = (ROOT / "README.md").read_text()
         ram = readme.split('id="ram"', 1)[1].split('id="speculation"', 1)[0]
         second = readme.split('id="speculation"', 1)[1].split('id="platform"', 1)[0]
         self.assertNotIn("max-model-len: 131072", ram)
         self.assertIn("max-model-len: 131072", second)
-        self.assertIn("возврат к `16384`", second)
+        self.assertNotIn("возврат к `16384`", second)
+        self.assertIn("сравнение целых профилей", second)
         self.assertIn("122 880", second)
         self.assertIn("cpu_bytes_to_use: 34359738368", ram)
         self.assertRegex(ram, r"128 GiB[\s\S]{0,200}A останавливается через Git/Argo")
@@ -234,12 +235,43 @@ class Guide(unittest.TestCase):
         self.assertIn("не меньше `2`", preflight)
         self.assertIn("оба `1`", preflight)
 
-    def test_context_extension_preserves_second_iteration(self):
+    def test_long_requests_use_the_ready_tune_profile(self):
         doc = (ROOT / "README.md").read_text()
         extension = doc.split('id="long-context"', 1)[1].split('id="platform"', 1)[0]
-        for setting in ("max-model-len", "65536", "131072", "Tune"):
+        for setting in ("max-model-len", "131072", "Tune", "8192"):
             self.assertIn(setting, extension)
-        self.assertIn("только окно B", extension)
+        self.assertIn("Меняется нагрузка, а не окно сервиса", extension)
+        self.assertNotIn("max-model-len: 65536", extension)
+
+    def test_kv_visuals_are_in_both_main_stories_before_optimization(self):
+        for name, capacity in (("README.md", "25-h100-kv-capacity"),
+                               ("RTX5060.md", "26-rtx-kv-capacity")):
+            text = (ROOT / name).read_text()
+            memory = text.split('id="memory"', 1)[1].split('id="speculation"', 1)[0]
+            for asset in ("03-kv-history", "05-kv-reuse", capacity):
+                self.assertIn(f"](assets/{asset}.svg)", memory)
+            self.assertLess(memory.index("03-kv-history"), memory.index('id="ram"'))
+            self.assertLess(memory.index(capacity), memory.index('id="ram"'))
+
+    def test_detailed_client_and_mps_diagnostics_live_in_reference(self):
+        for name in ("README.md", "RTX5060.md"):
+            text = (ROOT / name).read_text()
+            self.assertNotIn("MPS_SERVER_PID=", text)
+            self.assertNotIn("export BENCH_DIR=", text)
+            self.assertIn("docs/TROUBLESHOOTING.md#a30-claims", text)
+            self.assertIn("docs/MEASUREMENTS.md#gemma-client-", text)
+
+    def test_long_output_is_a_separate_check_and_cleanup_preserves_tune_window(self):
+        rtx = (ROOT / "RTX5060.md").read_text()
+        long_context = rtx.split('id="long-context"', 1)[1].split('id="placement"', 1)[0]
+        self.assertIn('--random-output-len "$OUTPUT_TOKENS"', long_context)
+        self.assertIn("OUTPUT_TOKENS=8192", long_context)
+        self.assertIn("RUN_NAME=gemma-long-output", long_context)
+        cleanup = rtx.split('id="cleanup"', 1)[1].split('id="setup"', 1)[0]
+        self.assertIn("Tune сохраняет 128K", cleanup)
+        self.assertNotIn("0.90", cleanup)
+        h100 = (ROOT / "README.md").read_text()
+        self.assertIn("| Длинный ответ | 122 880 | 8192 | 1 / 1 |", h100)
 
     def test_chat_path_is_present_from_manual_to_platform_stages(self):
         readme = (ROOT / "README.md").read_text()

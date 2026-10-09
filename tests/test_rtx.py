@@ -152,12 +152,16 @@ class RTXProfiles(unittest.TestCase):
         for profile in profiles:
             self.assertEqual(profile["replicaCount"], 0)
             self.assertEqual(profile["dra"]["count"], 1)
-            self.assertEqual(profile["vllm"]["max-model-len"], 4096)
             self.assertEqual(profile["vllm"]["dtype"], "bfloat16")
             self.assertEqual(profile["vllm"]["model"], "/data/modelcache/models/rtx-gemma-e2b")
             self.assertEqual(profile["modelVolumes"], [])
             self.assertIn("rtx-gemma-e2b", profile["modelRefs"])
         a, cache, spec = [p["vllm"] for p in profiles]
+        self.assertEqual(a["max-model-len"], 4096)
+        self.assertEqual(cache["max-model-len"], 4096)
+        self.assertEqual(spec["max-model-len"], 131072)
+        self.assertEqual(spec["gpu-memory-utilization"], 0.95)
+        self.assertEqual(spec["max-num-seqs"], 2)
         for flag in ("enable-prefix-caching", "enable-chunked-prefill"):
             self.assertTrue(a['no-' + flag])
         self.assertTrue(a["enforce-eager"])

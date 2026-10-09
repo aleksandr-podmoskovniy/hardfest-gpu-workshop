@@ -281,6 +281,83 @@ def tp2(name='10-tp2', gpu='H100', interconnect='NCCL', memory='HBM'):
     d.save()
 
 
+def kv_history():
+    d = Diagram('03-kv-history', 'KV-кеш: память уже прочитанной истории',
+                'KV — Key–Value: ключи и значения токенов, которые нужны для продолжения ответа.')
+    past = d.card(48, 174, 320, 146, 'История',
+                  ['Документ + вопрос', 'Уже обработанные токены'])
+    cache = d.card(440, 174, 320, 146, 'Сохранённые K и V',
+                   ['Не вычисляем заново', 'при каждом продолжении'], MINT, TEAL)
+    token = d.card(832, 174, 320, 146, 'Следующий токен',
+                   ['Использует прошлые K/V', 'Добавляет свои K/V'])
+    d.connect(past, cache)
+    d.connect(cache, token, color=TEAL)
+    d.text(48, 386, 'Что меняется при удлинении истории', 28, bold=True)
+    d.text(48, 436, 'Full attention', 25, BLUE, True)
+    for x in range(360, 1060, 100):
+        d.rect(x, 403, 88, 50, PALE, BLUE, 8)
+    d.text(360, 486, 'KV всей истории растёт вместе с ней', 24, width=792)
+    d.text(48, 550, 'Sliding attention', 25, TEAL, True)
+    for x in range(360, 1060, 100):
+        d.rect(x, 517, 88, 50, MINT if x >= 860 else GRAY,
+               TEAL if x >= 860 else LINE, 8, dash=x < 860)
+    d.text(360, 600, 'Хранится только последнее локальное окно', 24, width=792)
+    d.text(48, 660, 'Веса не растут от длины чата. KV — растёт, но по правилам архитектуры.', 25, bold=True)
+    d.footer('Это кеш состояния, не готовых ответов. Один прямоугольник условно обозначает группу токенов.')
+    d.save()
+
+
+def kv_reuse():
+    d = Diagram('05-kv-reuse', 'Два способа повторно использовать KV',
+                'Prefix caching — не пересчитывать начало. RAM offload — сохранить блоки вне GPU.')
+    prefix = d.card(48, 182, 440, 176, 'Одинаковое начало двух чатов',
+                    ['Те же начальные токены', '→ общие блоки KV'], PALE, BLUE)
+    a = d.card(680, 158, 472, 102, 'Вопрос A → своё продолжение', (), MINT, TEAL, compact=True)
+    b = d.card(680, 294, 472, 102, 'Вопрос B → своё продолжение', (), MINT, TEAL, compact=True)
+    d.connect(prefix, a, ('right', 'left'), via=((570, 270), (570, 209)))
+    d.connect(prefix, b, ('right', 'left'), via=((606, 270), (606, 345)))
+    d.text(48, 443, 'Если блоки больше не удерживаются в GPU', 27, bold=True)
+    gpu = d.card(48, 491, 264, 154, 'GPU', ['Веса модели', 'Вычисления и KV'], PALE, BLUE)
+    ram = d.card(888, 491, 264, 154, 'RAM узла', ['Сохранённые', 'блоки KV'], MINT, TEAL)
+    d.connector([gpu.port('right', .3), ram.port('left', .3)], TEAL)
+    d.text(600, 518, 'Сохранить для повторного запроса', 23, TEAL, anchor='middle', width=548)
+    d.connector([ram.port('left', .8), gpu.port('right', .8)])
+    d.text(600, 596, 'Вернуть перед вычислением на GPU', 23, BLUE, anchor='middle', width=548)
+    d.footer('RAM не увеличивает активный KV-пул GPU. Перенос имеет цену; ускорение проверяется замером.')
+    d.save()
+
+
+def kv_capacity(name, title, groups, maximum, unit, footer):
+    d = Diagram(name, title, 'Полезные данные KV основной модели; общий кеш префикса здесь не учитывается.')
+    for y, (label, bf16, fp8) in zip((190, 436), groups):
+        d.text(48, y, label, 29, bold=True, width=1104)
+        for offset, kind, value, color, fill in ((38, 'BF16', bf16, BLUE, PALE),
+                                                (102, 'FP8', fp8, TEAL, MINT)):
+            d.text(48, y+offset+31, kind, 25, color, True)
+            width = 680 * value / maximum
+            d.rect(166, y+offset, width, 44, fill, color, 6)
+            number = str(value).rstrip('0').rstrip('.') if isinstance(value, float) else str(value)
+            d.text(188+width, y+offset+31, number.replace('.', ',') + ' ' + unit,
+                   26, color, True, width=278)
+    d.text(48, 652, 'FP8: 1 байт на элемент вместо 2 в BF16 → вдвое меньше KV.', 26, bold=True)
+    d.footer(footer)
+    d.save()
+
+
+def h100_kv_capacity():
+    kv_capacity('25-h100-kv-capacity', 'Gemma 31B: цена восьми длинных историй',
+                [('8 независимых историй × 128K токенов', 86.25, 43.125),
+                 ('8 независимых историй × 256K токенов', 166.25, 83.125)], 166.25, 'GiB',
+                'Расчёт памяти, не обещание вместимости. Веса, assistant и рабочие буферы считаются отдельно.')
+
+
+def rtx_kv_capacity():
+    kv_capacity('26-rtx-kv-capacity', 'Gemma E2B: длинная история — 128K токенов',
+                [('1 история × 128K токенов', 774, 387),
+                 ('8 независимых историй × 128K токенов', 6192, 3096)], 6192, 'MiB',
+                '128K — максимум этой E2B. 8 историй — расчёт; Tune допускает 2 активные последовательности.')
+
+
 def gemma_formula():
     d = Diagram('11-gemma-kv', 'KV-кэш Gemma: считаем память',
                 'Контекст S — 128K или 256K; 1024 — окно только локальных слоёв.')
@@ -374,8 +451,8 @@ def rtx_platform():
     d.save()
 
 
-BUILDERS = (topology, latency, scheduler, speculation, mig, platform, tp2,
-            gemma_formula, gitops, rag, rtx_platform, rtx_tp2)
+BUILDERS = (topology, latency, kv_history, kv_reuse, scheduler, speculation, mig, platform, tp2,
+            gemma_formula, h100_kv_capacity, rtx_kv_capacity, gitops, rag, rtx_platform, rtx_tp2)
 
 if __name__ == '__main__':
     for build in BUILDERS:

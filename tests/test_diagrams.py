@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from build_diagrams import Box, Diagram
+from kv_math import calculate_gemma, calculate_gemma_e2b
 
 SVG = "{http://www.w3.org/2000/svg}"
 
@@ -92,6 +93,31 @@ class DiagramConnections(unittest.TestCase):
         self.assertEqual(card.port("top"), (160, 74))
         self.assertEqual(card.port("bottom"), (160, 206))
         self.assertEqual(card.port("right", .75), (286, 170))
+
+    def test_kv_capacity_labels_and_bars_match_architecture_calculations(self):
+        cases = (("25-h100-kv-capacity", calculate_gemma, [(131072, 8), (262144, 8)], 1, "GiB"),
+                 ("26-rtx-kv-capacity", calculate_gemma_e2b, [(131072, 1), (131072, 8)], 1024, "MiB"))
+        for name, calculate, groups, scale, unit in cases:
+            root = ET.parse(ROOT / f"assets/{name}.svg").getroot()
+            text = " ".join(root.itertext())
+            values = [calculate(tokens, sessions, element_bytes)["all_sessions_gib"] * scale
+                      for tokens, sessions in groups for element_bytes in (2, 1)]
+            for value in values:
+                label = f"{value:g}".replace(".", ",")
+                self.assertIn(f"{label} {unit}", text)
+            bars = [rect for rect in root.iter(SVG + "rect") if rect.attrib.get("height") == "44"]
+            self.assertEqual(len(bars), 4)
+            for rect, value in zip(bars, values):
+                self.assertAlmostEqual(float(rect.attrib["width"]), 680 * value / max(values))
+            self.assertIn("8 независимых историй", text)
+        rtx = (ROOT / "assets/26-rtx-kv-capacity.svg").read_text()
+        self.assertNotIn("256K", rtx)
+
+    def test_kv_reuse_does_not_promise_ram_as_active_gpu_memory(self):
+        text = " ".join(ET.parse(ROOT / "assets/05-kv-reuse.svg").getroot().itertext())
+        for label in ("Те же начальные токены", "RAM не увеличивает активный KV-пул GPU",
+                      "Вернуть перед вычислением на GPU"):
+            self.assertIn(label, text)
 
     def test_connections_track_moved_cards(self):
         diagram = Diagram("test", "Test", "Test")

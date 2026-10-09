@@ -188,3 +188,40 @@ Ready или `/health` 200: процесс API может продолжать �
 Не продолжайте нагрузочную сетку и не меняйте ECC, VFIO или драйвер
 в рамках этого упражнения. Возврат к тесту — после отдельной проверки
 аппаратуры и согласованного восстановления.
+
+<a id="a30-claims"></a>
+## Как связать модели с MIG и проверить MPS
+
+Список частей ещё не связывает их с моделями. Сначала выбирается Pod
+эмбеддера, затем та же проверка повторяется для реранкера и Whisper:
+
+```bash
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get pods -o wide
+export A30_POD=REPLACE_EMBEDDING_POD
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get pod "$A30_POD" \
+  -o jsonpath='{.spec.resourceClaims}{"\n"}{.status.resourceClaimStatuses}{"\n"}'
+export A30_CLAIM=REPLACE_ALLOCATED_CLAIM
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo get resourceclaim "$A30_CLAIM" \
+  -o jsonpath='{.status.allocation.devices}{"\n"}'
+kubectl --context "$MIG_CONTEXT" -n hardfest-demo exec "$A30_POD" \
+  -c REPLACE_RUNTIME_CONTAINER -- nvidia-smi -L
+```
+
+Заявка показывает выделенное устройство и конфигурацию драйвера.
+Идентификатор устройства сопоставляется с MIG UUID — постоянным идентификатором
+части — в данных драйвера и `nvidia-smi`. Имя DeviceClass само по себе не доказательство.
+
+Фактических MPS-клиентов показывает управляющий процесс MPS на A30.
+В его контейнере, с его `CUDA_MPS_PIPE_DIRECTORY`, доступны read-only команды
+[интерфейса MPS v2](https://docs.nvidia.com/deploy/mps/mpsv2-interface.html):
+
+```bash
+printf 'get_server_list\n' | nvidia-cuda-mps-control
+# PID берётся из предыдущего ответа, не PID процесса внутри runtime-контейнера.
+export MPS_SERVER_PID=REPLACE_SERVER_PID
+printf 'get_client_list %s\n' "$MPS_SERVER_PID" | nvidia-cuda-mps-control
+```
+
+Подключённые процессы сверяются с эмбеддером и реранкером в логах драйвера.
+Если список клиентов недоступен, подтверждена геометрия и заявленный режим,
+но не фактическое использование MPS. Новый MPS-сервер ради проверки не запускается.

@@ -10,10 +10,11 @@ AI Inference использует собственный контроллер и
 | --- | --- |
 | [gemma-a](../../values/gemma-a.yaml) | 16K, BF16 KV, без prefix cache, chunked prefill, graphs и offload |
 | [gemma-b](../../values/gemma-b.yaml) | Итерация 1: 16K, FP8 KV, prefix cache, CPU KV 32 GiB, полный prefill |
-| [gemma-b-spec](../../values/gemma-b-spec.yaml) | Итерация 2: 16K, кэши первой, prefill 2048, graphs и assistant |
+| [gemma-b-spec](../../values/gemma-b-spec.yaml) | Итерация 2: 128K, кэши первой, prefill 2048, graphs и assistant |
 | [qwen-tp2](../../values/qwen-tp2.yaml) | Ручной эталон параметров; основной запуск — AI Inference |
 
-64K/128K проверяются изменением окна активной второй B, без смены остальных настроек.
+Tune сразу использует 128K. Короткие и длинные запросы проверяются на одном профиле;
+размер порции prefill не ограничивает длину контекста.
 Все ручные профили закреплены на vLLM 0.31.0.
 
 Конфигурация не заменяет проверку ответа API на своей площадке.

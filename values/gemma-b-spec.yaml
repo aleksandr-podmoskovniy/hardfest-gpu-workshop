@@ -35,7 +35,7 @@ vllm:
   dtype: bfloat16
   safetensors-load-strategy: lazy
   tensor-parallel-size: 1
-  max-model-len: 16384
+  max-model-len: 131072
   max-num-seqs: 32
   gpu-memory-utilization: 0.9
   language-model-only: true
