@@ -180,6 +180,28 @@ class Readability(unittest.TestCase):
         self.assertNotIn("50 мс", compute)
         self.assertNotIn("3072", compute)
 
+    def test_it_basics_are_not_reintroduced_as_an_english_glossary(self):
+        # The audience knows ordinary IT terms. This narrow guard prevents
+        # the rejected acronym expansions, not useful domain explanations.
+        paths = (*GUIDES, *(ROOT / "docs").glob("*.md"))
+        unnecessary = re.compile(
+            r"Graphics Processing Unit|Central Processing Unit|"
+            r"(?:Video )?Random Access Memory|Application Programming Interface|"
+            r"Large Language Model", re.I)
+        for path in paths:
+            with self.subTest(guide=path.name):
+                self.assertIsNone(unnecessary.search(path.read_text()))
+
+    def test_inference_mechanisms_keep_their_useful_explanations(self):
+        for path in GUIDES:
+            with self.subTest(guide=path.name):
+                text = path.read_text()
+                for term in ("Key–Value", "Multi-Instance GPU", "Multi-Process Service",
+                             "Dynamic Resource Allocation", "W4A16", "BF16", "FP8"):
+                    self.assertIn(term, text)
+                self.assertRegex(text, r"(?:два|двух) байт")
+                self.assertIn("CPU→GPU", text)
+
 
 if __name__ == "__main__":
     unittest.main()
