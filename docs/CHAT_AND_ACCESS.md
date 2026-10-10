@@ -15,12 +15,27 @@ Open WebUI хранит пользователей, диалоги и базы �
 
 ## 1. Разделить маршруты A и B
 
-В Bifrost создаются два маршрута, в WebUI — две модели:
+Имена выполняют разные задачи: WebUI показывает подпись, Bifrost выбирает
+сервис по псевдониму, а vLLM принимает своё имя модели в поле `model`.
+Для ручной пары H100 из этого репозитория:
 
-| Имя в чате | Backend |
-| --- | --- |
-| `Gemma A — Base` | Service базовой Gemma |
-| `Gemma B — Tune` | Service оптимизированной Gemma |
+| Подпись WebUI | ID маршрута Bifrost | Service в `hardfest-demo` | `model` в API vLLM |
+| --- | --- | --- | --- |
+| `Gemma A — Base` | `vllm/gemma-a` | `hf-gemma-a:8000` | `gemma-4-31b` |
+| `Gemma B — Cache` → `Gemma B — Tune` | `vllm/gemma-b` | `hf-gemma-b:8000` | `gemma-4-31b` |
+
+Одинаковое имя `gemma-4-31b` не мешает сравнению: маршруты ведут в **разные
+Service**. Cache и Tune — последовательные настройки одной B, поэтому при
+переключении меняется её подпись, не адрес.
+
+Шлюз обращается к Service с отдельным provider key — учётной записью backend.
+Его ID, а не секретное значение, попадает в `providers[].key_ids`
+[конфигурации адаптера](../examples/webui-access.yaml). Там же разрешаются
+псевдонимы `gemma-a`, `gemma-b` и конечное имя `gemma-4-31b`.
+
+Для RTX имена другие: [маршруты площадки](SETUP.md#rtx). При замене A платформой
+используется отдельный Service, указанный в [разделе автоматизации](../README.md#platform).
+Подпись **Gemma A — DP** означает Deckhouse Platform, не data parallelism.
 
 > [!IMPORTANT]
 > Для A/B отключены балансировка, fallback между ними и кэш готовых ответов

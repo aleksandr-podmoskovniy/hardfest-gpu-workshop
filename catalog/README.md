@@ -1,20 +1,25 @@
 # Каталог моделей: импорт и доставка весов
 
-ai-models импортирует закреплённые веса в `Model` — общий источник
-для ручного runtime и AI Inference.
+Веса — файлы с обученными параметрами модели. Объект `Model` задаёт ai-models
+источник и закреплённую ревизию этих файлов. После импорта ими пользуются
+и ручной сервер vLLM, и AI Inference.
 
 Нужны ai-models с хранилищем, namespace `hardfest-demo`, доступ и лицензии.
-Команды — из частного `k8s-config`;
-[контексты](../docs/GITOPS.md#1-задать-контексты).
+Команды — из частного `k8s-config`, после [шага 1 SETUP](../docs/SETUP.md#1-проверить-доступ-и-ресурсы):
+контексты и `DEMO_DIR` заданы, ветка `WORKSHOP_BRANCH` создана и отправлена
+в origin по [bootstrap GitOps](../docs/GITOPS.md#bootstrap).
 
 **Веса H100 занимают около 183 GiB.** Проверьте свободный диск и квоту,
 оставив место под артефакты, временную загрузку и доставку.
 
 ## 1. Подготовить источник
 
-Для **нового** каталога:
+Для **нового** каталога; на существующей площадке перенесите проверенный diff,
+сохранив её ревизии и привязки:
 
 ```bash
+test ! -e "$DEMO_DIR/charts/model-catalog" || exit 1
+test ! -e "$DEMO_DIR/catalog/models.yaml" || exit 1
 mkdir -p "$DEMO_DIR/charts" "$DEMO_DIR/catalog" "$DEMO_DIR/argo-app"
 cp -R ../hardfest-gpu-workshop/charts/model-catalog "$DEMO_DIR/charts/"
 cp ../hardfest-gpu-workshop/catalog/models.yaml "$DEMO_DIR/catalog/models.yaml"
@@ -63,7 +68,8 @@ spec:
       - ServerSideApply=true
 ```
 
-Замените Git-адрес, ветку, проект, путь, namespace Argo и destination.
+Замените Git-адрес, проект, путь, namespace Argo и destination;
+`targetRevision` должен совпадать с `WORKSHOP_BRANCH`.
 `destination.name` — имя кластера в Argo.
 
 **Sync запускает импорт сразу:** переключателя `replicaCount: 0` здесь нет.
@@ -72,6 +78,7 @@ Autosync выключен.
 ## 3. Проверить и запустить импорт
 
 ```bash
+test "$(git branch --show-current)" = "$WORKSHOP_BRANCH" || exit 1
 helm lint "$DEMO_DIR/charts/model-catalog" --strict \
   -f "$DEMO_DIR/catalog/models.yaml" || exit 1
 helm template hf-models "$DEMO_DIR/charts/model-catalog" -n hardfest-demo \
@@ -81,7 +88,7 @@ git add -- "$DEMO_DIR/charts/model-catalog" "$DEMO_DIR/catalog/models.yaml" "$DE
 git diff --cached --check || exit 1
 git diff --cached
 git commit -S -s -m "Add pinned model catalog" || exit 1
-git push || exit 1
+git push origin "HEAD:refs/heads/$WORKSHOP_BRANCH" || exit 1
 ```
 
 Регистрация — через родительский Application, либо, если его нет:
@@ -100,23 +107,27 @@ kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application hardfes
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get models.ai.deckhouse.io -w
 ```
 
-Завершите наблюдение `Ctrl+C`, когда модели готовы. При Failed:
+Завершите наблюдение `Ctrl+C`, когда модели готовы, и проверьте артефакты:
 
 ```bash
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo describe model gemma-4-31b
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo describe model qwen3-8-flash-next-nvfp4
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get models.ai.deckhouse.io \
   -o custom-columns='NAME:.metadata.name,PHASE:.status.phase,BYTES:.status.artifact.sizeBytes,DIGEST:.status.artifact.digest'
 ```
 
 Нужны **Ready, ненулевой размер и digest**. Это готовность артефакта,
-не проверка CUDA или ответа модели.
+не проверка CUDA или ответа модели. При Failed проверьте нужную модель:
+
+```bash
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo describe model gemma-4-31b
+kubectl --context "$GPU_CONTEXT" -n hardfest-demo describe model qwen3-8-flash-next-nvfp4
+```
 
 ## 4. Подключить потребителя
 
 ### AI Inference
 
-В заказе используется Model **того же namespace**:
+Платформенный заказ `InferenceService` поручает AI Inference выбрать рецепт
+и запустить сервис. В нём используется Model **того же namespace**:
 
 ```yaml
 model:
@@ -132,7 +143,7 @@ model:
 
 ### Ручной runtime
 
-`modelRefs` в
+В ручном профиле values параметры vLLM задаются явно. Список `modelRefs` в
 [site-файле](../examples/site-gemma-catalog.yaml) или
 [варианте с assistant](../examples/site-gemma-assistant-catalog.yaml)
 формирует аннотацию **верхнего metadata Deployment**, не Pod template:
@@ -150,7 +161,11 @@ metadata:
 | Gemma | `/data/modelcache/models/gemma-4-31b` |
 | Assistant | `/data/modelcache/models/gemma-4-31b-assistant` |
 
-На назначенной ноде проверяются события доставки и доступность файлов.
+При размещении потребителя ai-models доставляет веса на назначенную ноду
+в **NodeCache — локальный дисковый кеш весов** и подключает их к Pod.
+После запуска проверяются события доставки и доступность указанных путей:
+`kubectl describe pod` и `kubectl logs` выполняются в контексте и namespace
+потребителя. Доставку нельзя считать готовой по одному состоянию Model.
 `Model Ready` не означает прогретый NodeCache всех нод:
 `artifact ... is not ready` — доставка весов, `Pulling image` — отдельный кеш образа.
 

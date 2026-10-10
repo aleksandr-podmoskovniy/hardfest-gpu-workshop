@@ -1,109 +1,136 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
-<title id="title">Весь стенд: от чата до GPU</title><desc id="desc">Синий маршрут — чат. Зелёный — документы и речь. Внизу — запуск, веса и метрики.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1040" viewBox="0 0 1200 1040" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
+<title id="title">Весь стенд: от чата до GPU</title><desc id="desc">Три разных пути: запрос пользователя, запуск движка и доставка данных.</desc>
 <defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}.formula{font-family:"DejaVu Sans Mono",Menlo,Consolas,monospace}</style>
-<rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="1" y="1" width="1198" height="1038" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
 <rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
 <text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
 <tspan x="70" dy="0">Весь стенд: от чата до GPU</tspan>
 </text>
 <text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">Синий маршрут — чат. Зелёный — документы и речь. Внизу — запуск, веса и метрики.</tspan>
+<tspan x="48" dy="0">Три разных пути: запрос пользователя, запуск движка и доставка данных.</tspan>
 </text>
 <path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="48" y="150" width="428" height="398" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
-<rect x="516" y="150" width="636" height="398" rx="12" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="72" y="178" font-size="18" fill="#536278" text-anchor="start" font-weight="700">
-<tspan x="72" dy="0">КЛАСТЕР WEBUI + A30</tspan>
+<text x="48" y="173" font-size="20" fill="#536278" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">1. ЗАПРОСЫ</tspan>
 </text>
-<text x="540" y="178" font-size="18" fill="#536278" text-anchor="start" font-weight="700">
-<tspan x="540" dy="0">КЛАСТЕР ШЛЮЗА + H100 ИЛИ RTX 5060 Ti</tspan>
+<rect x="48" y="200" width="228" height="140" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="236" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="180">
+<tspan x="72" dy="0">Open WebUI</tspan>
 </text>
-<rect x="72" y="196" width="380" height="94" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="96" y="232" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="332">
-<tspan x="96" dy="0">Open WebUI</tspan>
+<text x="72" y="270" font-size="20" fill="#17243b" text-anchor="start" data-max-width="180">
+<tspan x="72" dy="0">Чат и база знаний</tspan>
+<tspan x="72" dy="28.0">Голосовой ввод</tspan>
 </text>
-<text x="96" y="266" font-size="20" fill="#17243b" text-anchor="start" data-max-width="332">
-<tspan x="96" dy="0">Чат → адаптер личных ключей</tspan>
+<rect x="324" y="200" width="228" height="140" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="348" y="236" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="180">
+<tspan x="348" dy="0">Адаптер</tspan>
 </text>
-<rect x="72" y="328" width="380" height="80" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="96" y="364" font-size="24" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="332">
-<tspan x="96" dy="0">База знаний</tspan>
+<text x="348" y="270" font-size="20" fill="#17243b" text-anchor="start" data-max-width="180">
+<tspan x="348" dy="0">Пользователь</tspan>
+<tspan x="348" dy="28.0">→ личный VK</tspan>
 </text>
-<text x="96" y="398" font-size="20" fill="#17243b" text-anchor="start" data-max-width="332">
-<tspan x="96" dy="0">Документы и поисковый индекс</tspan>
+<rect x="600" y="200" width="240" height="140" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="624" y="236" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="192">
+<tspan x="624" dy="0">Bifrost</tspan>
 </text>
-<rect x="540" y="196" width="588" height="94" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="564" y="232" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="540">
-<tspan x="564" dy="0">Bifrost / ai-mcp-gateway</tspan>
+<text x="624" y="270" font-size="20" fill="#17243b" text-anchor="start" data-max-width="192">
+<tspan x="624" dy="0">ai-mcp-gateway</tspan>
+<tspan x="624" dy="28.0">Права и маршруты</tspan>
 </text>
-<text x="564" y="266" font-size="20" fill="#17243b" text-anchor="start" data-max-width="540">
-<tspan x="564" dy="0">Маршруты, права, лимиты и учёт запросов</tspan>
+<rect x="888" y="200" width="264" height="140" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="912" y="236" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="216">
+<tspan x="912" dy="0">vLLM</tspan>
 </text>
-<path d="M262.0 296 L262.0 322" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
-<path d="M458 243.0 L534 243.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
-<rect x="540" y="352" width="258" height="88" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="564" y="388" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="210">
-<tspan x="564" dy="0">Gemma A</tspan>
+<text x="912" y="270" font-size="20" fill="#17243b" text-anchor="start" data-max-width="216">
+<tspan x="912" dy="0">Gemma A и B</tspan>
+<tspan x="912" dy="28.0">или Qwen / 2 GPU</tspan>
 </text>
-<text x="564" y="422" font-size="20" fill="#17243b" text-anchor="start" data-max-width="210">
-<tspan x="564" dy="0">Base / одна GPU</tspan>
+<path d="M282 270.0 L318 270.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M558 270.0 L594 270.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M846 270.0 L882 270.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M162.0 346 L162.0 388.0 Q162 396 170.0 396.0 L712.0 396.0 Q720 396 720.0 388.0 L720.0 346" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
+<text x="304" y="381" font-size="20" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="470">
+<tspan x="304" dy="0">Поиск и голос: служебный VK</tspan>
 </text>
-<rect x="870" y="352" width="258" height="88" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="894" y="388" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="210">
-<tspan x="894" dy="0">Gemma B</tspan>
+<rect x="888" y="408" width="264" height="130" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="912" y="444" font-size="24" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="216">
+<tspan x="912" dy="0">A30 / 2 × 2g.12gb</tspan>
 </text>
-<text x="894" y="422" font-size="20" fill="#17243b" text-anchor="start" data-max-width="210">
-<tspan x="894" dy="0">Cache → Tune / 1 GPU</tspan>
+<text x="912" y="478" font-size="20" fill="#17243b" text-anchor="start" data-max-width="216">
+<tspan x="912" dy="0">Эмбеддер + реранкер</tspan>
+<tspan x="912" dy="28.0">Whisper large-v3</tspan>
 </text>
-<rect x="72" y="432" width="380" height="102" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
-<text x="96" y="468" font-size="24" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="332">
-<tspan x="96" dy="0">A30 / 2 × 2g.12gb</tspan>
+<path d="M846 312.0 L855.3333333333334 312.0 Q860 312 860.0 316.6666666666667 L860.0 465.6666666666667 Q860 473 867.3333333333334 473.0 L882 473.0" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
+<text x="48" y="450" font-size="20" fill="#17243b" text-anchor="start" data-max-width="774">
+<tspan x="48" dy="0">База знаний хранится в WebUI.</tspan>
+<tspan x="48" dy="28.0">Найденный текст дополняет запрос к vLLM;</tspan>
+<tspan x="48" dy="28.0">Whisper возвращает текст голосового сообщения.</tspan>
 </text>
-<text x="96" y="502" font-size="20" fill="#17243b" text-anchor="start" data-max-width="332">
-<tspan x="96" dy="0">Эмбеддер + реранкер: MPS</tspan>
-<tspan x="96" dy="28.0">Whisper large-v3: отдельно</tspan>
+<text x="48" y="573" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">WebUI + A30 — один кластер. Шлюз + 2 H100 или 2 RTX 5060 Ti — другой.</tspan>
 </text>
-<path d="M834.0 296 L834 320" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" data-connector="true"/>
-<path d="M834 320 L677.0 320.0 Q669.0 320 669.0 328.0 L669.0 346" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
-<path d="M834 320 L991.0 320.0 Q999.0 320 999.0 328.0 L999.0 346" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
-<path d="M534 271.2 L504.0 271.2 Q496 271.2 496.0 279.2 L496.0 475.0 Q496 483 488.0 483.0 L458 483.0" fill="none" stroke="#087d78" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-087d78)" data-connector="true"/>
-<rect x="540" y="466" width="588" height="68" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="564" y="493" font-size="23" fill="#536278" text-anchor="start" font-weight="700" data-max-width="540">
-<tspan x="564" dy="0">Финал: Qwen вместо двух Gemma</tspan>
+<path d="M48 598 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="634" font-size="20" fill="#536278" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">2. ДВА СПОСОБА ЗАПУСТИТЬ ТОТ ЖЕ ДВИЖОК</tspan>
 </text>
-<text x="564" y="520" font-size="20" fill="#17243b" text-anchor="start" data-max-width="540">
-<tspan x="564" dy="0">Одна модель в vLLM, обе GPU работают вместе</tspan>
+<rect x="48" y="687" width="228" height="100" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="723" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="180">
+<tspan x="72" dy="0">Git + Helm</tspan>
 </text>
-<text x="48" y="577" font-size="18" fill="#536278" text-anchor="start" font-weight="700">
-<tspan x="48" dy="0">ЧТО ОБЕСПЕЧИВАЕТ РАБОТУ МОДЕЛЕЙ</tspan>
+<text x="72" y="757" font-size="20" fill="#17243b" text-anchor="start" data-max-width="180">
+<tspan x="72" dy="0">Конфигурация</tspan>
 </text>
-<rect x="48" y="590" width="352" height="88" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="68" y="616" font-size="23" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="312">
-<tspan x="68" dy="0">Запуск</tspan>
+<rect x="324" y="687" width="228" height="100" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="348" y="723" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="180">
+<tspan x="348" dy="0">Argo CD</tspan>
 </text>
-<text x="68" y="641" font-size="18" fill="#17243b" text-anchor="start" data-max-width="312">
-<tspan x="68" dy="0">Git + Helm → Argo CD</tspan>
-<tspan x="68" dy="25.2">Вручную или по плану сервиса</tspan>
+<text x="348" y="757" font-size="20" fill="#17243b" text-anchor="start" data-max-width="180">
+<tspan x="348" dy="0">Применяет из Git</tspan>
 </text>
-<rect x="424" y="590" width="352" height="88" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="444" y="616" font-size="23" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="312">
-<tspan x="444" dy="0">Веса</tspan>
+<rect x="624" y="655" width="240" height="78" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="648" y="691" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="192">
+<tspan x="648" dy="0">Deployment</tspan>
 </text>
-<text x="444" y="641" font-size="18" fill="#17243b" text-anchor="start" data-max-width="312">
-<tspan x="444" dy="0">ai-models → NodeCache → vLLM</tspan>
-<tspan x="444" dy="25.2">Каталог и доставка файлов</tspan>
+<text x="648" y="725" font-size="20" fill="#17243b" text-anchor="start" data-max-width="192">
+<tspan x="648" dy="0">Ручные параметры</tspan>
 </text>
-<rect x="800" y="590" width="352" height="88" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5"/>
-<text x="820" y="616" font-size="23" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="312">
-<tspan x="820" dy="0">Графики</tspan>
+<rect x="624" y="765" width="240" height="78" rx="12" fill="#f3eefb" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="648" y="801" font-size="24" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="192">
+<tspan x="648" dy="0">AI Inference</tspan>
 </text>
-<text x="820" y="641" font-size="18" fill="#17243b" text-anchor="start" data-max-width="312">
-<tspan x="820" dy="0">vLLM / GPU → Prometheus</tspan>
-<tspan x="820" dy="25.2">Grafana: очередь и загрузка</tspan>
+<text x="648" y="835" font-size="20" fill="#17243b" text-anchor="start" data-max-width="192">
+<tspan x="648" dy="0">Подбирает запуск</tspan>
 </text>
-<path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">Qwen занимает обе карты. Одновременный запуск Gemma A и B требует запаса RAM.</tspan>
+<rect x="912" y="687" width="240" height="100" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="936" y="723" font-size="24" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="192">
+<tspan x="936" dy="0">vLLM</tspan>
+</text>
+<text x="936" y="757" font-size="20" fill="#17243b" text-anchor="start" data-max-width="192">
+<tspan x="936" dy="0">Исполняет модель</tspan>
+</text>
+<path d="M282 737.0 L318 737.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M558 712.0 L582.0 712.0 Q588 712 588.0 706.0 L588.0 700.0 Q588 694 594.0 694.0 L618 694.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M558 762.0 L580.0 762.0 Q588 762 588.0 770.0 L588.0 796.0 Q588 804 596.0 804.0 L618 804.0" fill="none" stroke="#7041b8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-7041b8)" data-connector="true"/>
+<path d="M870 694.0 L879.3333333333334 694.0 Q884 694 884.0 698.6666666666666 L884.0 706.0 Q884 712 890.0 712.0 L906 712.0" fill="none" stroke="#1554dc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-1554dc)" data-connector="true"/>
+<path d="M870 804.0 L879.3333333333334 804.0 Q884 804 884.0 799.3333333333334 L884.0 769.3333333333334 Q884 762 891.3333333333334 762.0 L906 762.0" fill="none" stroke="#7041b8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrow-7041b8)" data-connector="true"/>
+<text x="48" y="891" font-size="20" fill="#536278" text-anchor="start" font-weight="700">
+<tspan x="48" dy="0">3. ФАЙЛЫ И ГРАФИКИ — НЕ ЧАСТЬ МАРШРУТА ЧАТА</tspan>
+</text>
+<text x="48" y="932" font-size="22" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="535">
+<tspan x="48" dy="0">ai-models → NodeCache → веса для vLLM</tspan>
+</text>
+<text x="624" y="932" font-size="22" fill="#7041b8" text-anchor="start" font-weight="700" data-max-width="528">
+<tspan x="624" dy="0">vLLM / GPU → Prometheus → Console</tspan>
+</text>
+<text x="48" y="961" font-size="19" fill="#17243b" text-anchor="start" data-max-width="535">
+<tspan x="48" dy="0">Каталог выбирает файлы; кеш доставляет на узел.</tspan>
+</text>
+<text x="624" y="961" font-size="19" fill="#17243b" text-anchor="start" data-max-width="528">
+<tspan x="624" dy="0">Графики очереди, памяти и вычислений.</tspan>
+</text>
+<path d="M48 978 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="1011" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Gemma A и B занимают по GPU. Финальный Qwen использует обе карты вместо них.</tspan>
 </text>
 </svg>

@@ -9,6 +9,15 @@
 Модели и квоты задаются в values; код не привязан к Gemma. Полная схема доступа
 и подключение документов — в [настройке чата](../../docs/CHAT_AND_ACCESS.md).
 
+- Новая установка: [подготовить](#сборка-и-развёртывание),
+  [создать PVC](#создать-pvc-через-gitargo-cd),
+  [инициализировать журнал](#инициализировать-журнал-и-запустить-адаптер),
+  [подключить WebUI](#подключение-webui) и [проверить доступ](#проверить-перед-открытием-доступа).
+- Обновление: [учесть совместимость](#ограничения-и-старые-установки), сохранить PVC
+  и идентичность установки, перенести diff через [Git/Argo](#access-gitops),
+  затем [проверить доступ](#проверить-перед-открытием-доступа). Повторно журнал не инициализировать.
+- Добавление модели: [согласовать маршрут, профиль и права существующих VK](#добавление-модели-в-работающую-установку).
+
 ## Что меняет одобрение аккаунта
 
 | Состояние | Действие адаптера |
@@ -28,10 +37,13 @@
 > отзыв и проверка прямого запроса. Native DELETE лишь отвязывает владельца;
 > использовать его как отзыв нельзя. Уже начатый ответ может завершиться.
 
-## Сборка и развёртывание
+<a id="сборка-и-развёртывание"></a>
 
-Нужны работающие WebUI/Bifrost, отдельные служебные аккаунты и namespace WebUI.
-Адаптер запускается **в одной реплике**; это не HA-сервис.
+## Подготовить образ и частный GitOps-каталог
+
+Нужны работающие WebUI/Bifrost, отдельные служебные аккаунты, namespace WebUI,
+StorageClass и доступ Argo CD к этому кластеру. Адаптер запускается **в одной
+реплике**; это не HA-сервис. Нужны Git, Helm, kubectl и средство сборки образа.
 
 Из корня репозитория:
 
@@ -42,11 +54,37 @@ docker build --platform linux/amd64 \
 docker push "$ACCESS_IMAGE"
 ```
 
-Запишите digest опубликованного образа в `access-site.yaml`. Начальная
-конфигурация остановлена; значения `REPLACE_...` заменяются до запуска:
+Дальнейшие команды выполняются из **частного `k8s-config`**, расположенного рядом
+с этим клоном. Адреса площадки и IDs сохраняются только там; Secret — вне Git.
+`WEBUI_CONTEXT` указывает на кластер WebUI, не обязательно на GPU-кластер.
+
+```bash
+cd ../k8s-config
+export ARGO_CONTEXT=management ARGO_NAMESPACE=argocd
+export WEBUI_CONTEXT=webui-cluster WEBUI_NAMESPACE=workshop-ui
+export ACCESS_DIR=argo-projects/webui-cluster/webui-access
+export ACCESS_BRANCH=webui-access
+set -o pipefail
+kubectl --context "$WEBUI_CONTEXT" get namespace "$WEBUI_NAMESPACE"
+```
+
+Только для новой установки создайте каталог и перенесите чарт:
+
+```bash
+git switch -c "$ACCESS_BRANCH" || exit 1
+mkdir -p "$ACCESS_DIR/charts" "$ACCESS_DIR/site" "$ACCESS_DIR/argo-app"
+cp -R ../hardfest-gpu-workshop/charts/webui-access "$ACCESS_DIR/charts/"
+```
+
+В существующей установке задайте `ACCESS_BRANCH` из её `targetRevision`
+и переключитесь на эту ветку. Переносите diff, сохраняя `site/` и Application.
+Сохраните следующий файл как `$ACCESS_DIR/site/access-site.yaml`, заменив
+`REPLACE_...`, адреса и политику. В `image` укажите digest опубликованного образа.
+Начальная конфигурация остановлена:
 
 ```yaml
 replicaCount: 0
+name: webui-access
 image: registry.example.com/integrations/webui-access@sha256:REPLACE_DIGEST
 existingSecret: webui-access
 persistence:
@@ -104,29 +142,92 @@ Wildcard и доступ ко всем provider keys не разрешаются
 
 Проверьте `webuiSelector` и сетевые правила: чарт рассчитан на WebUI:8080,
 DNS и HTTPS-шлюз:443. Namespace, Secret и аккаунты чарт не создаёт.
+Для закрытого registry добавьте `imagePullSecrets` с существующим Secret в
+`WEBUI_NAMESPACE`. Если нужна native-выдача, до запуска заполните
+[параметры владельца](#native-выдача-с-владельцем).
 
-```bash
-helm lint charts/webui-access --strict
-helm template webui-access charts/webui-access \
-  --namespace workshop-ui -f access-site.yaml
+## Создать PVC через Git/Argo CD
+
+Сохраните `$ACCESS_DIR/argo-app/webui-access.yaml`. Замените `REPLACE_...`, путь,
+ветку и namespace на свои. `destination.name` — зарегистрированное в Argo имя
+кластера WebUI; оно может отличаться от `WEBUI_CONTEXT`.
+`targetRevision` должен совпадать с `ACCESS_BRANCH`.
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: webui-access
+  namespace: argocd
+spec:
+  project: REPLACE_ARGO_PROJECT
+  source:
+    repoURL: https://gitlab.example.com/REPLACE_GROUP/k8s-config.git
+    targetRevision: webui-access
+    path: argo-projects/webui-cluster/webui-access/charts/webui-access
+    helm:
+      releaseName: webui-access
+      valueFiles:
+        - ../../site/access-site.yaml
+  destination:
+    name: REPLACE_ARGO_WEBUI_CLUSTER
+    namespace: workshop-ui
 ```
 
-Сначала создайте PVC через [GitOps](../../docs/GITOPS.md) при нуле реплик,
-инициализируйте журнал ниже, затем включите `replicaCount: 1` через Git/Argo CD.
+Автосинхронизация и prune не включены. При существующем родительском Application
+доставляйте описание через его Sync; иначе зарегистрируйте его командой ниже.
 
-### Журнал выдачи: защита от повторного создания ключей
+<a id="access-gitops"></a>
+
+Каждое изменение values проходит этот цикл. Продолжайте только после успеха
+предыдущей команды; перед commit проверьте весь staged diff на секреты.
+Локальный рендер с `--set replicaCount=1` заранее проверяет политику и digest;
+в кластер отправляются значения из файла, первоначально `replicaCount: 0`:
+
+```bash
+test "$(git branch --show-current)" = "$ACCESS_BRANCH" || exit 1
+helm lint "$ACCESS_DIR/charts/webui-access" --strict \
+  -f "$ACCESS_DIR/site/access-site.yaml" || exit 1
+helm template webui-access "$ACCESS_DIR/charts/webui-access" \
+  -f "$ACCESS_DIR/site/access-site.yaml" --set replicaCount=1 >/dev/null || exit 1
+helm template webui-access "$ACCESS_DIR/charts/webui-access" \
+  --namespace "$WEBUI_NAMESPACE" -f "$ACCESS_DIR/site/access-site.yaml" |
+  kubectl --context "$WEBUI_CONTEXT" apply --dry-run=server -f - || exit 1
+git diff -- "$ACCESS_DIR"
+git add -- "$ACCESS_DIR"
+git diff --cached --check || exit 1
+git diff --cached
+git commit -S -s -m "Configure WebUI personal access" || exit 1
+git push -u origin "HEAD:refs/heads/$ACCESS_BRANCH" || exit 1
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply \
+  -f "$ACCESS_DIR/argo-app/webui-access.yaml" || exit 1
+REVISION=$(git rev-parse HEAD)
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application webui-access \
+  --type merge --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get application webui-access \
+  -o custom-columns='SYNC:.status.sync.status,HEALTH:.status.health.status,OPERATION:.status.operationState.phase,REVISION:.status.sync.revision'
+```
+
+Дождитесь завершения Sync с `Succeeded`, `Synced` и вашим `REVISION`.
+При `replicaCount: 0` должны появиться Deployment и `webui-access-state`, без Pod
+адаптера. PVC с `WaitForFirstConsumer` может оставаться Pending до временного Pod.
+
+## Инициализировать журнал и запустить адаптер
 
 Журнал хранит UUID пользователя, ID и имя VK, **не значение ключа**.
 Попытка сохраняется до POST. Неопределённый ответ API или рестарт не вызывают
 повторную выдачу; повреждённый журнал закрывает доступ.
 
-Для новой установки подготовьте файл `inventory.json`:
+Журнал инициализируется **один раз**. При обычном обновлении сохраните прежний
+PVC и пропустите инициализацию. Для новой установки подготовьте `inventory.json`
+в защищённом локальном каталоге вне Git:
 
 ```json
 {"version":1,"managed_by":"team-webui","keys":[]}
 ```
 
-Для существующей установки сначала остановите адаптер через Git/Argo. Получите
+При переносе установки без журнала сначала остановите адаптер: `replicaCount: 0`
+и [цикл Git/Argo](#access-gitops). Получите
 полный список его VK, включая неактивные, и сверьте markers `managed-by`/`user-id`.
 Вместо пустого `keys` внесите по одной записи
 без секретных значений:
@@ -137,24 +238,109 @@ helm template webui-access charts/webui-access \
 
 При неоднозначности миграцию не продолжайте.
 
-Временный служебный Pod должен подключать PVC к `/state`, использовать тот же
-образ, UID/GID 65532 и `fsGroup: 65532`. В нём выполните:
+Убедитесь, что остановленный Deployment больше не имеет Pod. Путь inventory
+задайте явно; файл содержит только IDs и имена, **без значений VK**.
+`team-webui` должен совпадать с `config.managed_by` и `inventory.managed_by`.
+Образ, pull secrets и имя PVC читаются из уже доставленного Deployment:
 
 ```bash
-kubectl -n workshop-ui exec -i webui-access-initialize -- \
-  /bridge --initialize-state /state team-webui < inventory.json
+export INVENTORY=/secure/operator/inventory.json
+ACCESS_REPLICAS=$(kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" \
+  get deployment webui-access -o jsonpath='{.spec.replicas}') || exit 1
+test "$ACCESS_REPLICAS" = 0 || exit 1
+ACCESS_PODS=$(kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" \
+  get pod -l app=webui-access -o name) || exit 1
+test -z "$ACCESS_PODS" || exit 1
+ACCESS_IMAGE=$(kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" \
+  get deployment webui-access -o jsonpath='{.spec.template.spec.containers[0].image}') || exit 1
+ACCESS_PVC=$(kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" \
+  get deployment webui-access \
+  -o jsonpath='{.spec.template.spec.volumes[?(@.name=="state")].persistentVolumeClaim.claimName}') || exit 1
+ACCESS_PULL_SECRETS=$(kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" \
+  get deployment webui-access -o jsonpath='{.spec.template.spec.imagePullSecrets}') || exit 1
+test -n "$ACCESS_PVC" && test -r "$INVENTORY" || exit 1
+kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" get pvc "$ACCESS_PVC" || exit 1
 ```
 
-Инициализация не перезаписывает существующий журнал. Удалите только временный Pod,
-сохраните PVC и включите адаптер. `Recreate` и файловая блокировка исключают
-двух писателей. Новый VK получает имя `Team WebUI: Имя (UUID)`, доступное поиску Bifrost.
+Создайте временный Pod. Текущий образ основан на Alpine и содержит `/bin/sleep`;
+его обычный `/bridge` entrypoint здесь переопределён. Pod не входит в Service
+адаптера, не получает служебные секреты и не обращается к WebUI/Bifrost.
+Дедлайн ограничивает время его работы 30 минутами:
+
+```bash
+kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" create -f - <<YAML || exit 1
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webui-access-initialize
+spec:
+  restartPolicy: Never
+  activeDeadlineSeconds: 1800
+  automountServiceAccountToken: false
+  imagePullSecrets: ${ACCESS_PULL_SECRETS:-[]}
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    fsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: initialize
+      image: "$ACCESS_IMAGE"
+      command: ["/bin/sleep", "1800"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: [ALL]
+      resources:
+        requests: {cpu: 100m, memory: 64Mi}
+        limits: {cpu: "1", memory: 256Mi}
+      volumeMounts:
+        - name: state
+          mountPath: /state
+  volumes:
+    - name: state
+      persistentVolumeClaim:
+        claimName: "$ACCESS_PVC"
+YAML
+kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" wait \
+  --for=condition=Ready pod/webui-access-initialize --timeout=180s || exit 1
+kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" exec -i webui-access-initialize -- \
+  /bridge --initialize-state /state team-webui < "$INVENTORY" || exit 1
+kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" delete pod webui-access-initialize \
+  --wait=true --timeout=120s || exit 1
+```
+
+Успех — код `0` у `exec` и сообщение `issuance journal initialized`.
+CLI завершился; удерживающий PVC процесс `sleep` удаляется последней командой.
+При ошибке остановитесь, прочитайте её и удалите только этот временный Pod той же
+командой. Повторная инициализация отказывается перезаписывать журнал; ошибку
+нельзя исправлять очисткой PVC. NetworkPolicy с запретом исходящих соединений
+не мешает инициализации: команда работает с локальным томом через `kubectl exec`.
+
+После успешной инициализации и удаления временного Pod задайте `replicaCount: 1`
+в `$ACCESS_DIR/site/access-site.yaml` и повторите [цикл Git/Argo](#access-gitops).
+Дождитесь нового `REVISION`, затем:
+
+```bash
+kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" rollout status \
+  deployment/webui-access --timeout=180s
+kubectl --context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE" logs \
+  deployment/webui-access --tail=80
+```
+
+`Recreate` и файловая блокировка ограничивают запись одним процессом. Новый VK
+получает имя `Team WebUI: Имя (UUID)`, доступное поиску Bifrost. PVC сохраняется
+при остановке и обновлении; namespace и PVC при cleanup не удаляются.
 
 Не заменяйте PVC пустым и не отключайте журнал после миграции. Защита от Helm/Argo
 prune не защищает от ручного удаления. Откат на старый адаптер с разрешённой выдачей
 опасен дублями. Если процесс упал между записью попытки и POST, проверьте API
 и журнал вручную: автоматической повторной выдачи не будет.
 
-### Native-выдача с владельцем
+## Native-выдача с владельцем
 
 По умолчанию используется core API. Для native API добавьте **оба** параметра:
 
@@ -244,12 +430,16 @@ VK и не распространяйте общий профиль поверх
 - Стоимость ответа совпадает с токенами и тарифом; журнал и счётчик бюджета
   сверены на каждой реплике Bifrost.
 
+При возвращении в [подготовку стенда](../../docs/SETUP.md) переключите Git
+обратно: `git switch "$WORKSHOP_BRANCH"`. Последующие изменения адаптера
+по-прежнему выполняются в `ACCESS_BRANCH`.
+
 > [!IMPORTANT]
 > Выдача VK и правильный тариф не доказывают общий HA-бюджет. На стенде
 > [зафиксирован недосчёт](../../results/rtx5060-access-20261006.json);
 > строгое общее ограничение расхода не подтверждено.
 
-Локальные проверки без обращения к кластеру:
+Локальные проверки из корня публичного клона, без обращения к кластеру:
 
 ```bash
 (cd integrations/webui-access/bridge && go vet ./... && go test -race ./...)

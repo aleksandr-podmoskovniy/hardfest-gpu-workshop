@@ -16,7 +16,7 @@ Prometheus выбирается **для конкретного кластера
 
 ## 1. Подключить сбор через GitOps
 
-Команды выполняются из `k8s-config`; переменные — из [GitOps](GITOPS.md).
+Команды выполняются из `k8s-config` после выбора ветки по [SETUP](SETUP.md).
 Нужны Prometheus, типы `ServiceMonitor` и `ClusterObservabilityDashboard`,
 а также права AppProject на соответствующие namespace и кластерный дашборд.
 
@@ -24,24 +24,47 @@ Prometheus выбирается **для конкретного кластера
 kubectl --context "$GPU_CONTEXT" -n d8-monitoring get prometheus main -o yaml
 kubectl --context "$GPU_CONTEXT" -n d8-monitoring get pods --show-labels
 kubectl --context "$GPU_CONTEXT" get crd clusterobservabilitydashboards.observability.deckhouse.io
-cp -R ../hardfest-gpu-workshop/observability "$DEMO_DIR/observability"
-cp ../hardfest-gpu-workshop/argocd/observability.yaml \
-  "$DEMO_DIR/argo-app/observability.yaml"
 ```
 
 Если Prometheus установлен не как `d8-monitoring/main`, используйте его имя.
+Выберите **одну** площадку в текущем GPU-кластере:
+
+| Площадка | Переменные |
+| --- | --- |
+| H100 | `export OBS_ROOT="$DEMO_DIR" OBS_NAMESPACE=hardfest-demo` |
+| RTX | `export OBS_ROOT="$RTX_DIR" OBS_NAMESPACE=hardfest-rtx` |
+
+Для нового каталога выполните блок ниже. Он копирует два файла напрямую,
+поэтому повторный запуск остановится до изменения существующего каталога.
+На действующей площадке перенесите проверенный diff, сохранив имена объектов,
+настройки Prometheus и доступы; заново этот блок не выполняйте.
+
+```bash
+test ! -e "$OBS_ROOT/observability" || exit 1
+test ! -e "$OBS_ROOT/argo-app/observability.yaml" || exit 1
+mkdir -p "$OBS_ROOT/observability" "$OBS_ROOT/argo-app"
+cp ../hardfest-gpu-workshop/observability/dashboard.yaml "$OBS_ROOT/observability/dashboard.yaml"
+sed "s/hardfest-demo/$OBS_NAMESPACE/g" ../hardfest-gpu-workshop/observability/monitoring.yaml \
+  > "$OBS_ROOT/observability/monitoring.yaml"
+cp ../hardfest-gpu-workshop/argocd/observability.yaml "$OBS_ROOT/argo-app/observability.yaml"
+```
+
+ServiceMonitor выбирает только namespace площадки; NetworkPolicy создаётся
+в нём же. Установка H100 не требует `hardfest-rtx`, установка RTX — `hardfest-demo`.
 В скопированных файлах измените:
 
 | Файл | Привязки площадки |
 | --- | --- |
 | `observability/monitoring.yaml` | Namespace и labels Prometheus; selectors ручных Service; NetworkPolicy |
-| `argo-app/observability.yaml` | Git URL, ветка, путь, AppProject и целевой кластер |
+| `argo-app/observability.yaml` | Git URL; `targetRevision: WORKSHOP_BRANCH`; путь `$OBS_ROOT/observability`; AppProject, кластер и `destination.namespace: OBS_NAMESPACE` |
 | Существующий манифест namespace | Метка выбора namespace, если её требует Prometheus |
 
 При selector Deckhouse по метке `prometheus.deckhouse.io/monitor-watcher-enabled`
 добавьте её со значением `"true"`, сохранив остальные поля namespace.
-Для RTX включите `hardfest-rtx` в `namespaceSelector.matchNames` ручного
-ServiceMonitor и разрешите ему сетевой доступ к runtime.
+Имена переменных в таблице заменяются их значениями: Argo не раскрывает shell-переменные.
+Если обе площадки работают в одном кластере, дополните существующий
+Application обоими namespace и отдельной политикой для каждого.
+У общих `hardfest-vllm` и `ai-inference-live` должен остаться один владелец.
 
 > [!IMPORTANT]
 > Ручной ServiceMonitor `hardfest-vllm` собирает порт `http`.
@@ -57,15 +80,18 @@ NetworkPolicy примера открывает TCP/8000 от Prometheus к ру
 `metadata.name` и JSON `uid`, чтобы не сломать ссылки.
 
 ```bash
+test "$(git branch --show-current)" = "$WORKSHOP_BRANCH" || exit 1
 kubectl --context "$GPU_CONTEXT" apply --server-side --dry-run=server \
-  -f "$DEMO_DIR/observability" || exit 1
-git add -- "$DEMO_DIR/observability" "$DEMO_DIR/argo-app/observability.yaml" || exit 1
+  -f "$OBS_ROOT/observability" || exit 1
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply --dry-run=server \
+  -f "$OBS_ROOT/argo-app/observability.yaml" || exit 1
+git add -- "$OBS_ROOT/observability" "$OBS_ROOT/argo-app/observability.yaml" || exit 1
 git diff --cached --check || exit 1
 git diff --cached || exit 1
 git commit -S -s -m "Add inference monitoring and live dashboard" || exit 1
-git push || exit 1
+git push origin "HEAD:refs/heads/$WORKSHOP_BRANCH" || exit 1
 kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply \
-  -f "$DEMO_DIR/argo-app/observability.yaml" || exit 1
+  -f "$OBS_ROOT/argo-app/observability.yaml" || exit 1
 REVISION=$(git rev-parse HEAD) || exit 1
 kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application hardfest-observability \
   --type merge \

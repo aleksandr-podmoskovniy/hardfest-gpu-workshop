@@ -3,6 +3,8 @@
 Результат подготовки — работающая **Gemma A — Base**, три сервиса A30,
 личный доступ в чат и метрики. B, платформенная Gemma и Qwen подготовлены,
 но выключены. Далее начинается [основной маршрут](../README.md#ab).
+Для двух RTX используется [вариант подготовки ниже](#rtx); H100-разделы
+не нужно выполнять перед ним.
 
 ![Стенд: запросы, запуск и наблюдение](../assets/01-topology.svg)
 
@@ -11,10 +13,10 @@
 | Open WebUI | Чат, документы и голосовой ввод |
 | webui-access | Связывает одобренного пользователя с личным ключом шлюза |
 | Bifrost | Выбирает маршрут модели, применяет доступы и учитывает запросы |
-| vLLM | Выполняет модель; ручной профиль или AI Inference задаёт запуск |
-| ai-models | Импортирует веса и доставляет их на ноду |
+| vLLM | Сервер, который загружает модель и обрабатывает запросы |
+| ai-models | Импортирует веса — файлы с параметрами модели — и доставляет их на ноду |
 | GitLab → Argo CD | Хранит и применяет конфигурацию |
-| Prometheus → Grafana | Собирает метрики и показывает состояние сервисов |
+| Prometheus → Console | Собирает метрики и показывает состояние сервисов |
 
 ## 1. Проверить доступ и ресурсы
 
@@ -32,6 +34,7 @@ export MIG_CONTEXT=a30-cluster
 export A30_DIR=argo-projects/a30-cluster/hardfest-demo
 export ARGO_NAMESPACE=argocd
 export DEMO_DIR=argo-projects/gpu-cluster/hardfest-demo
+export WORKSHOP_BRANCH=hardfest-demo
 set -o pipefail
 
 kubectl config get-contexts
@@ -61,6 +64,11 @@ kubectl --context "$GPU_CONTEXT" get deviceclasses
 **При ошибках GPU запуск не начинается. Драйвер, VFIO, MIG mode
 и чужие блокировки в рамках руководства не меняются.**
 
+До любых commit/push выполните [bootstrap ветки GitOps](GITOPS.md#bootstrap)
+и вернитесь сюда. Он выбирает существующую ветку либо создаёт новую,
+публикует её и задаёт upstream. Так первый импорт моделей уже получает
+существующую `targetRevision`.
+
 ### Память определяет порядок запуска
 
 | Профиль | RAM request / limit | RAM для KV |
@@ -86,13 +94,19 @@ Qwen занимает обе карты только после остановк
 Веса Gemma, assistant и Qwen занимают около **183 GiB**; дополнительно нужны
 место под артефакты, временные файлы и доставку. Квота не заменяет свободный диск.
 
-Проверяются Model Ready, ненулевой размер и digest, затем доставка на целевую
-ноду и пути внутри Pod. Для ручного запуска используется `modelRefs`;
-вариант с assistant содержит обе модели. На A30 импортируется `catalog/a30.yaml`.
+`Model` — объект с источником и ревизией весов. После импорта нужны `Ready`,
+ненулевой размер и digest. При размещении потребителя ai-models доставляет
+файлы в **NodeCache — дисковый кеш весов на ноде** и подключает их к Pod.
+Доставка и пути проверяются при первом запуске; `Model Ready` их не гарантирует.
+
+Ручной профиль **values** задаёт параметры vLLM и ресурсы; отдельный site-файл
+привязывает их к ноде, GPU и моделям. В его `modelRefs` перечислены модели
+для доставки; вариант с assistant содержит обе. На A30 импортируется
+`catalog/a30.yaml` по инструкции каталога.
 
 Runtime ручных и платформенных запусков — совместимый **vLLM 0.31**,
 образ закреплён по digest и доступен ноде.
-NodeCache хранит веса, а контейнерный образ имеет отдельный кеш.
+У контейнерного образа свой кеш, отдельный от весов.
 Для замеров заранее подготовлены CPU-нода, токенизатор и
 [клиент Gemma](../examples/gemma-benchmark-job.yaml) /
 [клиент Qwen](../examples/qwen-benchmark-job.yaml).
@@ -100,8 +114,15 @@ NodeCache хранит веса, а контейнерный образ имее
 <a id="inference-readiness"></a>
 ## 3. Проверить рецепты AI Inference
 
-Клиентские примеры не устанавливают модуль. До освобождения работающих GPU
-проверьте рецепт, класс сервиса и доступность следующей модели.
+AI Inference получает **InferenceService — заказ на запуск модели**:
+какая модель нужна и какие ограничения у сервиса. Контроллер выбирает рецепт —
+параметры запуска — и создаёт runtime. InferenceServiceClass задаёт допустимые
+ресурсы и правила сервиса. Клиентские примеры не устанавливают сам модуль.
+
+Подготовьте выключенные ручные A/B по [шагам 2–4 GitOps](GITOPS.md#2-подготовить-файлы-площадки)
+и заказы H100/A30 по [шагу 7](GITOPS.md#7-подготовить-платформенные-заказы).
+До освобождения работающих GPU
+проверьте рецепт, класс сервиса и доступность модели:
 
 | Заказ | Необходимая конфигурация |
 | --- | --- |
@@ -120,12 +141,17 @@ NodeCache хранит веса, а контейнерный образ имее
 
 ## 4. Подключить чат и наблюдение
 
-| Подготовить | Проверить |
-| --- | --- |
-| [GitOps](GITOPS.md) | Applications зарегистрированы, B и заказы выключены |
-| [Маршруты и доступ](CHAT_AND_ACCESS.md) | Отдельные A/B, без fallback и кеша готовых ответов |
-| Личный ключ | После регистрации и одобрения запрос имеет владельца |
-| [Мониторинг](OBSERVABILITY.md) | Видны ручные и платформенные сервисы, фильтры и единицы корректны |
+Сначала настройте [маршруты и доступ](CHAT_AND_ACCESS.md): отдельные A/B,
+без fallback и кеша готовых ответов. Адаптер личных ключей использует свою
+ветку `k8s-config`. Завершив его настройку, вернитесь в ветку стенда:
+
+```bash
+git switch "$WORKSHOP_BRANCH" || exit 1
+```
+
+Теперь подключите [мониторинг](OBSERVABILITY.md), затем запустите A.
+После запуска проверяются личный ключ запроса и метрики ручного сервиса;
+платформенные сервисы появятся на том же дашборде при включении.
 
 <a id="base-check"></a>
 ## 5. Запустить A и проверить ответ
@@ -163,48 +189,113 @@ port-forward закрывается. Dry-run и Model Ready не заменяю�
 <a id="rtx"></a>
 ## RTX 5060 Ti: отличия подготовки
 
-Общие проверки выше сохраняются. Нужны две RTX 5060 Ti по 16 GiB одной ноды,
-NodeCache и RAM для двух Gemma с лимитом **18 GiB каждая**, включая shm,
-плюс система. Диски, DRA и модули настраиваются заранее.
+Начните здесь из частного `k8s-config`. Нужны Git, Helm 3+, kubectl, curl
+и соседний клон `hardfest-gpu-workshop`. Две RTX 5060 Ti по 16 GiB находятся
+на одной Ready-ноде. Нужны дисковый кеш весов NodeCache и RAM для двух Gemma
+с лимитом **18 GiB каждая**, включая shm, плюс система. Namespace `hardfest-rtx`,
+диски, драйвер, DRA и ai-models/AI Inference подготовлены заранее;
+Argo имеет доступ к GitLab и целевому кластеру.
 
 ```bash
 export GPU_CONTEXT=gpu-cluster ARGO_CONTEXT=management ARGO_NAMESPACE=argocd
 export MIG_CONTEXT=a30-cluster
+export A30_DIR=argo-projects/a30-cluster/hardfest-demo
 export RTX_DIR=argo-projects/gpu-cluster/hardfest-rtx
 export NS=hardfest-rtx
+export WORKSHOP_BRANCH=hardfest-rtx
 set -o pipefail
+
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get applications
+kubectl --context "$GPU_CONTEXT" get nodes,deviceclasses
+kubectl --context "$GPU_CONTEXT" -n "$NS" get pods,pvc,resourceclaims
 ```
 
-В **новый** `$RTX_DIR` копируются:
+Выполните [bootstrap ветки](GITOPS.md#bootstrap) с этими переменными
+и вернитесь сюда. Проверьте обе карты по [диагностике GPU](TROUBLESHOOTING.md).
+При ошибках GPU запуск останавливается; драйверы, режимы карт и чужие
+workloads в рамках подготовки не меняются.
 
-| Источник в публичной копии | Каталог назначения |
-| --- | --- |
-| `charts/vllm-runtime`, `inference-service`, `model-catalog` | `charts/` |
-| `values/rtx/gemma-base.yaml`, `gemma-cache.yaml`, `gemma-spec.yaml` | `values/` |
-| `catalog/rtx.yaml` | `catalog/` |
-| `platform/rtx-gemma.yaml`, `rtx-qwen.yaml` | `platform/` |
-| `argocd/rtx/*.yaml` | `argo-app/` |
+Для **нового** `$RTX_DIR`:
+
+```bash
+test ! -e "$RTX_DIR" || exit 1
+mkdir -p "$RTX_DIR/charts" "$RTX_DIR/values" "$RTX_DIR/catalog" "$RTX_DIR/platform" "$RTX_DIR/argo-app"
+for CHART in vllm-runtime inference-service model-catalog; do
+  cp -R "../hardfest-gpu-workshop/charts/$CHART" "$RTX_DIR/charts/" || exit 1
+done
+cp ../hardfest-gpu-workshop/values/rtx/gemma-*.yaml "$RTX_DIR/values/"
+cp ../hardfest-gpu-workshop/catalog/rtx.yaml "$RTX_DIR/catalog/"
+cp ../hardfest-gpu-workshop/platform/rtx-*.yaml "$RTX_DIR/platform/"
+cp ../hardfest-gpu-workshop/argocd/rtx/*.yaml "$RTX_DIR/argo-app/"
+```
 
 Существующие привязки не перезаписываются. Заменяются `REPLACE_*`, Git-адрес,
 ветка, destination, нода, DeviceClass и registry; токен Hugging Face доставляется
 менеджером секретов.
 
-1. Sync `rtx-models`: три Model Ready и готовая доставка на RTX.
-2. Проверка рецептов: Gemma — 128K, assistant, FP8 KV, RAM KV 4 GiB;
+Сначала все ручные профили имеют `replicaCount: 0`,
+заказы — `order.enabled: false`. Проверьте каталог до импорта:
+
+```bash
+test "$(git branch --show-current)" = "$WORKSHOP_BRANCH" || exit 1
+helm lint "$RTX_DIR/charts/model-catalog" --strict -f "$RTX_DIR/catalog/rtx.yaml" || exit 1
+helm template rtx-models "$RTX_DIR/charts/model-catalog" -n "$NS" \
+  -f "$RTX_DIR/catalog/rtx.yaml" |
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f - || exit 1
+git add -- "$RTX_DIR"
+git diff --cached --check || exit 1
+git diff --cached
+git commit -S -s -m "Prepare RTX models and disabled services" || exit 1
+git push origin "HEAD:refs/heads/$WORKSHOP_BRANCH" || exit 1
+```
+
+Зарегистрируйте все RTX Applications в управляющем кластере. Если ими управляет
+родительский Application, сначала синхронизируйте его вместо прямого `apply`:
+
+```bash
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply --dry-run=server \
+  -f "$RTX_DIR/argo-app/" || exit 1
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply -f "$RTX_DIR/argo-app/" || exit 1
+REVISION=$(git rev-parse HEAD)
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application rtx-models \
+  --type merge --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}" || exit 1
+kubectl --context "$GPU_CONTEXT" -n "$NS" get models.ai.deckhouse.io -w
+```
+
+После Ready завершите наблюдение `Ctrl+C`. У всех трёх Model — объектов
+с источником весов — проверьте ненулевой размер и digest по [каталогу](../catalog/README.md#3-проверить-и-запустить-импорт),
+заменив namespace на `$NS`. Доставка файлов в NodeCache и mount в Pod
+проверяются при запуске потребителя.
+
+1. Проверка рецептов AI Inference по [объяснению выше](#inference-readiness): Gemma — 128K, assistant, FP8 KV, RAM KV 4 GiB;
    Qwen — 128K, TP2, MTP, FP8 KV, RAM KV 16 GiB, `max-num-seqs=8`.
    Класс разрешает соответственно одну/две GPU и одну реплику.
-3. Подключение маршрутов и метрик.
-4. В `gemma-base.yaml` — `replicaCount: 1`; Cache/Tune — 0,
+2. Подключение [маршрутов](CHAT_AND_ACCESS.md). Если инструкция адаптера
+   переключила Git на его отдельную ветку, вернитесь командой
+   `git switch "$WORKSHOP_BRANCH"` перед [мониторингом RTX](OBSERVABILITY.md)
+   и дальнейшими изменениями профилей.
+3. В ручном профиле `gemma-base.yaml` параметры vLLM заданы явно.
+   Установите `replicaCount: 1`; Cache/Tune — 0,
    заказы — `order.enabled: false`. Проверка:
 
 ```bash
 helm template rtx-gemma-base "$RTX_DIR/charts/vllm-runtime" -n "$NS" \
   -f "$RTX_DIR/values/gemma-base.yaml" |
-  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f -
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f - || exit 1
+git add -- "$RTX_DIR/values/gemma-base.yaml"
+git diff --cached --check || exit 1
+git diff --cached
+git commit -S -s -m "Start RTX Gemma Base" || exit 1
+git push origin "HEAD:refs/heads/$WORKSHOP_BRANCH" || exit 1
+REVISION=$(git rev-parse HEAD)
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application rtx-gemma-base \
+  --type merge --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}" || exit 1
+kubectl --context "$GPU_CONTEXT" -n "$NS" rollout status deployment/rtx-gemma-base --timeout=40m
 ```
 
-Далее подписанный commit/push и Sync этого SHA в `rtx-gemma-base`.
-После Ready нужны ответ API и ответ обычному пользователю WebUI.
+После Ready проверьте логи, mount весов, ответ API и ответ обычному пользователю
+WebUI по [проверке A](#base-check), заменив namespace на `$NS`, Service на
+`rtx-gemma-base`, а имя модели в запросе на `rtx-gemma-base`.
 
 | В WebUI | Маршрут | Service:порт | Upstream |
 | --- | --- | --- | --- |

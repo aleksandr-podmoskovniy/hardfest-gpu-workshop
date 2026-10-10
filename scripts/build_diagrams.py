@@ -33,11 +33,12 @@ class Box(NamedTuple):
 
 
 class Diagram:
-    def __init__(self, name, title, subtitle):
+    def __init__(self, name, title, subtitle, height=760):
         self.name = name
+        self.height = height
         self.parts = [
-            '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" '
-            'viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">',
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="{height}" '
+            f'viewBox="0 0 1200 {height}" role="img" aria-labelledby="title desc" data-design="hardfest-v2">',
             f'<title id="title">{escape(title)}</title><desc id="desc">{escape(subtitle)}</desc>',
             '<defs>' + ''.join(
                 f'<marker id="arrow-{color[1:]}" viewBox="0 0 10 10" refX="10" refY="5" '
@@ -47,7 +48,7 @@ class Diagram:
             '<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}'
             '.formula{font-family:"DejaVu Sans Mono",Menlo,Consolas,monospace}</style>',
         ]
-        self.rect(1, 1, 1198, 758, "#ffffff", LINE, 20)
+        self.rect(1, 1, 1198, height-2, "#ffffff", LINE, 20)
         self.rect(48, 38, 5, 34, BLUE, BLUE, 2)
         self.text(70, 64, title, 32, bold=True, width=1082)
         self.text(48, 104, subtitle, 20, MUTED, width=1104)
@@ -114,8 +115,8 @@ class Diagram:
         self.card(48, y, 1104, 100, title, [body], fill, color)
 
     def footer(self, note):
-        self.path("M48 698 H1152", LINE, width=1)
-        self.text(48, 731, note, 20, MUTED, width=1104)
+        self.path(f"M48 {self.height-62} H1152", LINE, width=1)
+        self.text(48, self.height-29, note, 20, MUTED, width=1104)
 
     def save(self):
         (ROOT / "assets" / f"{self.name}.svg").write_text("\n".join(self.parts + ['</svg>']) + '\n')
@@ -123,43 +124,50 @@ class Diagram:
 
 def topology():
     d = Diagram('01-topology', 'Весь стенд: от чата до GPU',
-                'Синий маршрут — чат. Зелёный — документы и речь. Внизу — запуск, веса и метрики.')
-    d.rect(48, 150, 428, 398)
-    d.rect(516, 150, 636, 398, '#ffffff')
-    d.text(72, 178, 'КЛАСТЕР WEBUI + A30', 18, MUTED, True)
-    d.text(540, 178, 'КЛАСТЕР ШЛЮЗА + H100 ИЛИ RTX 5060 Ti', 18, MUTED, True)
-    webui = d.card(72, 196, 380, 94, 'Open WebUI',
-                   ['Чат → адаптер личных ключей'], compact=True)
-    knowledge = d.card(72, 328, 380, 80, 'База знаний',
-                       ['Документы и поисковый индекс'], MINT, TEAL, compact=True)
-    gateway = d.card(540, 196, 588, 94, 'Bifrost / ai-mcp-gateway',
-                     ['Маршруты, права, лимиты и учёт запросов'], compact=True)
-    d.connect(webui, knowledge, ('bottom', 'top'), color=TEAL)
-    d.connect(webui, gateway)
-    gemma_a = d.card(540, 352, 258, 88, 'Gemma A', ['Base / одна GPU'], compact=True)
-    gemma_b = d.card(870, 352, 258, 88, 'Gemma B', ['Cache → Tune / 1 GPU'], compact=True)
-    a30 = d.card(72, 432, 380, 102, 'A30 / 2 × 2g.12gb',
-                 ['Эмбеддер + реранкер: MPS', 'Whisper large-v3: отдельно'], MINT, TEAL, compact=True)
-    d.connector([gateway.port('bottom'), (834, 320)], arrow=False)
-    for service in (gemma_a, gemma_b):
-        x = service.port('top')[0]
-        d.connector([(834, 320), (x, 320), service.port('top')])
-    d.connector([gateway.port('left', .8), (496, 271.2), (496, 483), a30.port('right')], TEAL)
-    d.rect(540, 466, 588, 68)
-    d.text(564, 493, 'Финал: Qwen вместо двух Gemma', 23, MUTED, True, width=540)
-    d.text(564, 520, 'Одна модель в vLLM, обе GPU работают вместе', 20, width=540)
+                'Три разных пути: запрос пользователя, запуск движка и доставка данных.', height=1040)
+    d.text(48, 173, '1. ЗАПРОСЫ', 20, MUTED, True)
+    webui = d.card(48, 200, 228, 140, 'Open WebUI',
+                   ['Чат и база знаний', 'Голосовой ввод'], compact=True)
+    adapter = d.card(324, 200, 228, 140, 'Адаптер',
+                     ['Пользователь', '→ личный VK'], compact=True)
+    gateway = d.card(600, 200, 240, 140, 'Bifrost',
+                     ['ai-mcp-gateway', 'Права и маршруты'], compact=True)
+    runtime = d.card(888, 200, 264, 140, 'vLLM',
+                     ['Gemma A и B', 'или Qwen / 2 GPU'], compact=True)
+    d.connect(webui, adapter)
+    d.connect(adapter, gateway)
+    d.connect(gateway, runtime)
 
-    # These are separate support paths, not additional hops of a chat request.
-    d.text(48, 577, 'ЧТО ОБЕСПЕЧИВАЕТ РАБОТУ МОДЕЛЕЙ', 18, MUTED, True)
-    for x, title, body, fill, color in (
-        (48, 'Запуск', ['Git + Helm → Argo CD', 'Вручную или по плану сервиса'], PALE, BLUE),
-        (424, 'Веса', ['ai-models → NodeCache → vLLM', 'Каталог и доставка файлов'], MINT, TEAL),
-        (800, 'Графики', ['vLLM / GPU → Prometheus', 'Grafana: очередь и загрузка'], LILAC, PURPLE),
-    ):
-        d.rect(x, 590, 352, 88, fill)
-        d.text(x+20, 616, title, 23, color, True, width=312)
-        d.text(x+20, 641, body, 18, width=312)
-    d.footer('Qwen занимает обе карты. Одновременный запуск Gemma A и B требует запаса RAM.')
+    d.connector([webui.port('bottom'), (162, 396), (720, 396), gateway.port('bottom')], TEAL)
+    d.text(304, 381, 'Поиск и голос: служебный VK', 20, TEAL, True, width=470)
+    a30 = d.card(888, 408, 264, 130, 'A30 / 2 × 2g.12gb',
+                 ['Эмбеддер + реранкер', 'Whisper large-v3'], MINT, TEAL, compact=True)
+    d.connector([gateway.port('right', .8), (860, 312), (860, 473), a30.port('left')], TEAL)
+    d.text(48, 450, ['База знаний хранится в WebUI.',
+                     'Найденный текст дополняет запрос к vLLM;',
+                     'Whisper возвращает текст голосового сообщения.'], 20, width=774)
+    d.text(48, 573, 'WebUI + A30 — один кластер. Шлюз + 2 H100 или 2 RTX 5060 Ti — другой.',
+           20, MUTED, width=1104)
+
+    d.path('M48 598 H1152', LINE, width=1)
+    d.text(48, 634, '2. ДВА СПОСОБА ЗАПУСТИТЬ ТОТ ЖЕ ДВИЖОК', 20, MUTED, True)
+    git = d.card(48, 687, 228, 100, 'Git + Helm', ['Конфигурация'], compact=True)
+    argo = d.card(324, 687, 228, 100, 'Argo CD', ['Применяет из Git'], compact=True)
+    manual = d.card(624, 655, 240, 78, 'Deployment', ['Ручные параметры'], compact=True)
+    platform = d.card(624, 765, 240, 78, 'AI Inference', ['Подбирает запуск'], LILAC, PURPLE, compact=True)
+    engine = d.card(912, 687, 240, 100, 'vLLM', ['Исполняет модель'], compact=True)
+    d.connect(git, argo)
+    d.connector([argo.port('right', .25), (588, 712), (588, 694), manual.port('left')])
+    d.connector([argo.port('right', .75), (588, 762), (588, 804), platform.port('left')], PURPLE)
+    d.connector([manual.port('right'), (884, 694), (884, 712), engine.port('left', .25)])
+    d.connector([platform.port('right'), (884, 804), (884, 762), engine.port('left', .75)], PURPLE)
+
+    d.text(48, 891, '3. ФАЙЛЫ И ГРАФИКИ — НЕ ЧАСТЬ МАРШРУТА ЧАТА', 20, MUTED, True)
+    d.text(48, 932, 'ai-models → NodeCache → веса для vLLM', 22, TEAL, True, width=535)
+    d.text(624, 932, 'vLLM / GPU → Prometheus → Console', 22, PURPLE, True, width=528)
+    d.text(48, 961, 'Каталог выбирает файлы; кеш доставляет на узел.', 19, width=535)
+    d.text(624, 961, 'Графики очереди, памяти и вычислений.', 19, width=528)
+    d.footer('Gemma A и B занимают по GPU. Финальный Qwen использует обе карты вместо них.')
     d.save()
 
 
@@ -472,4 +480,4 @@ BUILDERS = (topology, latency, kv_history, kv_reuse, scheduler, speculation, mig
 if __name__ == '__main__':
     for build in BUILDERS:
         build()
-    print(f'Built {len(BUILDERS)} self-contained SVGs, all 1200 × 760.')
+    print(f'Built {len(BUILDERS)} self-contained SVGs, width 1200; topology height 1040, others 760.')

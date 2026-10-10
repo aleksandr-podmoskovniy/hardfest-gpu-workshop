@@ -8,36 +8,51 @@
 
 **Не используйте `helm upgrade`, `kubectl scale` или ручную правку Deployment
 поверх Argo.** Runtime меняется только через Git.
-Namespace, ai-models, DRA и доступы должны быть [подготовлены](SETUP.md).
+Общий порядок подготовки начинается в [SETUP](SETUP.md): сначала доступы
+и ветка, затем модели и выключенные сервисы.
 
-## 1. Задать контексты
+<a id="bootstrap"></a>
+## 1. Подготовить ветку
 
 Команды выполняются из **частного `k8s-config`**.
-Рядом расположен клон `hardfest-gpu-workshop`; нужны Git, Helm 3+ и kubectl.
+Рядом расположен клон `hardfest-gpu-workshop`. Контексты, каталоги и
+`WORKSHOP_BRANCH` заданы в [SETUP](SETUP.md#1-проверить-доступ-и-ресурсы)
+или [подготовке RTX](SETUP.md#rtx). Доступ GitLab настраивается в Argo,
+не токеном внутри `repoURL`.
+
+Ветка выбирается **до первого импорта моделей**. Для нового стенда она
+создаётся от текущего согласованного commit `k8s-config`; для существующего
+используется локальная либо удалённая ветка площадки. Сначала сохраните
+незавершённые изменения: блок ниже требует чистого рабочего дерева.
 
 ```bash
-export ARGO_CONTEXT=management
-export GPU_CONTEXT=gpu-cluster
-export MIG_CONTEXT=a30-cluster
-export A30_DIR=argo-projects/a30-cluster/hardfest-demo
-export ARGO_NAMESPACE=argocd
-export DEMO_DIR=argo-projects/gpu-cluster/hardfest-demo
-set -o pipefail
-
-kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get applications
-kubectl --context "$GPU_CONTEXT" get nodes,deviceclasses
-kubectl --context "$GPU_CONTEXT" -n hardfest-demo get pvc
+: "${WORKSHOP_BRANCH:?Задайте ветку площадки из SETUP}"
+git status --short
+test -z "$(git status --porcelain)" || exit 1
+git fetch origin || exit 1
+if git show-ref --verify --quiet "refs/heads/$WORKSHOP_BRANCH"; then
+  git switch "$WORKSHOP_BRANCH" || exit 1
+elif git show-ref --verify --quiet "refs/remotes/origin/$WORKSHOP_BRANCH"; then
+  git switch --track -c "$WORKSHOP_BRANCH" "origin/$WORKSHOP_BRANCH" || exit 1
+else
+  git switch -c "$WORKSHOP_BRANCH" || exit 1
+fi
+git push --set-upstream origin "HEAD:refs/heads/$WORKSHOP_BRANCH" || exit 1
+git branch -vv
 ```
 
-Первый контекст — Argo, второй — модели H100, третий — A30.
-Доступ GitLab настраивается в Argo, не токеном внутри `repoURL`.
+Ожидается upstream `origin/$WORKSHOP_BRANCH`. Если push отклонён из-за
+расхождения истории, сначала разберите diff; force-push здесь не используется.
+В каждом Application `targetRevision` должен совпадать с этой веткой.
+После этого вернитесь к доставке весов в SETUP.
 
 ## 2. Подготовить файлы площадки
 
 Только для **нового** каталога:
 
 ```bash
-git switch -c hardfest-demo
+test ! -e "$DEMO_DIR/charts/vllm-runtime" || exit 1
+test ! -e "$DEMO_DIR/site" || exit 1
 mkdir -p "$DEMO_DIR/charts" "$DEMO_DIR/values" "$DEMO_DIR/site" "$DEMO_DIR/argo-app"
 cp -R ../hardfest-gpu-workshop/charts/vllm-runtime "$DEMO_DIR/charts/"
 cp ../hardfest-gpu-workshop/values/*.yaml "$DEMO_DIR/values/"
@@ -51,7 +66,7 @@ cp ../hardfest-gpu-workshop/argocd/gemma-b.yaml "$DEMO_DIR/argo-app/"
 
 | Файл | Его задача и необходимые значения |
 | --- | --- |
-| `values/gemma-a.yaml`, `gemma-b.yaml` | Профиль: параметры vLLM, память, shm и число реплик |
+| `values/gemma-a.yaml`, `gemma-b.yaml` | Ручной профиль: готовые параметры запуска vLLM, память, shm и число реплик |
 | `site/gemma.yaml` | Нода, созданный контроллером DeviceClass, Model и путь весов |
 | `site/gemma-assistant.yaml` | Те же привязки и оба `modelRefs` |
 | `argo-app/*.yaml` | Git-адрес, ветка, проект, путь чарта, destination |
@@ -88,6 +103,7 @@ Site перекрывает профиль: из параметров vLLM зд�
 
 ```bash
 export SLOT=a SITE=gemma APP=hardfest-gemma-a
+test "$(git branch --show-current)" = "$WORKSHOP_BRANCH" || exit 1
 helm lint "$DEMO_DIR/charts/vllm-runtime" --strict \
   -f "$DEMO_DIR/values/gemma-$SLOT.yaml" -f "$DEMO_DIR/site/$SITE.yaml" || exit 1
 helm template "hf-gemma-$SLOT" "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
@@ -98,7 +114,7 @@ git add -- "$DEMO_DIR"
 git diff --cached --check || exit 1
 git diff --cached
 git commit -S -s -m "Update HardFest configuration" || exit 1
-git push -u origin hardfest-demo || exit 1
+git push origin "HEAD:refs/heads/$WORKSHOP_BRANCH" || exit 1
 ```
 
 Dry-run проверяет схему, не веса и генерацию.
@@ -168,13 +184,15 @@ cp "$DEMO_DIR/values/gemma-b-spec.yaml" "$DEMO_DIR/values/gemma-b.yaml"
 
 ## 7. Подготовить платформенные заказы
 
-Чарт `inference-service` создаёт **только InferenceService**.
-Дочерний runtime создаёт контроллер; Model и классы должны существовать.
+Платформенный заказ **InferenceService** описывает модель и нужный сервис;
+AI Inference выбирает рецепт и создаёт runtime. Чарт `inference-service`
+создаёт только этот заказ; Model и классы должны существовать.
 
 Для нового каталога H100:
 
 ```bash
 mkdir -p "$DEMO_DIR/platform"
+test ! -e "$DEMO_DIR/charts/inference-service" || exit 1
 cp -R ../hardfest-gpu-workshop/charts/inference-service "$DEMO_DIR/charts/"
 cp ../hardfest-gpu-workshop/platform/gemma.yaml "$DEMO_DIR/platform/"
 cp ../hardfest-gpu-workshop/platform/qwen.yaml "$DEMO_DIR/platform/"
@@ -186,6 +204,7 @@ cp ../hardfest-gpu-workshop/argocd/qwen-platform.yaml "$DEMO_DIR/argo-app/"
 
 ```bash
 mkdir -p "$A30_DIR/charts" "$A30_DIR/platform" "$A30_DIR/argo-app"
+test ! -e "$A30_DIR/charts/inference-service" || exit 1
 cp -R ../hardfest-gpu-workshop/charts/inference-service "$A30_DIR/charts/"
 for SERVICE in embedding reranker whisper; do
   cp "../hardfest-gpu-workshop/platform/$SERVICE.yaml" "$A30_DIR/platform/"
@@ -198,19 +217,21 @@ done
 `valueFiles` содержит только `../../platform/ИМЯ.yaml`.
 В values — существующие Model, InferenceServiceClass и DeviceClass.
 
-Заказы пока `order.enabled: false`. В шагах 3–4 используются новые файлы
-`argo-app/*-platform.yaml`, не Applications ручных A/B.
-Проверка выключенного заказа рендерит пустой документ;
-его поля проверяются **после включения**:
+Заказы пока `order.enabled: false`. Выключенный заказ рендерит
+пустой документ; для проверки полей **без запуска** включите его только в
+локальном рендере:
 
 ```bash
-helm lint "$DEMO_DIR/charts/inference-service" --strict -f "$DEMO_DIR/platform/gemma.yaml"
+helm lint "$DEMO_DIR/charts/inference-service" --strict -f "$DEMO_DIR/platform/gemma.yaml" \
+  --set order.enabled=true || exit 1
 helm template hf-platform-gemma "$DEMO_DIR/charts/inference-service" \
-  -n hardfest-demo -f "$DEMO_DIR/platform/gemma.yaml" |
-  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f -
+  -n hardfest-demo -f "$DEMO_DIR/platform/gemma.yaml" --set order.enabled=true |
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f - || exit 1
 ```
 
-Далее commit/push и Sync соответствующего Application с конкретным SHA:
+Далее commit/push файлов чарта, `platform/` и соответствующих
+`argo-app/*-platform.yaml`. По шагу 4 зарегистрируйте именно эти новые
+Applications и синхронизируйте каждое с конкретным SHA:
 `hardfest-gemma-platform`, `hardfest-qwen-platform` или отдельного сервиса A30.
 Для A30 в командах `DEMO_DIR` заменяется на `A30_DIR`, `GPU_CONTEXT` —
 на `MIG_CONTEXT`, `gemma` — на нужный сервис; Argo-контекст сохраняется.
@@ -220,8 +241,8 @@ helm template hf-platform-gemma "$DEMO_DIR/charts/inference-service" \
 
 ```bash
 git log --oneline -5 -- "$DEMO_DIR"
-git revert -S -s --no-edit YOUR_PROFILE_COMMIT
-git push
+git revert -S -s --no-edit YOUR_PROFILE_COMMIT || exit 1
+git push origin "HEAD:refs/heads/$WORKSHOP_BRANCH" || exit 1
 ```
 
 Синхронизируйте новый commit, не используйте `helm rollback`.

@@ -10,7 +10,6 @@ spec:
   namespaceSelector:
     matchNames:
       - hardfest-demo
-      - hardfest-rtx
   selector:
     matchLabels:
       app.kubernetes.io/part-of: hardfest-gpu-workshop
@@ -29,29 +28,6 @@ spec:
   podSelector:
     matchLabels:
       app.kubernetes.io/part-of: hardfest-gpu-workshop
-  policyTypes:
-    - Ingress
-  ingress:
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: d8-monitoring
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: prometheus
-              prometheus: main
-      ports:
-        - port: 8000
-          protocol: TCP
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: hardfest-prometheus
-  namespace: hardfest-rtx
-spec:
-  podSelector:
-    matchLabels:
       app.kubernetes.io/component: llm-runtime
   policyTypes:
     - Ingress

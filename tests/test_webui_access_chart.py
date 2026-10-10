@@ -1,6 +1,7 @@
 """Offline rendering checks; no credentials or cluster access."""
 import json
 from pathlib import Path
+import re
 import subprocess
 import unittest
 
@@ -11,6 +12,72 @@ CHART = ROOT / "charts/webui-access"
 
 
 class WebUIAccessChart(unittest.TestCase):
+    def test_readme_initializer_matches_rendered_runtime(self):
+        readme = (ROOT / "integrations/webui-access/README.md").read_text()
+        examples = [yaml.safe_load(block) for block in re.findall(r"```yaml\n(.*?)\n```", readme, re.S)]
+        values = next(example for example in examples if "replicaCount" in example)
+        self.assertEqual(values["replicaCount"], 0)
+        self.assertTrue(values["persistence"]["enabled"])
+        values["image"] = "registry.example.com/webui-access@sha256:" + "a" * 64
+        values["imagePullSecrets"] = [{"name": "synthetic-registry"}]
+        values["persistence"]["storageClass"] = "synthetic-storage"
+        values["config"]["service_user_id"] = "synthetic-service-user"
+        values["config"]["providers"][0]["key_ids"] = ["synthetic-provider-key"]
+        objects = self.render(values=values)
+        runtime = objects["Deployment"]["spec"]["template"]["spec"]
+        state_volume = next(volume for volume in runtime["volumes"] if volume["name"] == "state")
+
+        shell_examples = re.findall(r"```bash\n(.*?)\n```", readme, re.S)
+        initialize = next(block for block in shell_examples if "<<YAML" in block)
+        manifest = re.search(r"<<YAML[^\n]*\n(.*?)\nYAML(?:\n|$)", initialize, re.S).group(1)
+        substitutions = {
+            "$ACCESS_IMAGE": runtime["containers"][0]["image"],
+            "$ACCESS_PVC": state_volume["persistentVolumeClaim"]["claimName"],
+            "${ACCESS_PULL_SECRETS:-[]}": json.dumps(runtime["imagePullSecrets"]),
+        }
+        for variable, value in substitutions.items():
+            manifest = manifest.replace(variable, value)
+        pod = yaml.safe_load(manifest)
+        spec = pod["spec"]
+        container = spec["containers"][0]
+        self.assertEqual(pod["kind"], "Pod")
+        self.assertEqual(pod["metadata"]["name"], "webui-access-initialize")
+        self.assertNotEqual(pod["metadata"].get("labels", {}).get("app"),
+                            objects["Service"]["spec"]["selector"]["app"])
+        self.assertEqual(container["image"], runtime["containers"][0]["image"])
+        self.assertEqual(spec["imagePullSecrets"], runtime["imagePullSecrets"])
+        self.assertEqual(spec["securityContext"], runtime["securityContext"])
+        self.assertEqual(spec["securityContext"]["runAsUser"], 65532)
+        self.assertEqual(spec["securityContext"]["runAsGroup"], 65532)
+        self.assertEqual(spec["securityContext"]["fsGroup"], 65532)
+        self.assertEqual(container["securityContext"], runtime["containers"][0]["securityContext"])
+        self.assertEqual(container["volumeMounts"], [{"name": "state", "mountPath": "/state"}])
+        self.assertEqual(values["config"]["state_dir"], "/state")
+        self.assertEqual(spec["volumes"], [state_volume])
+        self.assertNotIn("env", container)
+        self.assertNotIn("envFrom", container)
+        self.assertFalse(spec["automountServiceAccountToken"])
+        self.assertEqual(spec["restartPolicy"], "Never")
+        self.assertEqual(container["command"], ["/bin/sleep", "1800"])
+        self.assertEqual(spec["activeDeadlineSeconds"], 1800)
+
+        commands = re.sub(r"[ \t]*\\\n\s*", " ", initialize)
+        create = commands.index(" create -f - <<YAML || exit 1")
+        ready = commands.index(" wait --for=condition=Ready pod/webui-access-initialize --timeout=180s || exit 1")
+        execute = commands.index(" exec -i webui-access-initialize -- /bridge --initialize-state /state "
+                                 + values["config"]["managed_by"] + ' < "$INVENTORY" || exit 1')
+        cleanup = commands.index(" delete pod webui-access-initialize --wait=true --timeout=120s || exit 1")
+        self.assertLess(create, ready)
+        self.assertLess(ready, execute)
+        self.assertLess(execute, cleanup)
+        kubectl_commands = [line for line in commands.splitlines() if line.startswith("kubectl ")]
+        self.assertEqual(len(kubectl_commands), 4)
+        for command in kubectl_commands:
+            self.assertIn('--context "$WEBUI_CONTEXT" -n "$WEBUI_NAMESPACE"', command)
+        self.assertNotRegex(commands, r"delete\s+(?:pvc|namespace)\b")
+        subprocess.run(["bash", "-n"], input="\n".join(shell_examples), text=True, check=True,
+                       capture_output=True)
+
     def test_durable_issuance_volume_and_retention(self):
         args = ["--set", "persistence.enabled=true", "--set", "config.state_dir=/state"]
         objects = self.render(*args)
@@ -35,9 +102,11 @@ class WebUIAccessChart(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("durable issuance requires create mode", result.stderr)
 
-    def render(self, *options):
+    def render(self, *options, values=None):
         result = subprocess.run(
-            ["helm", "template", "access", str(CHART), "-n", "workshop-ui", *options],
+            ["helm", "template", "access", str(CHART), "-n", "workshop-ui", *options,
+             *(["-f", "-"] if values is not None else [])],
+            input=json.dumps(values) if values is not None else None,
             capture_output=True, text=True, check=True,
         )
         return {item["kind"]: item for item in yaml.safe_load_all(result.stdout) if item}

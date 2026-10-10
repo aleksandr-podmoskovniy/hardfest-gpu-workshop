@@ -378,7 +378,8 @@ class Guide(unittest.TestCase):
                          list((ROOT / "labs").glob("*.md")))
         for path in diagrams:
             svg = ET.parse(path).getroot()
-            self.assertEqual(svg.attrib["viewBox"], "0 0 1200 760")
+            expected_height = 1040 if path.name == "01-topology.svg" else 760
+            self.assertEqual(svg.attrib["viewBox"], f"0 0 1200 {expected_height}")
             self.assertEqual(svg.attrib["data-design"], "hardfest-v2")
             self.assertIn(path.name, docs, f"Unreferenced illustration: {path.name}")
             for node in svg.iter():

@@ -25,7 +25,8 @@ class DiagramConnections(unittest.TestCase):
             with self.subTest(file=path.name):
                 root = ET.parse(path).getroot()
                 self.assertEqual(root.attrib["data-design"], "hardfest-v2")
-                self.assertEqual(root.attrib["viewBox"], "0 0 1200 760")
+                height = 1040 if path.name == "01-topology.svg" else 760
+                self.assertEqual(root.attrib["viewBox"], f"0 0 1200 {height}")
                 self.assertTrue(root.find(SVG + "title").text)
                 self.assertTrue(root.find(SVG + "desc").text)
                 footer = list(root.iter(SVG + "text"))[-1]
@@ -34,12 +35,11 @@ class DiagramConnections(unittest.TestCase):
 
     def test_a30_stays_with_webui_and_includes_whisper(self):
         root = ET.parse(ROOT / "assets" / "01-topology.svg").getroot()
-        nodes = {" ".join(n.itertext()).strip(): n for n in root.iter(SVG + "text")}
-        self.assertIn("КЛАСТЕР WEBUI + A30", nodes)
-        self.assertIn("КЛАСТЕР ШЛЮЗА + H100 ИЛИ RTX 5060 Ti", nodes)
-        self.assertLess(float(nodes["A30 / 2 × 2g.12gb"].attrib["x"]),
-                        float(nodes["Bifrost / ai-mcp-gateway"].attrib["x"]))
-        self.assertIn("Whisper large-v3: отдельно", " ".join(root.itertext()))
+        text = " ".join(root.itertext())
+        self.assertIn("WebUI + A30 — один кластер", text)
+        self.assertIn("Шлюз + 2 H100 или 2 RTX 5060 Ti — другой", text)
+        self.assertIn("A30 / 2 × 2g.12gb", text)
+        self.assertIn("Whisper large-v3", text)
 
     def test_a30_target_has_two_partitions_and_three_services(self):
         root = ET.parse(ROOT / "assets" / "08-mig-mps.svg").getroot()
@@ -71,21 +71,35 @@ class DiagramConnections(unittest.TestCase):
             root = ET.parse(ROOT / f"assets/{name}.svg").getroot()
             text = " ".join(root.itertext())
             self.assertNotIn("Kubernetes MCP", text)
-            self.assertIn("Синий маршрут — чат", text)
-            self.assertIn("Финал: Qwen вместо двух Gemma", text)
+            self.assertIn("→ личный VK", text)
+            self.assertIn("Поиск и голос: служебный VK", text)
+            self.assertIn("Финальный Qwen использует обе карты вместо них", text)
             self.assertIn("ai-mcp-gateway", text)
+            # Direct WebUI→gateway service calls bypass the chat-only adapter;
+            # gateway→A30 is a separate service edge, not a VK passthrough.
+            green_routes = [n.attrib["d"] for n in root.iter(SVG + "path")
+                            if n.attrib.get("data-connector") and n.attrib["stroke"] == "#087d78"]
+            self.assertEqual(len(green_routes), 2)
+            self.assertTrue(green_routes[0].startswith("M162.0 346"))
+            self.assertTrue(green_routes[0].endswith("L720.0 346"))
+            self.assertTrue(green_routes[1].endswith("L882 473.0"))
 
     def test_stand_map_explains_support_paths_and_is_visible_in_both_guides(self):
         root = ET.parse(ROOT / "assets/01-topology.svg").getroot()
         text = " ".join(root.itertext())
-        for role in ("Open WebUI", "База знаний", "адаптер личных ключей", "Bifrost",
-                     "Gemma A", "Gemma B", "Qwen", "A30", "Whisper",
-                     "Git + Helm → Argo CD", "ai-models → NodeCache → vLLM",
-                     "Prometheus", "Grafana"):
+        for role in ("Open WebUI", "База знаний", "Адаптер", "Bifrost",
+                     "Gemma A и B", "Qwen", "A30", "Whisper", "Deployment", "AI Inference",
+                     "Git + Helm", "Argo CD", "ai-models → NodeCache → веса для vLLM",
+                     "Prometheus → Console"):
             self.assertIn(role, text)
         # Deployment, weight delivery and observation are separate paths,
         # not additional hops of every chat request.
-        self.assertIn("ЧТО ОБЕСПЕЧИВАЕТ РАБОТУ МОДЕЛЕЙ", text)
+        self.assertIn("ДВА СПОСОБА ЗАПУСТИТЬ ТОТ ЖЕ ДВИЖОК", text)
+        self.assertIn("ФАЙЛЫ И ГРАФИКИ — НЕ ЧАСТЬ МАРШРУТА ЧАТА", text)
+        # Both configuration branches reconnect to the runtime, not isolated captions.
+        routes = [n.attrib["d"] for n in root.iter(SVG + "path") if n.attrib.get("data-connector")]
+        self.assertTrue(any(r.endswith("L906 712.0") for r in routes))
+        self.assertTrue(any(r.endswith("L906 762.0") for r in routes))
         for page in ("README.md", "RTX5060.md", "docs/SETUP.md"):
             source = (ROOT / page).read_text()
             self.assertRegex(source, r"!\[[^\]]+\]\((?:\.\./)?assets/01-topology.svg\)")
