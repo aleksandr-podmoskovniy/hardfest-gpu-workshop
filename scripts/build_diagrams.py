@@ -121,30 +121,45 @@ class Diagram:
         (ROOT / "assets" / f"{self.name}.svg").write_text("\n".join(self.parts + ['</svg>']) + '\n')
 
 
-def topology(name='01-topology', gpu='H100'):
-    d = Diagram(name, 'Один чат — несколько моделей',
-                'Синий маршрут — чат. Зелёный — поиск по документам и распознавание речи.')
-    d.rect(48, 160, 428, 518)
-    d.rect(516, 160, 636, 518, '#ffffff')
-    d.text(72, 194, 'КЛАСТЕР WEBUI + A30', 18, MUTED, True)
-    d.text(540, 194, f'КЛАСТЕР {gpu} + ШЛЮЗ', 18, MUTED, True)
-    webui = d.card(72, 216, 380, 130, 'Open WebUI', ['Чат и голос', 'Пароль / OIDC'])
-    knowledge = d.card(72, 396, 380, 110, 'Базы знаний', ['Документы и индекс'], MINT, TEAL)
-    gateway = d.card(540, 216, 588, 130, 'ai-mcp-gateway', ['Ключи, квоты и учёт', 'Маршруты моделей'])
+def topology():
+    d = Diagram('01-topology', 'Весь стенд: от чата до GPU',
+                'Синий маршрут — чат. Зелёный — документы и речь. Внизу — запуск, веса и метрики.')
+    d.rect(48, 150, 428, 398)
+    d.rect(516, 150, 636, 398, '#ffffff')
+    d.text(72, 178, 'КЛАСТЕР WEBUI + A30', 18, MUTED, True)
+    d.text(540, 178, 'КЛАСТЕР ШЛЮЗА + H100 ИЛИ RTX 5060 Ti', 18, MUTED, True)
+    webui = d.card(72, 196, 380, 94, 'Open WebUI',
+                   ['Чат → адаптер личных ключей'], compact=True)
+    knowledge = d.card(72, 328, 380, 80, 'База знаний',
+                       ['Документы и поисковый индекс'], MINT, TEAL, compact=True)
+    gateway = d.card(540, 196, 588, 94, 'Bifrost / ai-mcp-gateway',
+                     ['Маршруты, права, лимиты и учёт запросов'], compact=True)
     d.connect(webui, knowledge, ('bottom', 'top'), color=TEAL)
     d.connect(webui, gateway)
-    gemma_a = d.card(540, 414, 258, 108, 'Gemma A', ['Base', f'{gpu} №1'], compact=True)
-    gemma_b = d.card(870, 414, 258, 108, 'Gemma B', ['Tune', f'{gpu} №2'], compact=True)
-    a30 = d.card(72, 536, 380, 126, 'A30 / 2 × 2g.12gb',
-                 ['Эмбеддер + реранкер: MPS', 'Whisper large-v3: отдельно'], MINT, TEAL)
-    d.connector([gateway.port('bottom'), (834, 382)], arrow=False)
+    gemma_a = d.card(540, 352, 258, 88, 'Gemma A', ['Base / одна GPU'], compact=True)
+    gemma_b = d.card(870, 352, 258, 88, 'Gemma B', ['Cache → Tune / 1 GPU'], compact=True)
+    a30 = d.card(72, 432, 380, 102, 'A30 / 2 × 2g.12gb',
+                 ['Эмбеддер + реранкер: MPS', 'Whisper large-v3: отдельно'], MINT, TEAL, compact=True)
+    d.connector([gateway.port('bottom'), (834, 320)], arrow=False)
     for service in (gemma_a, gemma_b):
         x = service.port('top')[0]
-        d.connector([(834, 382), (x, 382), service.port('top')])
-    d.connector([gateway.port('left', .8), (496, 320), (496, 599), a30.port('right')], TEAL)
-    d.card(540, 554, 588, 108, 'Финал: Qwen вместо двух Gemma',
-           ['Один сервис использует обе карты'], GRAY, MUTED, compact=True)
-    d.footer('Gemma сменяется на Qwen TP2. Чат, пользователи и базы знаний остаются.')
+        d.connector([(834, 320), (x, 320), service.port('top')])
+    d.connector([gateway.port('left', .8), (496, 271.2), (496, 483), a30.port('right')], TEAL)
+    d.rect(540, 466, 588, 68)
+    d.text(564, 493, 'Финал: Qwen вместо двух Gemma', 23, MUTED, True, width=540)
+    d.text(564, 520, 'Одна модель в vLLM, обе GPU работают вместе', 20, width=540)
+
+    # These are separate support paths, not additional hops of a chat request.
+    d.text(48, 577, 'ЧТО ОБЕСПЕЧИВАЕТ РАБОТУ МОДЕЛЕЙ', 18, MUTED, True)
+    for x, title, body, fill, color in (
+        (48, 'Запуск', ['Git + Helm → Argo CD', 'Вручную или по плану сервиса'], PALE, BLUE),
+        (424, 'Веса', ['ai-models → NodeCache → vLLM', 'Каталог и доставка файлов'], MINT, TEAL),
+        (800, 'Графики', ['vLLM / GPU → Prometheus', 'Grafana: очередь и загрузка'], LILAC, PURPLE),
+    ):
+        d.rect(x, 590, 352, 88, fill)
+        d.text(x+20, 616, title, 23, color, True, width=312)
+        d.text(x+20, 641, body, 18, width=312)
+    d.footer('Qwen занимает обе карты. Одновременный запуск Gemma A и B требует запаса RAM.')
     d.save()
 
 

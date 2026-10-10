@@ -1,187 +1,109 @@
-# Подключить мониторинг инференса
+# Мониторинг: подключение и чтение графиков
 
-[AI Inference / Service performance](../observability/dashboard.yaml) разделяет ряды по
-`namespace / service`. Поэтому две Gemma с одинаковыми весами не
-сливаются в одну линию. Ручные Deployment и сервисы AI Inference можно
-сравнивать вместе, когда Prometheus собирает их `/metrics`.
+Один дашборд **AI Inference / Service performance** сравнивает ручные и
+платформенные запуски по `namespace / service`. Одинаковые веса A и B не
+смешиваются в одну линию. Шаблон — [dashboard.yaml](../observability/dashboard.yaml).
 
-В каждом кластере используется один и тот же дашборд, без отдельных версий
-под карту или модель. Выбирайте namespace, сервис и модель фильтрами.
+| Данные | Источник | Где смотреть |
+| --- | --- | --- |
+| Очередь, токены, время ответа, KV | `/metrics` vLLM → Prometheus | Дашборд инференса |
+| Pod, RAM/CPU, перезапуски | Kubernetes → Prometheus | Тот же дашборд |
+| GPU и аппаратные разделы | DCGM-экспортёр → Prometheus | GPU-панели выбранной ноды |
+| Пользователь, маршрут, расход | Bifrost | Журнал запросов и бюджеты шлюза |
 
-Источник Prometheus относится к выбранному кластеру: общая схема чата
-не объединяет метрики разных кластеров.
+Prometheus выбирается **для конкретного кластера**. Общий чат не объединяет
+метрики GPU-кластера и соседнего A30 автоматически.
 
-| Где смотреть | Что проверять |
-| --- | --- |
-| Дашборд AI Inference | Работу движка, очередь, токены, память и ресурсы Pod |
-| Bifrost | Запросы, ошибки, права и расходы пользователей |
+## 1. Подключить сбор через GitOps
 
-### Как дашборд находит ручной запуск
-
-Ручной чарт ставит две метки Pod:
-
-- `app.kubernetes.io/component: llm-runtime`;
-- `app.kubernetes.io/name` — имя Service.
-
-Проверьте, что kube-state-metrics экспортирует обе метки в `kube_pod_labels`.
-По ним дашборд показывает сервис, RAM/CPU и перезапуски ещё до готовности `/metrics`.
-Метки владения InferenceService-контроллера ручному Pod не присваиваются.
-
-При недоступном сборе сервис остаётся виден как `DOWN` или `NO SCRAPE`.
-При `replicaCount: 0` Pod отсутствует и запись исчезает: остановленный ручной
-запуск не считается работающим сервисом.
-
-## Перед началом
-
-- [ ] Рабочий каталог — `k8s-config`; переменные заданы по [GitOps](GITOPS.md).
-- [ ] Установлены Prometheus и CRD (Custom Resource Definition), определения типов `ServiceMonitor` и `ClusterObservabilityDashboard`.
-- [ ] Argo AppProject разрешает нужные namespace и кластерный дашборд.
-- [ ] Известны namespace и labels Prometheus.
-- [ ] Для каждого endpoint выбран один сборщик: двойного scrape нет.
-
-Проверка стандартной установки Deckhouse:
+Команды выполняются из `k8s-config`; переменные — из [GitOps](GITOPS.md).
+Нужны Prometheus, типы `ServiceMonitor` и `ClusterObservabilityDashboard`,
+а также права AppProject на соответствующие namespace и кластерный дашборд.
 
 ```bash
 kubectl --context "$GPU_CONTEXT" -n d8-monitoring get prometheus main -o yaml
 kubectl --context "$GPU_CONTEXT" -n d8-monitoring get pods --show-labels
 kubectl --context "$GPU_CONTEXT" get crd clusterobservabilitydashboards.observability.deckhouse.io
-```
-
-Если сборщик называется иначе, используйте его реальные имя и namespace.
-
-## 1. Подготовить манифесты
-
-```bash
 cp -R ../hardfest-gpu-workshop/observability "$DEMO_DIR/observability"
 cp ../hardfest-gpu-workshop/argocd/observability.yaml \
   "$DEMO_DIR/argo-app/observability.yaml"
 ```
 
-В редакторе проверьте следующие привязки:
+Если Prometheus установлен не как `d8-monitoring/main`, используйте его имя.
+В скопированных файлах измените:
 
-| Файл/объект | Что проверить |
+| Файл | Привязки площадки |
 | --- | --- |
-| ServiceMonitor в `observability/monitoring.yaml` | Namespace, selector и соответствие селекторам Prometheus |
-| NetworkPolicy в том же файле | Namespace и labels Pod Prometheus |
-| `argo-app/observability.yaml` | Git URL, ветка, путь, AppProject, целевой кластер |
-| AppProject | Доступ к namespace и `ClusterObservabilityDashboard`, без ненужных wildcard |
+| `observability/monitoring.yaml` | Namespace и labels Prometheus; selectors ручных Service; NetworkPolicy |
+| `argo-app/observability.yaml` | Git URL, ветка, путь, AppProject и целевой кластер |
+| Существующий манифест namespace | Метка выбора namespace, если её требует Prometheus |
 
-Имена файлов относительны `$DEMO_DIR`.
-У ручного чарта порт Service называется `http`; на него рассчитан
-`hardfest-vllm`. AI Inference создаёт собственный ServiceMonitor с портом
-`service-port` — его не переименовывайте. NetworkPolicy в примере открывает
-TCP/8000 только сборщику ручных сервисов и не меняет доступ ai-mcp-gateway.
+При selector Deckhouse по метке `prometheus.deckhouse.io/monitor-watcher-enabled`
+добавьте её со значением `"true"`, сохранив остальные поля namespace.
+Для RTX включите `hardfest-rtx` в `namespaceSelector.matchNames` ручного
+ServiceMonitor и разрешите ему сетевой доступ к runtime.
 
 > [!IMPORTANT]
-> Для сервисов AI Inference сохраняйте сбор, уже созданный модулем.
-> Второй ServiceMonitor одного endpoint даст двойной счёт.
+> Ручной ServiceMonitor `hardfest-vllm` собирает порт `http`.
+> AI Inference создаёт свой ServiceMonitor с портом `service-port`.
+> Не добавляйте второй сборщик того же endpoint: это удвоит счётчики.
 
-Prometheus должен также выбирать namespace, в котором находится
-ServiceMonitor. В стандартной конфигурации Deckhouse с
-`serviceMonitorNamespaceSelector` по метке
-`prometheus.deckhouse.io/monitor-watcher-enabled` добавьте в существующий
-манифест namespace приложения:
+NetworkPolicy примера открывает TCP/8000 от Prometheus к ручным сервисам,
+но не настраивает доступ шлюза. После проверки selectors и прав AppProject:
 
-```yaml
-metadata:
-  labels:
-    prometheus.deckhouse.io/monitor-watcher-enabled: "true"
-```
-
-Остальные поля и labels namespace сохраните. Проверьте фактический selector
-в `Prometheus/main`: один лишь ServiceMonitor не гарантирует обнаружение цели.
-
-## 2. Проверить и отправить конфигурацию
+Блок ниже регистрирует отдельный Application. Если им управляет App-of-Apps,
+обновите и синхронизируйте родителя вместо прямого `apply`: у Application
+должен остаться один владелец. У существующего дашборда сохраните
+`metadata.name` и JSON `uid`, чтобы не сломать ссылки.
 
 ```bash
 kubectl --context "$GPU_CONTEXT" apply --server-side --dry-run=server \
-  -f "$DEMO_DIR/observability"
-```
-
-После успешной проверки:
-
-```bash
-git add -- "$DEMO_DIR/observability" "$DEMO_DIR/argo-app/observability.yaml"
-git diff --cached --check
-git diff --cached
-git commit -S -s -m "Add inference monitoring and live dashboard"
-git push
+  -f "$DEMO_DIR/observability" || exit 1
+git add -- "$DEMO_DIR/observability" "$DEMO_DIR/argo-app/observability.yaml" || exit 1
+git diff --cached --check || exit 1
+git diff --cached || exit 1
+git commit -S -s -m "Add inference monitoring and live dashboard" || exit 1
+git push || exit 1
 kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply \
-  -f "$DEMO_DIR/argo-app/observability.yaml"
-REVISION=$(git rev-parse HEAD)
+  -f "$DEMO_DIR/argo-app/observability.yaml" || exit 1
+REVISION=$(git rev-parse HEAD) || exit 1
 kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application hardfest-observability \
   --type merge \
   --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
 ```
 
-Блок регистрации рассчитан на отдельный Application.
-Для App-of-Apps обновите родителя, а не создавайте второго владельца.
+## 2. Найти обе модели
 
-## 3. Открыть дашборд и проверить сбор
+В Console: **Система → Управление → Мониторинг → Дашборды → AI Platform →
+AI Inference / Service performance**. Объект примера — `ai-inference-live`.
 
 ```bash
-kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get application hardfest-observability
 kubectl --context "$GPU_CONTEXT" -n d8-monitoring get servicemonitor hardfest-vllm
 kubectl --context "$GPU_CONTEXT" get clusterobservabilitydashboard ai-inference-live
 ```
 
-В Console: **Система → Управление → Мониторинг → Дашборды →
-AI Platform → AI Inference / Service performance**.
+Выберите namespace, Service A/B и интервал нагрузки. Для GPU укажите ноду
+в **GPU node (whole node)**; `All` включает другие нагрузки на всех нодах.
+Фильтр **Model** ограничивает метрики движка, не список Pod и ресурсы Kubernetes.
 
-В примере объект называется `ai-inference-live`. Если на площадке уже есть
-этот дашборд под другим именем, сохраните его `metadata.name` и JSON `uid`,
-обновите существующий Application. Не создавайте второй объект только ради
-переименования: ранее сохранённая ссылка должна продолжить работать.
+Ручной чарт уже добавляет Pod метки `app.kubernetes.io/component: llm-runtime`
+и `app.kubernetes.io/name` с именем Service. Обе должны экспортироваться
+в `kube_pod_labels`. Метки владения InferenceService ручному Pod не нужны.
 
-Прямой путь в своей Console:
-
-```text
-/system/management/monitoring/dashboard/cluster-observability-dashboard/ai-inference-live
-```
-
-Установите фильтры:
-
-| Поле | Значение |
-| --- | --- |
-| Namespace | `hardfest-demo` |
-| Service | `hf-gemma-a`, `hf-gemma-b` или активный сервис платформы |
-| Model | Нужная модель или All |
-| GPU node (whole node) | Нода сервиса; All показывает все GPU кластера |
-| Период | Последние 30 минут |
-| Prometheus | Сборщик вашей площадки |
-
-### Фильтры и статусы
-
-Inventory — список сервисов — использует labels Pod AI Inference и ручных `llm-runtime`.
-Сервис виден, пока его Pod существует, даже до готовности `/metrics`.
-Без Pod после остановки до нуля запись исчезает; это не ошибка сборщика.
-
-Фильтр **Model** ограничивает только метрики движка.
-Для списка Pod и Kubernetes-ресурсов выбирайте **Service** и **Runtime pod**,
-для ресурсов также **GPU node**.
-
-| Статус | Значение | Следующая проверка |
+| Статус | Что это значит | Что проверить |
 | --- | --- | --- |
-| `UP` | Метрики успешно собираются | Отправить запрос модели |
-| `DOWN` | Цель сбора есть, запрос к ней неуспешен | Endpoint, сеть, готовность runtime |
-| `NO SCRAPE` | Pod есть, цели сбора нет | ServiceMonitor и его selectors |
+| `UP` | `/metrics` собирается | Отправить запрос модели |
+| `DOWN` | Цель найдена, опрос неуспешен | Endpoint, сеть, готовность runtime |
+| `NO SCRAPE` | Pod есть, цели нет | Selectors Prometheus и ServiceMonitor, имя порта |
+| Сервис исчез после остановки | При `replicaCount: 0` нет Pod | Нормально; остановленный запуск не считается работающим |
 
-Scrape — один опрос `/metrics` сборщиком.
-Ни один статус scrape не заменяет успешный запрос к API модели.
+После запроса подождите два интервала сбора. `UP` подтверждает метрики,
+но не успешную генерацию. Задержки без завершённых запросов могут быть пустыми.
 
-Выполните короткие запросы к выбранным сервисам и подождите два интервала scrape.
-Статистика задержек появляется только после запросов.
+### Если нужна отдельная Grafana
 
-### Регистрация в Grafana
-
-`ClusterObservabilityDashboard` публикует дашборд в Console, но не
-в отдельной Grafana. Для Grafana Deckhouse проверьте наличие её CRD:
-
-```bash
-kubectl --context "$GPU_CONTEXT" get crd grafanadashboarddefinitions.deckhouse.io
-```
-
-Добавьте в тот же GitOps-каталог `grafana-dashboard.yaml`:
+Console-объект не регистрирует дашборд в Grafana. При установленном типе
+`GrafanaDashboardDefinition` добавьте в тот же GitOps-каталог:
 
 ```yaml
 apiVersion: deckhouse.io/v1
@@ -191,144 +113,77 @@ metadata:
 spec:
   folder: AI Platform
   definition: |
-    # Вставьте сюда тот же JSON из dashboard.yaml.
+    # Заменить полным JSON из spec.definition файла dashboard.yaml.
 ```
 
-Комментарий замените полным JSON; поле верхнего уровня `id` не добавляйте,
-`uid` сохраните. AppProject должен разрешать также
-`deckhouse.io/GrafanaDashboardDefinition`. После commit/push и синхронизации
-того же Application дашборд появится в папке **AI Platform** в Grafana.
-Используйте одинаковое содержимое для обоих интерфейсов, не отдельные версии.
+Разрешите этот тип в AppProject и синхронизируйте Application. Без такого типа
+импортируйте JSON через интерфейс Grafana. В обоих случаях сохраняйте `uid`,
+не добавляйте верхнеуровневое поле `id` и используйте тот же JSON, не вторую версию.
 
-В Grafana без этой CRD импортируйте JSON вручную. Из существующего
-Console-дашборда его можно извлечь без дополнительных утилит:
+## 3. Читать результаты нагрузки
 
-```bash
-mkdir -p results/hardfest
-kubectl --context "$GPU_CONTEXT" get clusterobservabilitydashboard ai-inference-live \
-  -o jsonpath='{.spec.definition}' > results/hardfest/inference-dashboard.json
-```
+Начните с очереди и скорости. Остальные панели объясняют найденный симптом.
 
-Без установленной CRD откройте `dashboard.yaml` редактором и скопируйте
-JSON блока `spec.definition` в импорт Grafana.
-Само создание Console CR не добавляет дашборд в отдельную Grafana.
-
-## Как читать панели
-
-### Запросы, время и кэш
-
-| Панель | Что показывает |
+| Панель | Смысл |
 | --- | --- |
-| Output tokens/s | Суммарная генерация сервиса по всем сессиям |
-| Running / waiting | Запросы в работе и очереди |
-| Queue p95 | Ожидание scheduler |
+| Running / waiting | Запросы в работе и ожидании |
+| Output tokens/s | Суммарная генерация всех сессий сервиса |
+| Queue p95 | Ожидание свободного места в работе движка |
+| TTFT p95 | Время до первого токена внутри vLLM, включая очередь |
 | Среднее время этапов | Queue, prefill, decode: `rate(sum) / rate(count)` |
-| TTFT p95 | Time To First Token: время до первого токена внутри vLLM, включая очередь |
-| Prefill p95 | Обработка входа по измерению движка |
-| TPOT | Time Per Output Token: время на выходной токен после первого, распределение по запросам |
-| Темп decode | Обратное среднее ITL (Inter-Token Latency), интервала между токенами; не общий throughput |
-| KV-cache / external hit | Заполнение Key–Value cache, сохранённых ключей и значений attention, и повторное использование префиксов |
-| KV-offload | Передачи GPU ↔ RAM и доля закреплённого CPU-кеша через OffloadingConnector |
-| Speculative decoding | Draft tokens/s и доля принятых токенов; не коэффициент ускорения |
-| MIG engine / tensor activity | Активность аппаратных разделов по `GPU_I_ID` и `GPU_I_PROFILE`, не доля отдельного процесса |
+| TPOT / темп decode | Время на выходной токен / обратное среднее интервала между токенами; не общий throughput |
+| KV-cache / external hit | Занятость KV-пула / повторное использование префиксов |
+| Speculative decoding | Скорость предложенных draft-токенов и доля принятых |
 
-**p95** — граница, в которую укладываются 95% наблюдений за выбранный период.
+**p95** — значение, в которое укладываются 95% наблюдений. Из p95 TTFT нельзя
+вычесть p95 очереди: это разные распределения. При отсутствии наблюдений p95
+не определён; `No data` не заменяется нулём.
 
-Для эмбеддера и реранкера важны requests/s и **E2E (End-to-End latency)**,
-полная задержка запроса на измеряемом участке.
-Отсутствие выходных токенов не означает отказ.
+Первый токен рассуждений не обязательно виден как текст ответа. Браузер,
+сеть, поиск документов и шлюз не входят целиком во время движка. У эмбеддера
+и реранкера сравнивайте requests/s и полную задержку запроса, не output tokens/s.
 
-### Границы измерения
+Короткий benchmark и график могут давать разные числа: `rate` усредняет
+счётчик по окну, которое захватывает простой. Для сравнения выделите одинаковый
+интервал нагрузки; не меняйте формулу ради совпадения.
 
-- Без наблюдений p95 не определён: `No data`/NaN не заменяются нулём.
-- Из p95 TTFT нельзя вычитать p95 очереди: это разные распределения.
-- Первый токен reasoning-модели не обязательно первый видимый текст ответа.
-- Браузер, сеть, RAG и шлюз не входят целиком в метрики движка.
+### KV-offload: запись — ещё не повторное использование
 
-### GPU и RAM
+Панели **OffloadingConnector** используют метрики с префиксом `vllm:`:
 
-Короткий benchmark считает токены за длительность своей серии. График
-`rate(...[$__rate_interval])` усредняет счётчик по временному окну, куда может
-попасть и простой. Поэтому пик короткой серии в CLI не обязан совпадать с
-высотой графика. Для сопоставления выделите интервал нагрузки и проверьте
-шаг scrape; не меняйте единицы или формулу ради совпадения чисел.
-
-GPU-панели показывают все устройства экспортёра **DCGM (Data Center GPU Manager)**
-на выбранных узлах, включая чужую нагрузку.
-
-| Механизм | Что он разделяет |
+| Метрика | Значение |
 | --- | --- |
-| MIG — Multi-Instance GPU | Память и вычислительные ресурсы карты на аппаратные разделы |
-| MPS — Multi-Process Service | Совместное выполнение CUDA-процессов на доступном устройстве |
+| `kv_offload_total_bytes_total{transfer_type="GPU_to_CPU"}` | Записано в RAM |
+| `kv_offload_total_bytes_total{transfer_type="CPU_to_GPU"}` | Возвращено на GPU |
+| `kv_offload_cpu_cache_usage_perc` | Доля блоков, закреплённых активными передачами |
 
-Фильтр Service не создаёт изолированный учёт MIG/MPS:
-для него нужны соответствующие метрики драйвера.
+Дашборд отдельно показывает скорость и объём за окно. Нулевая доля закреплённых
+блоков **не означает пустой RAM-кеш**. Только записи GPU → RAM не доказывают
+повторного использования: нужны чтения RAM → GPU при повторном запросе.
 
-Выбирайте узел явно в фильтре **GPU node (whole node)**. В MIG-режиме экспортёр
-может не отдавать обычные `GPU_UTIL` и `FB_USED`; доступны отдельные
-счётчики активности MIG. Не заменяйте отсутствующую память нулём и не
-суммируйте повторённые значения физической карты как память разных разделов.
-Панели загрузки, памяти, мощности и температуры GPU не зависят от готовности
-vLLM. Ошибки карты проверяйте отдельно по журналу драйвера и `nvidia-smi -q`.
+У `SimpleCPUOffload` другой набор метрик. Сверяйте backend и `/metrics`
+закреплённого runtime; отсутствующие счётчики другого backend не означают отказ.
+Высокая доля принятия draft-токенов тоже не доказывает ускорения — нужен A/B-замер.
 
-### KV-offload и speculative decoding
+### GPU: показатели устройства, не отдельного чата
 
-Ряд **KV-offload: переносы OffloadingConnector** предназначен для native
-connector, в том числе профиля `VLLM_USE_SIMPLE_KV_OFFLOAD=0` на RTX.
-Он не требует включения Simple CPU backend.
+GPU-панели включают чужую нагрузку на выбранной ноде. MIG делит карту на
+аппаратные части; MPS позволяет процессам совместно работать внутри устройства.
+Фильтр Service сам по себе не выделяет долю процесса в MIG/MPS.
 
-| Метрика native connector | Что показывает |
-| --- | --- |
-| `kv_offload_total_bytes_total{transfer_type="GPU_to_CPU"}` | Переданные в RAM байты |
-| `kv_offload_total_bytes_total{transfer_type="CPU_to_GPU"}` | Возвращённые на GPU байты |
-| `kv_offload_cpu_cache_usage_perc` | Доля кеша, закреплённая активными передачами |
+В MIG-режиме обычные `GPU_UTIL` и `FB_USED` могут отсутствовать; используйте
+доступные метрики разделов с `GPU_I_ID` и `GPU_I_PROFILE`. Не подставляйте нули
+и не суммируйте повторённые значения физической карты как память разных частей.
+Ошибка GPU проверяется отдельно по журналу драйвера и `nvidia-smi -q`.
 
-Все имена имеют префикс `vllm:`.
-Дашборд показывает bytes/s и объём за выбранное окно раздельно по направлению.
+## Проверка готовности
 
-- **Pinned usage** — доля блоков, закреплённых активными передачами.
-  Ноль не означает пустой RAM-кеш.
-- Записи GPU → RAM без чтений RAM → GPU не доказывают повторное использование CPU KV.
+- A и B видны раздельно; их endpoint собирается один раз.
+- После запросов появляются скорость и задержки.
+- Выбраны нужные кластер, namespace, Service, нода и время.
+- Метрики выключенной оптимизации не выданы за нулевое потребление.
 
-### Сбор с RTX-сервисов
-
-Для ручных RTX-сервисов добавьте `hardfest-rtx` в `namespaceSelector.matchNames`
-существующего ServiceMonitor и разрешите ему доступ к runtime через NetworkPolicy.
-
-Для платформенных сервисов AI Inference создаёт собственный ServiceMonitor:
-проверьте его наличие и `up=1` в Prometheus.
-Проверьте selector наблюдения за namespace и labels Service. Второй ServiceMonitor
-для тех же endpoints создавать не нужно: это может удвоить scrape.
-
-### Как читать speculative decoding
-
-**Speculative decoding** — генерация с черновиком: draft-модель предлагает
-токены, основная проверяет их.
-
-Панели показывают скорость draft-токенов и долю принятых
-токенов. Высокая доля принятия сама по себе не доказывает ускорения:
-сравните время и throughput на одинаковой нагрузке. При выключенном
-speculative decoding эти панели также могут не иметь данных.
-
-### Учёт на шлюзе
-
-Один `model_name` не различает A и B: веса одинаковы.
-Сравнивайте runtime по Service.
-Общий серверный **VK (Virtual Key)**, ключ шлюза, не является персональным учётом участников.
-Для учёта участников откройте журнал запросов и бюджеты в Bifrost.
-
-## Проверка
-
-- [ ] В inventory выбранные сервисы имеют `Scrape UP = 1`.
-- [ ] После запросов появляются токены и задержки.
-- [ ] A и B отображаются отдельно.
-- [ ] Нет двух ServiceMonitor для одного endpoint.
-- [ ] Дашборд доступен в кластерном разделе Console.
-
-## Если графики пустые
-
-1. Проверьте namespace selector Prometheus, ServiceMonitor selector, имя порта и NetworkPolicy.
-2. Сверьте `/metrics` закреплённого runtime: имена и labels могли отличаться.
-3. Убедитесь, что в выбранном интервале были запросы.
-4. Проверьте права на кластерные дашборды, а не только namespace приложения.
-5. Не путайте `Synced` в Argo со здоровым scrape и успешным ответом модели.
+Если данных нет, проверьте selectors, порт и NetworkPolicy, затем фактический
+`/metrics` и наличие запросов в интервале. `Synced` в Argo не доказывает ни сбор,
+ни ответ модели. Для пользовательского расхода нужен Bifrost, а не общий
+`model_name` или серверный ключ провайдера.

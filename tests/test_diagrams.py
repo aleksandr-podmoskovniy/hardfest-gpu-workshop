@@ -36,9 +36,9 @@ class DiagramConnections(unittest.TestCase):
         root = ET.parse(ROOT / "assets" / "01-topology.svg").getroot()
         nodes = {" ".join(n.itertext()).strip(): n for n in root.iter(SVG + "text")}
         self.assertIn("КЛАСТЕР WEBUI + A30", nodes)
-        self.assertIn("КЛАСТЕР H100 + ШЛЮЗ", nodes)
+        self.assertIn("КЛАСТЕР ШЛЮЗА + H100 ИЛИ RTX 5060 Ti", nodes)
         self.assertLess(float(nodes["A30 / 2 × 2g.12gb"].attrib["x"]),
-                        float(nodes["ai-mcp-gateway"].attrib["x"]))
+                        float(nodes["Bifrost / ai-mcp-gateway"].attrib["x"]))
         self.assertIn("Whisper large-v3: отдельно", " ".join(root.itertext()))
 
     def test_a30_target_has_two_partitions_and_three_services(self):
@@ -74,6 +74,21 @@ class DiagramConnections(unittest.TestCase):
             self.assertIn("Синий маршрут — чат", text)
             self.assertIn("Финал: Qwen вместо двух Gemma", text)
             self.assertIn("ai-mcp-gateway", text)
+
+    def test_stand_map_explains_support_paths_and_is_visible_in_both_guides(self):
+        root = ET.parse(ROOT / "assets/01-topology.svg").getroot()
+        text = " ".join(root.itertext())
+        for role in ("Open WebUI", "База знаний", "адаптер личных ключей", "Bifrost",
+                     "Gemma A", "Gemma B", "Qwen", "A30", "Whisper",
+                     "Git + Helm → Argo CD", "ai-models → NodeCache → vLLM",
+                     "Prometheus", "Grafana"):
+            self.assertIn(role, text)
+        # Deployment, weight delivery and observation are separate paths,
+        # not additional hops of every chat request.
+        self.assertIn("ЧТО ОБЕСПЕЧИВАЕТ РАБОТУ МОДЕЛЕЙ", text)
+        for page in ("README.md", "RTX5060.md", "docs/SETUP.md"):
+            source = (ROOT / page).read_text()
+            self.assertRegex(source, r"!\[[^\]]+\]\((?:\.\./)?assets/01-topology.svg\)")
 
     def test_latency_defines_time_to_first_token_and_generation(self):
         text = " ".join(ET.parse(ROOT / "assets/02-latency.svg").getroot().itertext())

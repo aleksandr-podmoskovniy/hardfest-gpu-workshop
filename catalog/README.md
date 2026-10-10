@@ -1,28 +1,18 @@
-# Подготовка моделей в ai-models
+# Каталог моделей: импорт и доставка весов
 
-ai-models загружает закреплённую ревизию весов и публикует проверенный артефакт.
-На объект `Model` затем ссылаются потребители: ручной Deployment или AI Inference.
-Новый способ запуска не требует заново выбирать репозиторий и ревизию модели.
+ai-models импортирует закреплённые веса в `Model` — общий источник
+для ручного runtime и AI Inference.
 
-## Перед началом
+Нужны ai-models с хранилищем, namespace `hardfest-demo`, доступ и лицензии.
+Команды — из частного `k8s-config`;
+[контексты](../docs/GITOPS.md#1-задать-контексты).
 
-- Установлен ai-models и настроены хранилище артефактов и доставка.
-- В GPU-кластере существует namespace `hardfest-demo`.
-- Проверены лицензии моделей и доступ к их весам.
-- Команды выполняются из `k8s-config`; переменные заданы по [GitOps](../docs/GITOPS.md#1-задать-контексты).
+**Веса H100 занимают около 183 GiB.** Проверьте свободный диск и квоту,
+оставив место под артефакты, временную загрузку и доставку.
 
-В [models.yaml](models.yaml) закреплены те же ревизии, что в
-[models.lock.json](../models.lock.json): Gemma, её assistant и Qwen NVFP4.
-Только веса занимают около **183 GiB**. Артефакты, временные загрузки и доставка
-могут храниться отдельно и расходовать дополнительное место.
+## 1. Подготовить источник
 
-> [!IMPORTANT]
-> Квота бакета не означает наличие свободного диска. До импорта проверьте оба
-> ограничения и оставьте запас для доставки и уже работающих моделей.
-
-## 1. Скопировать чарт и catalog/models.yaml
-
-Для нового каталога в частной репе:
+Для **нового** каталога:
 
 ```bash
 mkdir -p "$DEMO_DIR/charts" "$DEMO_DIR/catalog" "$DEMO_DIR/argo-app"
@@ -30,10 +20,8 @@ cp -R ../hardfest-gpu-workshop/charts/model-catalog "$DEMO_DIR/charts/"
 cp ../hardfest-gpu-workshop/catalog/models.yaml "$DEMO_DIR/catalog/models.yaml"
 ```
 
-Откройте `$DEMO_DIR/catalog/models.yaml`. Не заменяйте закреплённые ревизии на
-`main`: у повторного запуска должны быть те же веса.
-
-Если источник требует авторизацию, добавьте к нужной модели `authSecretName`:
+[Ревизии](models.yaml) закреплены в [lock-файле](../models.lock.json), не на `main`.
+Для закрытой модели:
 
 ```yaml
 models:
@@ -43,13 +31,12 @@ models:
     authSecretName: hf-model-read
 ```
 
-Это фрагмент одной записи, не замена всего списка. Secret `hf-model-read` с полем
-`token` создаётся отдельно в `hardfest-demo` через менеджер секретов. Значение
-токена не должно попадать в values, Git или аргументы команд.
+Это одна запись. Secret `hf-model-read`, поле `token`, доставляется отдельно
+в тот же namespace; токен не попадает в Git, values или аргументы команд.
 
-## 2. Создать argo-app/models.yaml
+## 2. Создать Application
 
-Создайте файл `$DEMO_DIR/argo-app/models.yaml` в редакторе:
+В `$DEMO_DIR/argo-app/models.yaml`:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -76,47 +63,44 @@ spec:
       - ServerSideApply=true
 ```
 
-Замените `repoURL`, ветку, проект, путь и destination своими. Namespace Application
-должен совпадать с `$ARGO_NAMESPACE`. `destination.name` — имя GPU-кластера в Argo.
+Замените Git-адрес, ветку, проект, путь, namespace Argo и destination.
+`destination.name` — имя кластера в Argo.
 
-> [!IMPORTANT]
-> Sync этого Application запускает загрузку моделей. В отличие от runtime-чартов
-> здесь нет переключателя `replicaCount: 0`. Autosync не включайте.
+**Sync запускает импорт сразу:** переключателя `replicaCount: 0` здесь нет.
+Autosync выключен.
 
-## 3. Проверить манифесты и отправить commit
+## 3. Проверить и запустить импорт
 
 ```bash
 helm lint "$DEMO_DIR/charts/model-catalog" --strict \
-  -f "$DEMO_DIR/catalog/models.yaml"
+  -f "$DEMO_DIR/catalog/models.yaml" || exit 1
 helm template hf-models "$DEMO_DIR/charts/model-catalog" -n hardfest-demo \
   -f "$DEMO_DIR/catalog/models.yaml" |
-  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f -
+  kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f - || exit 1
 git add -- "$DEMO_DIR/charts/model-catalog" "$DEMO_DIR/catalog/models.yaml" "$DEMO_DIR/argo-app/models.yaml"
-git diff --cached --check
+git diff --cached --check || exit 1
 git diff --cached
-git commit -S -s -m "Add pinned model catalog"
-git push
+git commit -S -s -m "Add pinned model catalog" || exit 1
+git push || exit 1
 ```
 
-Проверка должна показать три `Model` с закреплёнными URL. В diff не должно быть
-токенов. Server dry-run проверяет API, но пока не скачивает веса.
-
-## 4. Запустить импорт через Argo
-
-Если Application управляется родительским GitOps-приложением, сначала доставьте
-его через родителя. Иначе зарегистрируйте файл в управляющем кластере:
+Регистрация — через родительский Application, либо, если его нет:
 
 ```bash
-kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply --dry-run=server -f "$DEMO_DIR/argo-app/models.yaml"
+kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply --dry-run=server -f "$DEMO_DIR/argo-app/models.yaml" || exit 1
 kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply -f "$DEMO_DIR/argo-app/models.yaml"
+```
+
+В обоих случаях импорт запускается адресным Sync:
+
+```bash
 REVISION=$(git rev-parse HEAD)
 kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application hardfest-models \
   --type merge --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo get models.ai.deckhouse.io -w
 ```
 
-Завершите наблюдение `Ctrl+C`, когда все три модели перешли в `Ready`.
-При `Failed` остановитесь и посмотрите причину:
+Завершите наблюдение `Ctrl+C`, когда модели готовы. При Failed:
 
 ```bash
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo describe model gemma-4-31b
@@ -125,14 +109,14 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo get models.ai.deckhouse.io \
   -o custom-columns='NAME:.metadata.name,PHASE:.status.phase,BYTES:.status.artifact.sizeBytes,DIGEST:.status.artifact.digest'
 ```
 
-У каждой модели должны быть фаза `Ready`, ненулевой размер и digest артефакта.
-Это готовность весов; CUDA, память GPU и ответ движка проверяются отдельно.
+Нужны **Ready, ненулевой размер и digest**. Это готовность артефакта,
+не проверка CUDA или ответа модели.
 
-## 5. Подключить подготовленную модель
+## 4. Подключить потребителя
 
-### В AI Inference
+### AI Inference
 
-Вместо повторного URL используйте ссылку на `Model` того же namespace:
+В заказе используется Model **того же namespace**:
 
 ```yaml
 model:
@@ -142,14 +126,16 @@ model:
     name: qwen3-8-flash-next-nvfp4
 ```
 
-Для Gemma меняется только `name: gemma-4-31b`. Источник задаёт веса, но не заменяет
-рецепт, DeviceClass и число GPU. Следующие шаги —
-[Gemma через AI Inference](../README.md#platform) и [Qwen TP2](../README.md#tp2).
+Для Gemma: `name: gemma-4-31b`.
+Рецепт и GPU выбираются отдельно.
+[Запуск Gemma](../README.md#platform), [Qwen TP2](../README.md#tp2).
 
-### В ручном Deployment
+### Ручной runtime
 
-Модуль ai-models читает аннотацию **верхнего `metadata` Deployment**, не аннотацию
-в `spec.template.metadata`:
+`modelRefs` в
+[site-файле](../examples/site-gemma-catalog.yaml) или
+[варианте с assistant](../examples/site-gemma-assistant-catalog.yaml)
+формирует аннотацию **верхнего metadata Deployment**, не Pod template:
 
 ```yaml
 metadata:
@@ -157,50 +143,35 @@ metadata:
     ai.deckhouse.io/model: gemma-4-31b,gemma-4-31b-assistant
 ```
 
-После доставки веса доступны по путям:
+`modelVolumes` остаётся пустым. Пути vLLM:
 
-| Модель | Путь внутри контейнера |
+| Model | Путь |
 | --- | --- |
 | Gemma | `/data/modelcache/models/gemma-4-31b` |
 | Assistant | `/data/modelcache/models/gemma-4-31b-assistant` |
 
-В чарте этот режим включается через `modelRefs`.
-Используйте [site-gemma-catalog.yaml](../examples/site-gemma-catalog.yaml) и
-[вариант с assistant](../examples/site-gemma-assistant-catalog.yaml).
-`modelVolumes` оставьте пустым; пути в `vllm` должны совпасть с таблицей.
-Чарт формирует аннотацию, вручную патчить Deployment не нужно.
+На назначенной ноде проверяются события доставки и доступность файлов.
+`Model Ready` не означает прогретый NodeCache всех нод:
+`artifact ... is not ready` — доставка весов, `Pulling image` — отдельный кеш образа.
 
-Для каждого назначенного Pod проверьте события доставки. `Model Ready`
-не означает, что NodeCache уже прогрет на всех нодах.
-`MountVolume ... artifact ... is not ready` относится к доставке весов;
-`Pulling image` — к контейнерному образу runtime. Это разные кеши.
+## Другие площадки
 
-## Каталог A30
+| Площадка | Каталог и условия |
+| --- | --- |
+| A30 | [a30.yaml](a30.yaml), `$A30_DIR`, `$MIG_CONTEXT`, Application `hardfest-models-a30`, namespace `hardfest-demo` |
+| RTX | [rtx.yaml](rtx.yaml), namespace `hardfest-rtx`; [порядок подготовки](../docs/SETUP.md#rtx) |
 
-Повторите шаги 1–4 в каталоге `$A30_DIR` и контексте `$MIG_CONTEXT`,
-используя [a30.yaml](a30.yaml) вместо `models.yaml`.
-Application назовите `hardfest-models-a30`, destination укажите кластер A30;
-source.path должен вести к `$A30_DIR/charts/model-catalog`.
-Не назначайте двум Applications одно имя или один каталог.
+Для A30 повторяются шаги 1–3 с другим каталогом, `source.path` и destination:
+импортируются Embedding 4B, Reranker 4B и Whisper large-v3.
+В Console выбирается **кластер A30**, не H100.
 
-В этом каталоге три закреплённых модели: Qwen3 Embedding 4B W4A16,
-Qwen3 Reranker 4B W4A16 и Whisper large-v3.
-В Console откройте **кластер A30 → hardfest-demo → AI-модели**.
-Каталог H100-кластера не показывает Models из соседнего кластера.
-После импорта переходите к [трём сервисам](../README.md#placement).
+RTX импортирует Gemma E2B, совместимый assistant и Qwen3.5-9B.
+Model соседнего кластера или namespace не заменяет локальный.
 
-## Каталог RTX 5060 Ti
+## Смена ревизии и сохранность
 
-Для двух RTX используйте [rtx.yaml](rtx.yaml) в namespace `hardfest-rtx`:
-Gemma 4 E2B, её отдельный assistant и Qwen3.5-9B с нативным MTP.
-Модель из другого namespace не заменяет локальный `Model` для заказа.
-Команды, Argo Application и отдельные условия готовности доставки/assistant —
-в [подготовке RTX](../docs/SETUP.md#rtx).
-Теория и полный порядок опытов — в [сценарии RTX](../RTX5060.md).
+`spec.source` существующего Model неизменяем: новая ревизия получает новое имя.
+После Ready потребители переключаются через GitOps.
 
-## Обновление ревизии
-
-`spec.source` существующего `Model` неизменяем. Для другой ревизии создайте новое
-имя, дождитесь `Ready` и переключите потребителей через GitOps.
-Чарт помечает модели как сохраняемые при Argo prune и Helm uninstall. Это не
-защищает от явного удаления ресурса: не удаляйте модели и их хранилище при cleanup.
+Чарт сохраняет Models при Argo prune и Helm uninstall, но не защищает
+от явного удаления. **При остановке стенда модели и хранилище не удаляются.**

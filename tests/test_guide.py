@@ -229,13 +229,14 @@ class Guide(unittest.TestCase):
 
     def test_platform_preflight_precedes_releasing_working_gpus(self):
         preflight = (ROOT / "docs/SETUP.md").read_text()
-        for term in ("inference-readiness", "до успешной проверки", "authentication: Token"):
+        for term in ("inference-readiness", "До освобождения работающих GPU",
+                     "проверьте рецепт, класс сервиса", "authentication: Token"):
             self.assertIn(term, preflight)
         for field in ("acceleratorPolicy.maxAcceleratorCount", "scalingPolicy.minReplicas",
-                      "scalingPolicy.maxReplicas", "exposurePolicy.authentication"):
+                      "maxReplicas", "exposurePolicy.authentication"):
             self.assertIn(field, preflight)
-        self.assertIn("не меньше `2`", preflight)
-        self.assertIn("оба `1`", preflight)
+        self.assertIn("acceleratorPolicy.maxAcceleratorCount ≥ 2", preflight)
+        self.assertIn("scalingPolicy.minReplicas = maxReplicas = 1", preflight)
 
     def test_long_requests_use_the_ready_tune_profile(self):
         doc = (ROOT / "README.md").read_text()
@@ -313,8 +314,13 @@ class Guide(unittest.TestCase):
 
     def test_initial_launch_commands_live_in_preparation(self):
         setup = (ROOT / "docs/SETUP.md").read_text()
-        self.assertIn("## 6. Заранее запустить A", setup)
-        self.assertIn("Prepare running Gemma baseline", setup)
+        self.assertIn("## 5. Запустить A и проверить ответ", setup)
+        self.assertIn("GITOPS.md#запуск-a", setup)
+        gitops = (ROOT / "docs/GITOPS.md").read_text()
+        launch = gitops.split('<a id="запуск-a"></a>', 1)[1].split("## 6.", 1)[0]
+        for setting in ("replicaCount: 1", "B остаётся выключенной", "rollout status deployment/hf-gemma-a"):
+            self.assertIn(setting, launch)
+        self.assertIn("/v1/chat/completions", setup)
         rtx = setup.split('id="rtx"', 1)[1]
         self.assertIn("replicaCount: 1", rtx)
         self.assertIn("rtx-gemma-base", rtx)
