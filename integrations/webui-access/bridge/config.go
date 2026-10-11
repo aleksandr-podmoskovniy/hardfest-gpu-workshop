@@ -25,26 +25,27 @@ type PriceRule struct {
 }
 
 type Config struct {
-	WebUIURL             string           `json:"webui_url"`
-	GatewayURL           string           `json:"gateway_url"`
-	ServiceUserID        string           `json:"service_user_id"`
-	IssuerUserID         string           `json:"issuer_user_id,omitempty"`
-	IssuerProfileID      uint             `json:"issuer_user_access_profile_id,omitempty"`
-	TeamID               string           `json:"team_id,omitempty"`
-	ManagedBy            string           `json:"managed_by"`
-	KeyNamePrefix        string           `json:"key_name_prefix"`
-	StateDir             string           `json:"state_dir,omitempty"`
-	ProvisioningMode     string           `json:"provisioning_mode"`
-	ChatModels           []string         `json:"chat_models"`
-	Providers            []ProviderPolicy `json:"providers"`
-	Pricing              []PriceRule      `json:"pricing"`
-	BudgetUSD            float64          `json:"budget_usd"`
-	BudgetReset          string           `json:"budget_reset"`
-	RequestsPerMinute    int              `json:"requests_per_minute"`
-	TokensPerMinute      int              `json:"tokens_per_minute"`
-	MaxConcurrent        int              `json:"max_concurrent_total"`
-	MaxConcurrentPerUser int              `json:"max_concurrent_per_user"`
-	ReconcileSeconds     int              `json:"reconcile_interval_seconds"`
+	WebUIURL              string           `json:"webui_url"`
+	GatewayURL            string           `json:"gateway_url"`
+	ServiceUserID         string           `json:"service_user_id"`
+	IssuerUserID          string           `json:"issuer_user_id,omitempty"`
+	IssuerProfileID       uint             `json:"issuer_user_access_profile_id,omitempty"`
+	TeamID                string           `json:"team_id,omitempty"`
+	ManagedBy             string           `json:"managed_by"`
+	KeyNamePrefix         string           `json:"key_name_prefix"`
+	StateDir              string           `json:"state_dir,omitempty"`
+	ProvisioningMode      string           `json:"provisioning_mode"`
+	ChatModels            []string         `json:"chat_models"`
+	Providers             []ProviderPolicy `json:"providers"`
+	Pricing               []PriceRule      `json:"pricing"`
+	BudgetUSD             float64          `json:"budget_usd"`
+	BudgetReset           string           `json:"budget_reset"`
+	RequestsPerMinute     int              `json:"requests_per_minute"`
+	TokensPerMinute       int              `json:"tokens_per_minute"`
+	MaxConcurrent         int              `json:"max_concurrent_total"`
+	MaxConcurrentPerUser  int              `json:"max_concurrent_per_user"`
+	RequestTimeoutSeconds int              `json:"request_timeout_seconds,omitempty"`
+	ReconcileSeconds      int              `json:"reconcile_interval_seconds"`
 }
 
 func readConfig(r io.Reader) (Config, error) {
@@ -69,6 +70,9 @@ func readConfig(r io.Reader) (Config, error) {
 	}
 	if c.ReconcileSeconds == 0 {
 		c.ReconcileSeconds = 15
+	}
+	if c.RequestTimeoutSeconds == 0 {
+		c.RequestTimeoutSeconds = 900
 	}
 	return c, c.validate()
 }
@@ -140,6 +144,9 @@ func (c Config) validate() error {
 	}
 	if c.MaxConcurrent < 1 || c.MaxConcurrentPerUser < 1 || c.MaxConcurrentPerUser > c.MaxConcurrent || c.ReconcileSeconds < 5 || c.ReconcileSeconds > 3600 {
 		return fmt.Errorf("invalid concurrency or reconciliation interval")
+	}
+	if c.RequestTimeoutSeconds != 0 && (c.RequestTimeoutSeconds < 60 || c.RequestTimeoutSeconds > 7200) {
+		return fmt.Errorf("request_timeout_seconds must be between 60 and 7200")
 	}
 	return nil
 }

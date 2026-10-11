@@ -134,7 +134,11 @@ func (b *Bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, _ := json.Marshal(clean)
-	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Minute)
+	timeout := b.cfg.RequestTimeoutSeconds
+	if timeout == 0 {
+		timeout = 900
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), time.Duration(timeout)*time.Second)
 	defer cancel()
 	resp, err := b.inference(ctx, id, key, data)
 	if err != nil {

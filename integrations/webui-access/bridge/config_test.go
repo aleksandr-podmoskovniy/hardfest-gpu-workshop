@@ -52,6 +52,9 @@ func TestInvalidConfigurationFailsClosed(t *testing.T) {
 		"no budget":         func(c *Config) { c.BudgetUSD = 0 },
 		"zero rpm":          func(c *Config) { c.RequestsPerMinute = 0 },
 		"concurrency":       func(c *Config) { c.MaxConcurrentPerUser = 9 },
+		"negative timeout":  func(c *Config) { c.RequestTimeoutSeconds = -1 },
+		"short timeout":     func(c *Config) { c.RequestTimeoutSeconds = 59 },
+		"unbounded timeout": func(c *Config) { c.RequestTimeoutSeconds = 7201 },
 		"duplicate pricing": func(c *Config) { c.Pricing = []PriceRule{{"a", 1, 2}, {"a", 2, 3}} },
 	}
 	for name, change := range cases {
@@ -68,6 +71,22 @@ func TestInvalidConfigurationFailsClosed(t *testing.T) {
 	for _, body := range []string{strings.TrimSuffix(string(raw), "}") + `,"provider_key_ids":[]}`, string(raw) + " {}"} {
 		if _, err := readConfig(strings.NewReader(body)); err == nil {
 			t.Fatal("accepted legacy or trailing config")
+		}
+	}
+}
+
+func TestRequestTimeoutDefaultAndLongContext(t *testing.T) {
+	for _, seconds := range []int{0, 60, 900, 7200} {
+		c := configured()
+		c.RequestTimeoutSeconds = seconds
+		raw, _ := json.Marshal(c)
+		got, err := readConfig(strings.NewReader(string(raw)))
+		want := seconds
+		if want == 0 {
+			want = 900
+		}
+		if err != nil || got.RequestTimeoutSeconds != want {
+			t.Fatalf("timeout %d: got %d, err %v", seconds, got.RequestTimeoutSeconds, err)
 		}
 	}
 }
