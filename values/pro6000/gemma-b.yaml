@@ -1,0 +1,58 @@
+# Use independently, not as an overlay on A or Cache.
+fullnameOverride: selectel-gemma-b
+replicaCount: 0
+image: REPLACE_RUNTIME_IMAGE@sha256:f7cb9820c7e92eb78a4b3f60033e240c87a16bf99117471aba347fdd69eaca2d
+profile: gemma31-full-tune-256k
+nodeSelector:
+  kubernetes.io/hostname: REPLACE_PRO6000_NODE
+tolerations: []
+dra:
+  deviceClassName: REPLACE_GENERATED_PRO6000_DEVICECLASS
+  count: 1
+modelVolumes: []
+modelRefs: [gemma-4-31b, gemma-4-31b-assistant]
+resources:
+  requests:
+    cpu: "4"
+    memory: 92Gi
+    ephemeral-storage: 1Gi
+  limits:
+    memory: 92Gi
+    ephemeral-storage: 8Gi
+runtimeSize: 6Gi
+shmSize: 81Gi
+vllm:
+  model: /data/modelcache/models/gemma-4-31b
+  served-model-name: selectel-gemma-b
+  host: 0.0.0.0
+  port: 8000
+  dtype: bfloat16
+  language-model-only: true
+  safetensors-load-strategy: lazy
+  tensor-parallel-size: 1
+  max-model-len: 262144
+  max-num-seqs: 10
+  gpu-memory-utilization: 0.9
+  enforce-eager: false
+  enable-prefix-caching: true
+  enable-chunked-prefill: true
+  max-num-batched-tokens: 4096
+  max-cudagraph-capture-size: 32
+  speculative-config:
+    method: mtp
+    model: /data/modelcache/models/gemma-4-31b-assistant
+    num_speculative_tokens: 1
+  kv-cache-dtype: fp8
+  attention-backend: TRITON_ATTN
+  kv-offloading-size: 80
+  kv-offloading-backend: native
+  reasoning-parser: gemma4
+  tool-call-parser: gemma4
+  enable-auto-tool-choice: true
+  generation-config: vllm
+  sse-keep-alive-interval: 15
+extraEnv:
+  - name: VLLM_USE_SIMPLE_KV_OFFLOAD
+    value: "0"
+networkPolicy:
+  extraIngress: []

@@ -1,0 +1,124 @@
+{
+  "run_id": "7cd2d7af86524793912427949fd8c621",
+  "model": "Qwen3.8 Flash Next NVFP4",
+  "hardware": "2 × RTX PRO 6000 Blackwell 96 GB",
+  "submitted_concurrently": 10,
+  "submission_spread_seconds": 0.06733894348144531,
+  "completed": 10,
+  "input_tokens_each": 229376,
+  "output_tokens_each": 32768,
+  "window_tokens": 262144,
+  "synthetic_ignore_eos": true,
+  "finish_reason": "length",
+  "wall_seconds": 1538.8347587909957,
+  "aggregate_output_tokens_per_second": 212.940342117984,
+  "client_ttft_min_seconds": 79.5180518339912,
+  "client_ttft_max_seconds": 1198.6873080829973,
+  "client_ttft_mean_seconds": 595.8129142124992,
+  "speculative_acceptance_fraction": 1.0,
+  "observed_max_running": 6.0,
+  "observed_max_waiting": 9.0,
+  "monitoring_step_seconds": 15,
+  "preemptions": 2.0,
+  "traffic_path": "direct vLLM API capacity test; not WebUI or Bifrost",
+  "performance_caveat": "Forced synthetic continuation; do not extrapolate throughput to natural chat.",
+  "gpu_scope": "whole node during exclusive Qwen run, not per-service attribution",
+  "timing_semantics": "Engine prefill and decode are wall-clock phases including preemption delays; TPOT is the request mean decode/(output_tokens-1).",
+  "interpretation": "Capacity stress passes, but queue latency is not suitable for live interactive chat.",
+  "engine_mean_ttft_seconds": 592.7817402124405,
+  "engine_mean_tpot_seconds": 0.020432597372167117,
+  "engine_mean_queue_seconds": 512.8590313835008,
+  "engine_mean_prefill_seconds": 79.25637137689992,
+  "engine_mean_decode_seconds": 669.5149180937999,
+  "engine_mean_e2e_seconds": 1262.299449133873,
+  "ttft_histogram_upper_bound_seconds": 2560.0,
+  "ttft_histogram_overflow_count": 0.0,
+  "e2e_histogram_upper_bound_seconds": 7680.0,
+  "e2e_histogram_overflow_count": 0.0,
+  "tpot_histogram_upper_bound_seconds": 80.0,
+  "tpot_histogram_overflow_count": 0.0,
+  "offload_restore_counter_first_observed": 147.0,
+  "offload_restore_counter_last_observed": 294.0,
+  "offload_restore_counter_observed_increase": 147.0,
+  "offload_restore_counter_has_pre_run_baseline": false,
+  "requests": [
+    {
+      "session": 0,
+      "ttft_s": 1198.6873080829973,
+      "elapsed_s": 1538.7395391660102,
+      "input_tokens": 229376,
+      "output_tokens": 32768
+    },
+    {
+      "session": 1,
+      "ttft_s": 955.9635863750009,
+      "elapsed_s": 1534.9799399170006,
+      "input_tokens": 229376,
+      "output_tokens": 32768
+    },
+    {
+      "session": 2,
+      "ttft_s": 466.0854605420027,
+      "elapsed_s": 1263.085079083001,
+      "input_tokens": 229376,
+      "output_tokens": 32768
+    },
+    {
+      "session": 3,
+      "ttft_s": 1121.6551153750042,
+      "elapsed_s": 1537.7794505420025,
+      "input_tokens": 229376,
+      "output_tokens": 32768
+    },
+    {
+      "session": 4,
+      "ttft_s": 1043.6234302499943,
+      "elapsed_s": 1536.5816941660014,
+      "input_tokens": 229376,
+      "output_tokens": 32768
+    },
+    {
+      "session": 5,
+      "ttft_s": 311.34779695799807,
+      "elapsed_s": 1110.8591446659993,
+      "input_tokens": 229376,
+      "output_tokens": 32768
+    },
+    {
+      "session": 6,
+      "ttft_s": 157.21381487500912,
+      "elapsed_s": 954.3467027080042,
+      "input_tokens": 229376,
+      "output_tokens": 32768
+    },
+    {
+      "session": 7,
+      "ttft_s": 79.5180518339912,
+      "elapsed_s": 878.0500629589951,
+      "input_tokens": 229376,
+      "output_tokens": 32768
+    },
+    {
+      "session": 8,
+      "ttft_s": 389.1997700409993,
+      "elapsed_s": 1265.6750121249934,
+      "input_tokens": 229376,
+      "output_tokens": 32768
+    },
+    {
+      "session": 9,
+      "ttft_s": 234.83480779199454,
+      "elapsed_s": 1032.854052708004,
+      "input_tokens": 229376,
+      "output_tokens": 32768
+    }
+  ],
+  "source_sha256": {
+    "client": "b7cb77b58f18819cc6b385dd8d2ff3e26af8e7428386c76acdca17ca867a219c",
+    "monitor": "ead1af396ee7517514d67357f108c49a14f1d817fa350db8f9a35902f967b6fb"
+  },
+  "public_source_sha256": {
+    "client": "0d7c1a2e4446fe650e82f9ee72e0aeff8fb863cf9f272625cda2bcb9a6652992",
+    "monitor": "e2bf4da078953cf2ed69623db072b5144f8d6ee9fb1a4ee379c099e521dde50a"
+  }
+}

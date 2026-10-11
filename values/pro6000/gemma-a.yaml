@@ -1,0 +1,47 @@
+# vLLM 0.31.0; supply the matching image and placement in private site values.
+fullnameOverride: selectel-gemma-a
+replicaCount: 0
+image: REPLACE_RUNTIME_IMAGE@sha256:f7cb9820c7e92eb78a4b3f60033e240c87a16bf99117471aba347fdd69eaca2d
+profile: gemma31-base-auto-context
+nodeSelector:
+  kubernetes.io/hostname: REPLACE_PRO6000_NODE
+tolerations: []
+dra:
+  deviceClassName: REPLACE_GENERATED_PRO6000_DEVICECLASS
+  count: 1
+modelVolumes: []
+modelRefs: [gemma-4-31b]
+resources:
+  requests:
+    cpu: "4"
+    memory: 32Gi
+    ephemeral-storage: 1Gi
+  limits:
+    memory: 32Gi
+    ephemeral-storage: 8Gi
+runtimeSize: 6Gi
+shmSize: 2Gi
+vllm:
+  model: /data/modelcache/models/gemma-4-31b
+  served-model-name: selectel-gemma-a
+  host: 0.0.0.0
+  port: 8000
+  dtype: bfloat16
+  language-model-only: true
+  safetensors-load-strategy: lazy
+  tensor-parallel-size: 1
+  # Auto-fit; the measured 167520-token window is not a portable guarantee.
+  max-model-len: -1
+  max-num-seqs: 10
+  gpu-memory-utilization: 0.9
+  enforce-eager: true
+  no-enable-prefix-caching: true
+  # Keep supported scheduler defaults; A does not force unchunked prefill.
+  kv-cache-dtype: auto
+  reasoning-parser: gemma4
+  tool-call-parser: gemma4
+  enable-auto-tool-choice: true
+  generation-config: vllm
+  sse-keep-alive-interval: 15
+networkPolicy:
+  extraIngress: []

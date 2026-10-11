@@ -1,0 +1,20 @@
+# Reference for explicit creation in the Deckhouse UI after manual workloads stop.
+# Replace class/deviceClass with validated site values. Creation requests GPUs:
+# this CRD has no replicas/scaling field; keep the object absent until needed.
+# This order does not pin the recipe or prove 256K streaming through WebUI.
+apiVersion: ai.deckhouse.io/v1alpha1
+kind: InferenceService
+metadata:
+  name: selectel-gemma31
+  namespace: hardfest-demo
+spec:
+  inferenceServiceClassName: REPLACE_PRO6000_GEMMA_CLASS
+  model:
+    src: ai-models
+    ref:
+      kind: Model
+      name: gemma-4-31b
+  launchStrategy: Latency
+  resources:
+    accelerator:
+      deviceClasses: [REPLACE_GENERATED_PRO6000_DEVICECLASS]

@@ -62,12 +62,43 @@ def validate_objects(objects):
     return errors
 
 
+def validate_pro6000_application(app, profile):
+    """Manual sync must preserve replicas chosen through the Deckhouse UI."""
+    errors = []
+    spec = app["spec"]
+    name = profile["fullnameOverride"]
+    source = spec["source"]
+    helm = source.get("helm", {})
+    if not source.get("path", "").endswith("/charts/vllm-runtime"):
+        errors.append("expected vllm-runtime chart")
+    if helm.get("releaseName") != name:
+        errors.append("releaseName must match the profile")
+    stage = name.removeprefix("selectel-")
+    if helm.get("valueFiles") != [f"../../values/{stage}.yaml", "../../site/pro6000.yaml"]:
+        errors.append("expected one profile followed by private site bindings")
+    if any(helm.get(field) for field in ("parameters", "values", "valuesObject")):
+        errors.append("keep settings in explicit valueFiles")
+    if spec.get("destination", {}).get("namespace") != "hardfest-demo":
+        errors.append("PRO6000 workload namespace must be hardfest-demo")
+    policy = spec.get("syncPolicy", {})
+    if "automated" in policy or app.get("metadata", {}).get("finalizers"):
+        errors.append("autosync/cascade must not be enabled")
+    options = set(policy.get("syncOptions", []))
+    if not {"RespectIgnoreDifferences=true", "FailOnSharedResource=true"} <= options:
+        errors.append("respect UI replica changes and reject shared ownership")
+    expected = [{"group": "apps", "kind": "Deployment", "name": name,
+                 "jsonPointers": ["/spec/replicas"]}]
+    if spec.get("ignoreDifferences") != expected:
+        errors.append("ignore only the intended Deployment replica count")
+    return errors
+
+
 def check():
     errors = []
     paths = sorted((ROOT / "values").glob("*.yaml"))
     if len(paths) != 4:
         errors.append("expected four standalone Helm profiles")
-    for path in paths:
+    for path in paths + sorted((ROOT / "values/pro6000").glob("*.yaml")):
         try:
             errors.extend(f"{path.name}: {e}" for e in validate_objects(render(path)))
         except (KeyError, TypeError, OSError, ValueError, yaml.YAMLError, subprocess.CalledProcessError) as exc:
@@ -99,6 +130,13 @@ def check():
                 errors.append(f"{path.name}: unexpected values precedence")
         if "automated" in app["spec"].get("syncPolicy", {}) or app["metadata"].get("finalizers"):
             errors.append(f"{path.name}: autosync/cascade must not be enabled")
+    for path in sorted((ROOT / "argocd/pro6000").glob("*.yaml")):
+        try:
+            profile = load(ROOT / "values/pro6000" / path.name)
+            errors.extend(f"pro6000/{path.name}: {error}"
+                          for error in validate_pro6000_application(load(path), profile))
+        except (KeyError, TypeError, OSError, ValueError, yaml.YAMLError) as exc:
+            errors.append(f"pro6000/{path.name}: {exc}")
     for path in (ROOT / "observability").glob("*.yaml"):
         for obj in yaml.safe_load_all(path.read_text()):
             if not obj or not obj.get("apiVersion") or not obj.get("kind"):

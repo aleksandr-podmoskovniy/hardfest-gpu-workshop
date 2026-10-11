@@ -1,0 +1,177 @@
+{
+  "run_id": "7cd2d7af86524793912427949fd8c621",
+  "ignore_eos": true,
+  "passes": [
+    {
+      "model": "qwen3-8-flash-next-nvfp4",
+      "pass": 0,
+      "input_tokens": 229376,
+      "output_tokens": 32768,
+      "sessions": 10,
+      "ok": true,
+      "results": [
+        {
+          "session": 7,
+          "ok": true,
+          "ttft_s": 79.5180518339912,
+          "elapsed_s": 878.0500629589951,
+          "submitted_at": 1791716870.74233,
+          "completed_at": 1791717748.811472,
+          "usage": {
+            "prompt_tokens": 229376,
+            "total_tokens": 262144,
+            "completion_tokens": 32768
+          },
+          "finish_reason": "length",
+          "done": true,
+          "text_chars": 192759
+        },
+        {
+          "session": 6,
+          "ok": true,
+          "ttft_s": 157.21381487500912,
+          "elapsed_s": 954.3467027080042,
+          "submitted_at": 1791716870.763228,
+          "completed_at": 1791717825.134593,
+          "usage": {
+            "prompt_tokens": 229376,
+            "total_tokens": 262144,
+            "completion_tokens": 32768
+          },
+          "finish_reason": "length",
+          "done": true,
+          "text_chars": 192759
+        },
+        {
+          "session": 9,
+          "ok": true,
+          "ttft_s": 234.83480779199454,
+          "elapsed_s": 1032.854052708004,
+          "submitted_at": 1791716870.718983,
+          "completed_at": 1791717903.598817,
+          "usage": {
+            "prompt_tokens": 229376,
+            "total_tokens": 262144,
+            "completion_tokens": 32768
+          },
+          "finish_reason": "length",
+          "done": true,
+          "text_chars": 192759
+        },
+        {
+          "session": 5,
+          "ok": true,
+          "ttft_s": 311.34779695799807,
+          "elapsed_s": 1110.8591446659993,
+          "submitted_at": 1791716870.756466,
+          "completed_at": 1791717981.6424708,
+          "usage": {
+            "prompt_tokens": 229376,
+            "total_tokens": 262144,
+            "completion_tokens": 32768
+          },
+          "finish_reason": "length",
+          "done": true,
+          "text_chars": 192759
+        },
+        {
+          "session": 2,
+          "ok": true,
+          "ttft_s": 466.0854605420027,
+          "elapsed_s": 1263.085079083001,
+          "submitted_at": 1791716870.779348,
+          "completed_at": 1791718133.893396,
+          "usage": {
+            "prompt_tokens": 229376,
+            "total_tokens": 262144,
+            "completion_tokens": 32768
+          },
+          "finish_reason": "length",
+          "done": true,
+          "text_chars": 192759
+        },
+        {
+          "session": 8,
+          "ok": true,
+          "ttft_s": 389.1997700409993,
+          "elapsed_s": 1265.6750121249934,
+          "submitted_at": 1791716870.7493892,
+          "completed_at": 1791718136.453404,
+          "usage": {
+            "prompt_tokens": 229376,
+            "total_tokens": 262144,
+            "completion_tokens": 32768
+          },
+          "finish_reason": "length",
+          "done": true,
+          "text_chars": 192759
+        },
+        {
+          "session": 1,
+          "ok": true,
+          "ttft_s": 955.9635863750009,
+          "elapsed_s": 1534.9799399170006,
+          "submitted_at": 1791716870.771637,
+          "completed_at": 1791718405.7843049,
+          "usage": {
+            "prompt_tokens": 229376,
+            "total_tokens": 262144,
+            "completion_tokens": 32768
+          },
+          "finish_reason": "length",
+          "done": true,
+          "text_chars": 192767
+        },
+        {
+          "session": 4,
+          "ok": true,
+          "ttft_s": 1043.6234302499943,
+          "elapsed_s": 1536.5816941660014,
+          "submitted_at": 1791716870.735312,
+          "completed_at": 1791718407.349757,
+          "usage": {
+            "prompt_tokens": 229376,
+            "total_tokens": 262144,
+            "completion_tokens": 32768
+          },
+          "finish_reason": "length",
+          "done": true,
+          "text_chars": 192759
+        },
+        {
+          "session": 3,
+          "ok": true,
+          "ttft_s": 1121.6551153750042,
+          "elapsed_s": 1537.7794505420025,
+          "submitted_at": 1791716870.72822,
+          "completed_at": 1791718408.5404391,
+          "usage": {
+            "prompt_tokens": 229376,
+            "total_tokens": 262144,
+            "completion_tokens": 32768
+          },
+          "finish_reason": "length",
+          "done": true,
+          "text_chars": 192759
+        },
+        {
+          "session": 0,
+          "ok": true,
+          "ttft_s": 1198.6873080829973,
+          "elapsed_s": 1538.7395391660102,
+          "submitted_at": 1791716870.7863219,
+          "completed_at": 1791718409.558641,
+          "usage": {
+            "prompt_tokens": 229376,
+            "total_tokens": 262144,
+            "completion_tokens": 32768
+          },
+          "finish_reason": "length",
+          "done": true,
+          "text_chars": 192763
+        }
+      ],
+      "elapsed_s": 1538.8347587909957
+    }
+  ]
+}

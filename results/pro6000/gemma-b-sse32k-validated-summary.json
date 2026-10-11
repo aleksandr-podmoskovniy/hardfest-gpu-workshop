@@ -1,0 +1,138 @@
+{
+  "run_id": "5d35768e9444437098af2818eb906c4a",
+  "variant": "b",
+  "model": "selectel-gemma-b",
+  "input_tokens_each": 229376,
+  "output_tokens_each": 32768,
+  "window_tokens": 262144,
+  "submitted_concurrently": 10,
+  "submission_spread_seconds": 0.14903926849365234,
+  "completed": 10,
+  "wall_seconds": 18755.978295347,
+  "aggregate_output_tokens_per_second": 17.470696267615708,
+  "client_output_tokens": 327680,
+  "completed_request_output_tokens": 327680,
+  "global_generation_tokens_delta": 327680.0,
+  "output_counter_reconciled": true,
+  "client_ttft_min_seconds": 153.09440374300175,
+  "client_ttft_max_seconds": 15301.355473707,
+  "client_ttft_mean_seconds": 7727.3679687003,
+  "sampled_max_running": 2.0,
+  "sampled_max_waiting": 9.0,
+  "sampled_max_gpu_kv_fraction": 0.96986000835771,
+  "monitoring_step_seconds": 15,
+  "preemptions": 0.0,
+  "synthetic_ignore_eos": true,
+  "traffic_path": "direct vLLM API; not WebUI or Bifrost",
+  "comparison_limit": "A and B have different input/window sizes: no speedup claim from this pair.",
+  "gpu_scope": "Both models ran simultaneously: node GPU graphs are not per-service attribution.",
+  "timing_semantics": "Engine wall-clock phases can include scheduling/preemption delays; mean TPOT is the mean of per-request decode/(output_tokens-1).",
+  "requests": [
+    {
+      "session": 0,
+      "ttft_s": 7803.973327148997,
+      "elapsed_s": 11398.567304001997,
+      "submitted_at": 1791736222.0881615,
+      "completed_at": 1791747620.6554654
+    },
+    {
+      "session": 1,
+      "ttft_s": 153.09440374300175,
+      "elapsed_s": 3748.439601185004,
+      "submitted_at": 1791736222.0205324,
+      "completed_at": 1791739970.4601347
+    },
+    {
+      "session": 2,
+      "ttft_s": 15148.028874584,
+      "elapsed_s": 18743.346909784996,
+      "submitted_at": 1791736222.0618594,
+      "completed_at": 1791754965.4087684
+    },
+    {
+      "session": 3,
+      "ttft_s": 3902.0456572030016,
+      "elapsed_s": 7497.1320528159995,
+      "submitted_at": 1791736221.9796066,
+      "completed_at": 1791743719.1116595
+    },
+    {
+      "session": 4,
+      "ttft_s": 15301.355473707,
+      "elapsed_s": 18755.767918607,
+      "submitted_at": 1791736222.115528,
+      "completed_at": 1791754977.8834455
+    },
+    {
+      "session": 5,
+      "ttft_s": 11399.377454745001,
+      "elapsed_s": 14994.493148004003,
+      "submitted_at": 1791736222.0481088,
+      "completed_at": 1791751216.541257
+    },
+    {
+      "session": 6,
+      "ttft_s": 4055.3968179749936,
+      "elapsed_s": 7649.891149325995,
+      "submitted_at": 1791736222.0054445,
+      "completed_at": 1791743871.896593
+    },
+    {
+      "session": 7,
+      "ttft_s": 7650.670978062997,
+      "elapsed_s": 11245.878479863997,
+      "submitted_at": 1791736221.992257,
+      "completed_at": 1791747467.8707368
+    },
+    {
+      "session": 8,
+      "ttft_s": 11552.760507629995,
+      "elapsed_s": 15147.293074923997,
+      "submitted_at": 1791736222.0329964,
+      "completed_at": 1791751369.3260713
+    },
+    {
+      "session": 9,
+      "ttft_s": 306.9761922040052,
+      "elapsed_s": 3901.293957751004,
+      "submitted_at": 1791736221.9664888,
+      "completed_at": 1791740123.2604458
+    }
+  ],
+  "engine_mean_ttft_seconds": 7726.973528385162,
+  "engine_mean_tpot_seconds": 0.10928668710080873,
+  "engine_mean_queue_seconds": 7572.365111378502,
+  "engine_mean_prefill_seconds": 154.07124955239996,
+  "engine_mean_decode_seconds": 3580.9968762321996,
+  "engine_mean_e2e_seconds": 11307.971401810646,
+  "ttft_histogram_upper_bound_seconds": 2560.0,
+  "ttft_histogram_overflow_count": 8.0,
+  "e2e_histogram_upper_bound_seconds": 7680.0,
+  "e2e_histogram_overflow_count": 6.0,
+  "tpot_histogram_upper_bound_seconds": 80.0,
+  "tpot_histogram_overflow_count": 0.0,
+  "speculative_acceptance_fraction": 1.0,
+  "native_offload_bytes_in_monitoring_interval": {
+    "GPU_to_CPU": 98134917120.0,
+    "CPU_to_GPU": 0.0
+  },
+  "offload_counter_sample_bounds_unix": {
+    "GPU_to_CPU": [
+      1791736215,
+      1791755070
+    ],
+    "CPU_to_GPU": [
+      1791736215,
+      1791755070
+    ]
+  },
+  "offload_limit": "Counter deltas include monitoring padding before/after the client run, not its exact boundaries. Transfers do not measure stored-cache occupancy; a separate replay verifies reuse.",
+  "source_sha256": {
+    "client": "d9407f5f3a041719115b42ca75b977e8c490d220a292aee8b14489b5352fc34f",
+    "monitor": "ee5aa1e3f1174554eb5b67217c94c4301341a7b99d707bc5e4e151626337dd57"
+  },
+  "public_source_sha256": {
+    "client": "744b5431d9e1aeb668a0d537d01b60237e059742f67d24c87605b0191b8cb955",
+    "monitor": "a19c4f129e8402ceba376d27866775ce40a5de2fc42d8197426719c9bb829556"
+  }
+}

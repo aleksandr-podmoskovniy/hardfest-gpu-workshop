@@ -1,0 +1,23 @@
+{
+  "scope": "Physical GPU allocation for the complete A/B capacity interval, not exclusive per-process utilization",
+  "verified_at_utc": "2026-10-11T22:09:54Z",
+  "bindings": [
+    {
+      "model": "selectel-gemma-a",
+      "prometheus_gpu": "0",
+      "prometheus_device": "nvidia0"
+    },
+    {
+      "model": "selectel-gemma-b",
+      "prometheus_gpu": "1",
+      "prometheus_device": "nvidia1"
+    }
+  ],
+  "prometheus": {
+    "range_start_unix": 1791736215,
+    "range_end_unix": 1791756255,
+    "step_seconds": 15,
+    "limit": "Evaluation grid is not proof of a successful raw scrape every15seconds. Physical allocation is not exclusive process attribution."
+  },
+  "limit": "Public mapping omits node, hardware identifiers and object identities; it records allocation, not exclusive process attribution."
+}

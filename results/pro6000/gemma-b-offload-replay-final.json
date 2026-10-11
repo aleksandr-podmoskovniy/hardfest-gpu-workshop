@@ -1,0 +1,46 @@
+{
+  "kind": "one-token CPU KV restore diagnostic",
+  "capacity_report_sha256": "4a26d4ad04b4c06c181b405d1fff93cb8a0e930745500cb1298e66e335fcb0df",
+  "original_capacity_report_sha256": "d9407f5f3a041719115b42ca75b977e8c490d220a292aee8b14489b5352fc34f",
+  "plan": {
+    "run_id": "5d35768e9444437098af2818eb906c4a",
+    "model": "selectel-gemma-b",
+    "input_tokens": 229376,
+    "candidate_sessions": [
+      8,
+      5,
+      0
+    ]
+  },
+  "started_at": 1791756339.3094618,
+  "attempts": [
+    {
+      "session": 8,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 229377,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "elapsed_s": 3.330505981000897,
+      "before": {
+        "running": 0.0,
+        "waiting": 0.0,
+        "cpu_to_gpu_bytes": 0.0,
+        "cpu_counter_present": true
+      },
+      "metrics_after": {
+        "values": {
+          "running": 0.0,
+          "waiting": 0.0,
+          "cpu_to_gpu_bytes": 9813360640.0,
+          "cpu_counter_present": true
+        },
+        "cpu_to_gpu_bytes_delta": 9813360640.0
+      }
+    }
+  ],
+  "restore_proved": true,
+  "ended_at": 1791756342.7184453
+}

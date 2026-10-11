@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "scope": "Recorded direct-runtime experiments; offline export",
+  "files": {
+    "gemma-a-capacity-sse32k.final.json": {
+      "sha256": "5911c2ce4658ab7ab746345dc83f0442f7523f2b6e03eb6fec62bdc639de7af5",
+      "bytes": 7534,
+      "transformation": "Whitelist run_id, ignore_eos, passes; drop embedded metrics.",
+      "source_file": "gemma-a-capacity-sse32k.final.json",
+      "source_sha256": "f50bd94ef8bff7d5f22539a26ed7fbf6be8cb2a987bfd42de5752ea2f6e7c2c2"
+    },
+    "gemma-a-sse32k-final-prometheus-isolated.json": {
+      "sha256": "d5f7cb5fd8434be98160fbcf795e58f1bdf838cded19830de0d8d9bc58f2ab85",
+      "bytes": 3961460,
+      "transformation": "Compact JSON only; preserve every timestamp, sample, unit and label.",
+      "source_file": "gemma-a-sse32k-final-prometheus-isolated.json",
+      "source_sha256": "21c043957c4fb0b4ada74e142a34db5205f3a03f6b009f902189d43012ac718b"
+    },
+    "gemma-a-sse32k-validated-summary.json": {
+      "sha256": "b3323534910d3fa0f45de316597e4e369a68ecba63e24eeb0d04ecb4c14613c0",
+      "bytes": 4281,
+      "transformation": "Recomputed with the included strict validator from public inputs.",
+      "source_file": "gemma-a-sse32k-validated-summary.json",
+      "source_sha256": "8667350e20c2c7ff66c6cbb0b13ac2c628069f154c82d1d1f847839befc3bbb4",
+      "inputs": [
+        "gemma-a-capacity-sse32k.final.json",
+        "gemma-a-sse32k-final-prometheus-isolated.json"
+      ]
+    },
+    "gemma-b-capacity-sse32k.final.json": {
+      "sha256": "744b5431d9e1aeb668a0d537d01b60237e059742f67d24c87605b0191b8cb955",
+      "bytes": 7518,
+      "transformation": "Whitelist run_id, ignore_eos, passes; drop embedded metrics.",
+      "source_file": "gemma-b-capacity-sse32k.final.json",
+      "source_sha256": "d9407f5f3a041719115b42ca75b977e8c490d220a292aee8b14489b5352fc34f"
+    },
+    "gemma-b-sse32k-final-prometheus-isolated.json": {
+      "sha256": "a19c4f129e8402ceba376d27866775ce40a5de2fc42d8197426719c9bb829556",
+      "bytes": 3893843,
+      "transformation": "Compact JSON only; preserve every timestamp, sample, unit and label.",
+      "source_file": "gemma-b-sse32k-final-prometheus-isolated.json",
+      "source_sha256": "ee5aa1e3f1174554eb5b67217c94c4301341a7b99d707bc5e4e151626337dd57"
+    },
+    "gemma-b-sse32k-validated-summary.json": {
+      "sha256": "53705e4075b19eae05bb3d31a7f23dda19f3eb54e29b1c62ab622832c7b58d8b",
+      "bytes": 4690,
+      "transformation": "Recomputed with the included strict validator from public inputs.",
+      "source_file": "gemma-b-sse32k-validated-summary.json",
+      "source_sha256": "4f46c728a6216294a4afc5eec5d7009fb6dba0b303eb0b2cb97d3ef9e188277b",
+      "inputs": [
+        "gemma-b-capacity-sse32k.final.json",
+        "gemma-b-sse32k-final-prometheus-isolated.json"
+      ]
+    },
+    "qwen-10x256k-output32k-offload160-cold.json": {
+      "sha256": "0d7c1a2e4446fe650e82f9ee72e0aeff8fb863cf9f272625cda2bcb9a6652992",
+      "bytes": 5103,
+      "transformation": "Whitelist run_id, ignore_eos, passes; drop embedded metrics.",
+      "source_file": "qwen-10x256k-output32k-offload160-cold.json",
+      "source_sha256": "b7cb77b58f18819cc6b385dd8d2ff3e26af8e7428386c76acdca17ca867a219c"
+    },
+    "qwen-10x256k-prometheus.json": {
+      "sha256": "e2bf4da078953cf2ed69623db072b5144f8d6ee9fb1a4ee379c099e521dde50a",
+      "bytes": 350330,
+      "transformation": "Compact JSON only; preserve every timestamp, sample, unit and label.",
+      "source_file": "qwen-10x256k-prometheus.json",
+      "source_sha256": "ead1af396ee7517514d67357f108c49a14f1d817fa350db8f9a35902f967b6fb"
+    },
+    "qwen-10x256k-summary.json": {
+      "sha256": "af14d7b019a5eed561f2ab818fe41a6a957c1c88fcb522d137b84f18aa865dbf",
+      "bytes": 4159,
+      "transformation": "Recomputed with the included strict validator from public inputs.",
+      "source_file": "qwen-10x256k-summary.json",
+      "source_sha256": "400dfb7ab1609509488e93af28f0ad82fbe8fd341c613fdb100ab2990f89e82a",
+      "inputs": [
+        "qwen-10x256k-output32k-offload160-cold.json",
+        "qwen-10x256k-prometheus.json"
+      ]
+    },
+    "gemma-matched-chat-final.json": {
+      "sha256": "41ae4f1104d5c7bb467a60f6a09c65cd05334d4cf229fcb8082768b6c60f06cd",
+      "bytes": 43774,
+      "transformation": "Remove only wave metrics_before/metrics_after; preserve responses, token hashes and timings.",
+      "source_file": "gemma-matched-chat-final.json",
+      "source_sha256": "79e917b8f082f76b450d89fbae0df9b4c8ef140545d03ec040d6cce32a48caca"
+    },
+    "gemma-matched-chat-validated-summary.json": {
+      "sha256": "2f42e819dee197f8fc33fc0adedd35ed9c62462962dcfa0a83e2012b22644e0d",
+      "bytes": 7228,
+      "transformation": "Recomputed from the sanitized report with the included strict validator.",
+      "source_file": "gemma-matched-chat-validated-summary.json",
+      "source_sha256": "63fd1a6a5537b93345d5a5727181f4f68871fb5b75249ec820d58bc95a5930a4",
+      "inputs": [
+        "gemma-matched-chat-final.json"
+      ]
+    },
+    "gemma-b-offload-replay-final.json": {
+      "sha256": "873c87d1b032833600fff54d1e1c21efd58192b6715c4cfb49b9247fe7779d08",
+      "bytes": 1220,
+      "transformation": "Unchanged one-token diagnostic; no endpoint or private identifier.",
+      "source_file": "gemma-b-offload-replay-final.json",
+      "source_sha256": "873c87d1b032833600fff54d1e1c21efd58192b6715c4cfb49b9247fe7779d08"
+    },
+    "gemma-gpu-mapping.json": {
+      "sha256": "7fb7b2e7680889d0872aa6dc2a50ba3ef51fd768841ed0bfc0b52821356b1d89",
+      "bytes": 817,
+      "transformation": "Keep model-to-GPU-index mapping, verification time and interval; remove query, hardware and object identifiers.",
+      "source_file": "gemma-gpu-attribution-final.json",
+      "source_sha256": "7047d6bcfaaebddd55f296d8a8f02cda9ddac898c219518c0a5ff975afbbbf09"
+    },
+    "gemma-a-sse32k-capacity.svg": {
+      "sha256": "200c6b913bcf8b829a5013469a3c64324798ba083a4bfc0063e92d3b42216763",
+      "bytes": 7830,
+      "transformation": "Regenerated from public samples and client timings; source hashes refer to public files.",
+      "source_file": "gemma-a-sse32k-capacity.svg",
+      "source_sha256": "09f6f9bcaec525364243c8c4c42836390b041e4b3dca4d9e1868c27a8eeaa329",
+      "inputs": [
+        "gemma-a-capacity-sse32k.final.json",
+        "gemma-a-sse32k-final-prometheus-isolated.json",
+        "gemma-gpu-mapping.json"
+      ]
+    },
+    "gemma-a-capacity-monitoring.svg": {
+      "sha256": "6e9eee5037aa7484005d9970c6949cb3d3a6a3e4d7d49358f375e66b8627c956",
+      "bytes": 105277,
+      "transformation": "Regenerated from public samples and client timings; source hashes refer to public files.",
+      "source_file": "gemma-a-capacity-monitoring.svg",
+      "source_sha256": "ec5164e42e4cdc063a788ab588a5052656bc48673b190818aa0448b9da04ef54",
+      "inputs": [
+        "gemma-a-capacity-sse32k.final.json",
+        "gemma-a-sse32k-final-prometheus-isolated.json",
+        "gemma-gpu-mapping.json"
+      ]
+    },
+    "gemma-b-sse32k-capacity.svg": {
+      "sha256": "6c56ad72c742cd592056da0cfb68079914474bb8a6b360072910d451bf4235e3",
+      "bytes": 7825,
+      "transformation": "Regenerated from public samples and client timings; source hashes refer to public files.",
+      "source_file": "gemma-b-sse32k-capacity.svg",
+      "source_sha256": "ee9a27a15e6689b2ec0475fd9fa9a5d5b960a92d95e1f194288fb742592cc6ea",
+      "inputs": [
+        "gemma-b-capacity-sse32k.final.json",
+        "gemma-b-sse32k-final-prometheus-isolated.json",
+        "gemma-gpu-mapping.json"
+      ]
+    },
+    "gemma-b-capacity-monitoring.svg": {
+      "sha256": "9b8a44f8de5473c4d4e3953bd471a0694c6415dac016478699716df19a55ff36",
+      "bytes": 99652,
+      "transformation": "Regenerated from public samples and client timings; source hashes refer to public files.",
+      "source_file": "gemma-b-capacity-monitoring.svg",
+      "source_sha256": "28479243b08131a2c06276ef0f34cbbdc9732333e45b57c8f57ae61f6b7b87ea",
+      "inputs": [
+        "gemma-b-capacity-sse32k.final.json",
+        "gemma-b-sse32k-final-prometheus-isolated.json",
+        "gemma-gpu-mapping.json"
+      ]
+    },
+    "qwen-capacity-monitoring.svg": {
+      "sha256": "9ebaab2d9ca1325d4df38baf1f744a87dbdce31b366eec91bf7535c960a810f6",
+      "bytes": 18889,
+      "transformation": "Regenerated from public samples; renderer changed only to accept explicit input/output paths.",
+      "source_file": "qwen-capacity-monitoring.svg",
+      "source_sha256": "9ebaab2d9ca1325d4df38baf1f744a87dbdce31b366eec91bf7535c960a810f6",
+      "inputs": [
+        "qwen-10x256k-output32k-offload160-cold.json",
+        "qwen-10x256k-prometheus.json"
+      ]
+    },
+    "gemma-matched-chat-ttft.svg": {
+      "sha256": "c610824a1bc6485c55a52b4dac0bf71ce1fb2a42daeffaa8579174431d17ae60",
+      "bytes": 8962,
+      "transformation": "Validated public client TTFT; median and min/max of ten responses per profile and wave; separate explicit axes.",
+      "inputs": [
+        "gemma-matched-chat-final.json",
+        "gemma-matched-chat-validated-summary.json"
+      ]
+    },
+    "tools/gemma_capacity_summary.py": {
+      "sha256": "2f011910a16110c56a2c70403af00662fa62a7e1529eb1266f1bb8323c6cdc72",
+      "source_file": "gemma_capacity_summary.py",
+      "source_sha256": "2f011910a16110c56a2c70403af00662fa62a7e1529eb1266f1bb8323c6cdc72",
+      "transformation": "Unchanged validator/renderer, except Qwen renderer accepts explicit paths."
+    },
+    "tools/qwen_evidence_summary.py": {
+      "sha256": "314e01f174a8f4c2801ef553c7eb269f0a8aa473435a4e0711a91f789c88673f",
+      "source_file": "qwen_evidence_summary.py",
+      "source_sha256": "314e01f174a8f4c2801ef553c7eb269f0a8aa473435a4e0711a91f789c88673f",
+      "transformation": "Unchanged validator/renderer, except Qwen renderer accepts explicit paths."
+    },
+    "tools/render_gemma_capacity.py": {
+      "sha256": "3dad6161c8a20cdc9554ffd05a0ae36991ade44f501778cda39de112799cec64",
+      "source_file": "render_gemma_capacity.py",
+      "source_sha256": "3dad6161c8a20cdc9554ffd05a0ae36991ade44f501778cda39de112799cec64",
+      "transformation": "Unchanged validator/renderer, except Qwen renderer accepts explicit paths."
+    },
+    "tools/render_gemma_monitoring.py": {
+      "sha256": "747e617dbbeec832a8f52e7db50f523fcede2be47b9889ae7ce05788ef7f0f62",
+      "source_file": "render_gemma_monitoring.py",
+      "source_sha256": "747e617dbbeec832a8f52e7db50f523fcede2be47b9889ae7ce05788ef7f0f62",
+      "transformation": "Unchanged validator/renderer, except Qwen renderer accepts explicit paths."
+    },
+    "tools/render_matched_chat.py": {
+      "sha256": "3a0912483682ca18bf23ae55057855133c6fa64a2a213b055ef16b0d7cf857be",
+      "transformation": "Project renderer for the validated public matched-chat report; no private runtime input."
+    },
+    "tools/render_qwen_evidence.py": {
+      "sha256": "a1d030bf12a6645c2f2bff94ed616e2eb93f0e2941e8cd8ed6f551a9b1efaed4",
+      "source_file": "render-qwen-evidence.py",
+      "source_sha256": "a12c6c9bc580a1c6a575265c0ee40c70de200ccdc0f2f9645533dfe7f534f2b3",
+      "transformation": "Unchanged validator/renderer, except Qwen renderer accepts explicit paths."
+    },
+    "tools/summarize_matched_chat.py": {
+      "sha256": "f1cc9b3878fd7712f6ad750e8122e4fffe6bb7399897e2e4bfd1767846d8bceb",
+      "source_file": "summarize_matched_chat.py",
+      "source_sha256": "f1cc9b3878fd7712f6ad750e8122e4fffe6bb7399897e2e4bfd1767846d8bceb",
+      "transformation": "Unchanged validator/renderer, except Qwen renderer accepts explicit paths."
+    },
+    "gemma-a-capacity-monitoring.png": {
+      "sha256": "7a72526be9b9d917887881c81fedd74c139b7b048ab84b120ffae3b93f335d45",
+      "bytes": 180252,
+      "inputs": [
+        "gemma-a-capacity-monitoring.svg"
+      ],
+      "transformation": "1400x1100 headless Chrome screenshot of the public SVG using an isolated temporary profile."
+    },
+    "gemma-a-sse32k-capacity.png": {
+      "sha256": "407d7d2099819f69b00f5cb083b2964a0b67e022597cbcad58041d27a676d1cd",
+      "bytes": 161152,
+      "inputs": [
+        "gemma-a-sse32k-capacity.svg"
+      ],
+      "transformation": "1400x1100 headless Chrome screenshot of the public SVG using an isolated temporary profile."
+    },
+    "gemma-b-capacity-monitoring.png": {
+      "sha256": "6bdafe4a8a13d46a9de45a22b837ad30ba7ba5a60d3b3c53ed5bcd2f8a4b733b",
+      "bytes": 178900,
+      "inputs": [
+        "gemma-b-capacity-monitoring.svg"
+      ],
+      "transformation": "1400x1100 headless Chrome screenshot of the public SVG using an isolated temporary profile."
+    },
+    "gemma-b-sse32k-capacity.png": {
+      "sha256": "bdb500b5b38dd4000979184ff333d7ce33e9c86d0083c844d1b5be80ab2d69f3",
+      "bytes": 160231,
+      "inputs": [
+        "gemma-b-sse32k-capacity.svg"
+      ],
+      "transformation": "1400x1100 headless Chrome screenshot of the public SVG using an isolated temporary profile."
+    },
+    "gemma-matched-chat-ttft.png": {
+      "sha256": "8477947fca6e3ffb224bd8989e45745b12d79bae08100a10588b8460d975f259",
+      "bytes": 133122,
+      "inputs": [
+        "gemma-matched-chat-ttft.svg"
+      ],
+      "transformation": "1400x650 headless Chrome screenshot of the public SVG using an isolated temporary profile."
+    },
+    "qwen-capacity-monitoring.png": {
+      "sha256": "fd3c41f3543b1805e84b6306dd831b12a6f79555860f7f4fe81c40bf4741686e",
+      "bytes": 174291,
+      "inputs": [
+        "qwen-capacity-monitoring.svg"
+      ],
+      "transformation": "1400x1100 headless Chrome screenshot of the public SVG using an isolated temporary profile."
+    }
+  }
+}

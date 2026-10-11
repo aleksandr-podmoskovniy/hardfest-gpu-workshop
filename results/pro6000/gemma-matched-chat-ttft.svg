@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+<title id="title">Gemma A/B: время до первого видимого ответа при одинаковом входе</title>
+<desc id="desc">Три отдельные шкалы. Для короткой и длинной холодной волны шкала линейная; для повторной длинной волны логарифмическая. Точка обозначает медиану, отрезок — минимум и максимум десяти ответов.</desc>
+<rect width="1400" height="650" fill="#f5f7fb"/>
+<style>text{font-family:Arial,sans-serif;fill:#172b4d}.title{font-size:27px;font-weight:700}.heading{font-size:22px;font-weight:700}.body{font-size:18px}.small{font-size:16px}</style>
+<text x="32" y="45" class="title" text-anchor="start">Одинаковый вход: когда пользователь увидел первый ответ</text>
+<text x="32" y="79" class="body" text-anchor="start">TTFT клиента включает очередь, prefill и возможное рассуждение. По 10 ответов A и B в каждой панели.</text>
+<text x="32" y="113" class="small" text-anchor="start">Точка — медиана; отрезок — min–max. Панели имеют разные шкалы: сравнивайте числа, а не длины.</text>
+<g data-panel="short-cold" data-scale="linear">
+<rect x="32" y="140" width="440" height="320" rx="10" fill="white" stroke="#d8dfeb"/>
+<text x="50" y="177" class="heading" text-anchor="start">Короткая волна</text>
+<text x="50" y="207" class="small" text-anchor="start">98 входных токенов</text>
+<text x="50" y="235" class="small" text-anchor="start">Линейная шкала 0–0,5 с</text>
+<path d="M102.000,260V392" stroke="#e2e8f0"/>
+<text x="102.000" y="420" class="small" text-anchor="middle">0</text>
+<path d="M171.600,260V392" stroke="#e2e8f0"/>
+<text x="171.600" y="420" class="small" text-anchor="middle">0,1</text>
+<path d="M241.200,260V392" stroke="#e2e8f0"/>
+<text x="241.200" y="420" class="small" text-anchor="middle">0,2</text>
+<path d="M310.800,260V392" stroke="#e2e8f0"/>
+<text x="310.800" y="420" class="small" text-anchor="middle">0,3</text>
+<path d="M380.400,260V392" stroke="#e2e8f0"/>
+<text x="380.400" y="420" class="small" text-anchor="middle">0,4</text>
+<path d="M450.000,260V392" stroke="#e2e8f0"/>
+<text x="450.000" y="420" class="small" text-anchor="middle">0,5</text>
+<text x="450" y="445" class="small" text-anchor="end">секунды до первого видимого ответа</text>
+<text x="52" y="286" class="heading" text-anchor="start">A</text>
+<g data-series="a" data-count="10" data-min="0.13783148500078823" data-median="0.3081416780005384" data-max="0.3098583770042751">
+<path d="M197.931,280H317.661M197.931,273V287M317.661,273V287" stroke="#2563eb" stroke-width="3"/>
+<circle cx="316.467" cy="280" r="6" fill="#2563eb" stroke="white" stroke-width="1.5"/>
+<text x="102" y="307" class="small" text-anchor="start">0,308 с; min–max 0,138–0,310 с</text>
+</g>
+<text x="52" y="358" class="heading" text-anchor="start">B</text>
+<g data-series="b" data-count="10" data-min="0.10650403899489902" data-median="0.4408072824990086" data-max="0.4424838920022012">
+<path d="M176.127,352H409.969M176.127,345V359M409.969,345V359" stroke="#d97706" stroke-width="3"/>
+<circle cx="408.802" cy="352" r="6" fill="#d97706" stroke="white" stroke-width="1.5"/>
+<text x="102" y="379" class="small" text-anchor="start">0,441 с; min–max 0,107–0,442 с</text>
+</g>
+</g>
+<g data-panel="long-cold" data-scale="linear">
+<rect x="480" y="140" width="440" height="320" rx="10" fill="white" stroke="#d8dfeb"/>
+<text x="498" y="177" class="heading" text-anchor="start">Длинная, cold</text>
+<text x="498" y="207" class="small" text-anchor="start">98 268 входных токенов</text>
+<text x="498" y="235" class="small" text-anchor="start">Линейная шкала 0–650 с</text>
+<path d="M550.000,260V392" stroke="#e2e8f0"/>
+<text x="550.000" y="420" class="small" text-anchor="middle">0</text>
+<path d="M657.077,260V392" stroke="#e2e8f0"/>
+<text x="657.077" y="420" class="small" text-anchor="middle">200</text>
+<path d="M764.154,260V392" stroke="#e2e8f0"/>
+<text x="764.154" y="420" class="small" text-anchor="middle">400</text>
+<path d="M898.000,260V392" stroke="#e2e8f0"/>
+<text x="898.000" y="420" class="small" text-anchor="middle">650</text>
+<text x="898" y="445" class="small" text-anchor="end">секунды до первого видимого ответа</text>
+<text x="500" y="286" class="heading" text-anchor="start">A</text>
+<g data-series="a" data-count="10" data-min="59.87270322800032" data-median="330.5651764295035" data-max="601.191026638">
+<path d="M582.055,280H871.868M582.055,273V287M871.868,273V287" stroke="#2563eb" stroke-width="3"/>
+<circle cx="726.980" cy="280" r="6" fill="#2563eb" stroke="white" stroke-width="1.5"/>
+<text x="550" y="307" class="small" text-anchor="start">330,565 с; min–max 59,873–601,191 с</text>
+</g>
+<text x="500" y="358" class="heading" text-anchor="start">B</text>
+<g data-series="b" data-count="10" data-min="37.380498976002855" data-median="75.79598605900173" data-max="75.81736545199965">
+<path d="M570.013,352H590.591M570.013,345V359M590.591,345V359" stroke="#d97706" stroke-width="3"/>
+<circle cx="590.580" cy="352" r="6" fill="#d97706" stroke="white" stroke-width="1.5"/>
+<text x="550" y="379" class="small" text-anchor="start">75,796 с; min–max 37,380–75,817 с</text>
+</g>
+</g>
+<g data-panel="long-warm" data-scale="log">
+<rect x="928" y="140" width="440" height="320" rx="10" fill="white" stroke="#d8dfeb"/>
+<text x="946" y="177" class="heading" text-anchor="start">Длинная, повтор</text>
+<text x="946" y="207" class="small" text-anchor="start">98 268 входных токенов</text>
+<text x="946" y="235" class="small" text-anchor="start">Логарифмическая шкала 0,1–1000 с</text>
+<path d="M998.000,260V392" stroke="#e2e8f0"/>
+<text x="998.000" y="420" class="small" text-anchor="middle">0,1</text>
+<path d="M1085.000,260V392" stroke="#e2e8f0"/>
+<text x="1085.000" y="420" class="small" text-anchor="middle">1</text>
+<path d="M1172.000,260V392" stroke="#e2e8f0"/>
+<text x="1172.000" y="420" class="small" text-anchor="middle">10</text>
+<path d="M1259.000,260V392" stroke="#e2e8f0"/>
+<text x="1259.000" y="420" class="small" text-anchor="middle">100</text>
+<path d="M1346.000,260V392" stroke="#e2e8f0"/>
+<text x="1346.000" y="420" class="small" text-anchor="middle">1000</text>
+<text x="1346" y="445" class="small" text-anchor="end">секунды до первого видимого ответа</text>
+<text x="948" y="286" class="heading" text-anchor="start">A</text>
+<g data-series="a" data-count="10" data-min="59.76291828400281" data-median="330.19938576349887" data-max="600.769597339">
+<path d="M1239.550,280H1326.748M1239.550,273V287M1326.748,273V287" stroke="#2563eb" stroke-width="3"/>
+<circle cx="1304.134" cy="280" r="6" fill="#2563eb" stroke="white" stroke-width="1.5"/>
+<text x="998" y="307" class="small" text-anchor="start">330,199 с; min–max 59,763–600,770 с</text>
+</g>
+<text x="948" y="358" class="heading" text-anchor="start">B</text>
+<g data-series="b" data-count="10" data-min="0.5791811519957264" data-median="1.7238425539981108" data-max="2.754210658997181">
+<path d="M1064.365,352H1123.280M1064.365,345V359M1123.280,345V359" stroke="#d97706" stroke-width="3"/>
+<circle cx="1105.575" cy="352" r="6" fill="#d97706" stroke="white" stroke-width="1.5"/>
+<text x="998" y="379" class="small" text-anchor="start">1,724 с; min–max 0,579–2,754 с</text>
+</g>
+</g>
+<text x="32" y="500" class="body" text-anchor="start">Все 60 ответов корректны и завершились естественно. Выход — 13–14 токенов, лимит — 32 768.</text>
+<text x="32" y="531" class="small" text-anchor="start">Один прогон, последовательные волны. Внутри каждой волны 10 запросов делят общий префикс.</text>
+<text x="32" y="556" class="small" text-anchor="start">Cold: префикс отсутствовал перед волной. Это не десять независимых документов и не общий коэффициент ускорения.</text>
+<text x="32" y="581" class="small" text-anchor="start">Прямой vLLM, без WebUI/Bifrost. Отличается весь профиль; выигрыш нельзя приписать только offload.</text>
+<text x="32" y="615" class="small" text-anchor="start">SHA256: public raw 41ae4f1104d5c7bb; summary 2f42e819dee197f8; original raw 79e917b8f082f76b</text>
+</svg>

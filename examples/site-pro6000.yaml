@@ -1,0 +1,9 @@
+# Private site binding only. Keep the selected profile's modelRefs and vLLM map.
+image: REPLACE_RUNTIME_IMAGE@sha256:f7cb9820c7e92eb78a4b3f60033e240c87a16bf99117471aba347fdd69eaca2d
+nodeSelector:
+  kubernetes.io/hostname: REPLACE_PRO6000_NODE
+dra:
+  deviceClassName: REPLACE_GENERATED_PRO6000_DEVICECLASS
+tolerations: []
+networkPolicy:
+  extraIngress: []

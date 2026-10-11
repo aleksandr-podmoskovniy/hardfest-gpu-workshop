@@ -1,0 +1,123 @@
+{
+  "run_id": "f4d4ecbc805847e285b6ba323ecf309b",
+  "variant": "a",
+  "model": "selectel-gemma-a",
+  "input_tokens_each": 134752,
+  "output_tokens_each": 32768,
+  "window_tokens": 167520,
+  "submitted_concurrently": 10,
+  "submission_spread_seconds": 0.08977603912353516,
+  "completed": 10,
+  "wall_seconds": 20013.697457152004,
+  "aggregate_output_tokens_per_second": 16.372786722770297,
+  "client_output_tokens": 327680,
+  "completed_request_output_tokens": 327680,
+  "global_generation_tokens_delta": 327680.0,
+  "output_counter_reconciled": true,
+  "client_ttft_min_seconds": 103.76683955400222,
+  "client_ttft_max_seconds": 18114.369531004006,
+  "client_ttft_mean_seconds": 9109.313557648798,
+  "sampled_max_running": 1.0,
+  "sampled_max_waiting": 9.0,
+  "sampled_max_gpu_kv_fraction": 0.8928838951310861,
+  "monitoring_step_seconds": 15,
+  "preemptions": 0.0,
+  "synthetic_ignore_eos": true,
+  "traffic_path": "direct vLLM API; not WebUI or Bifrost",
+  "comparison_limit": "A and B have different input/window sizes: no speedup claim from this pair.",
+  "gpu_scope": "Both models ran simultaneously: node GPU graphs are not per-service attribution.",
+  "timing_semantics": "Engine wall-clock phases can include scheduling/preemption delays; mean TPOT is the mean of per-request decode/(output_tokens-1).",
+  "requests": [
+    {
+      "session": 0,
+      "ttft_s": 16113.424463778996,
+      "elapsed_s": 18012.597702127,
+      "submitted_at": 1791736221.5577338,
+      "completed_at": 1791754234.1554368
+    },
+    {
+      "session": 1,
+      "ttft_s": 10109.921168676003,
+      "elapsed_s": 12009.254262512004,
+      "submitted_at": 1791736221.5476227,
+      "completed_at": 1791748230.8018847
+    },
+    {
+      "session": 2,
+      "ttft_s": 4106.567085406998,
+      "elapsed_s": 6005.815938378,
+      "submitted_at": 1791736221.5751388,
+      "completed_at": 1791742227.3910394
+    },
+    {
+      "session": 3,
+      "ttft_s": 12111.140107743995,
+      "elapsed_s": 14010.344557812,
+      "submitted_at": 1791736221.6286047,
+      "completed_at": 1791750231.9731624
+    },
+    {
+      "session": 4,
+      "ttft_s": 103.76683955400222,
+      "elapsed_s": 2003.1780115989968,
+      "submitted_at": 1791736221.6109993,
+      "completed_at": 1791738224.7890084
+    },
+    {
+      "session": 5,
+      "ttft_s": 2105.294424173997,
+      "elapsed_s": 4004.5994409580017,
+      "submitted_at": 1791736221.5663004,
+      "completed_at": 1791740226.1657407
+    },
+    {
+      "session": 6,
+      "ttft_s": 8108.741104477995,
+      "elapsed_s": 10008.052855734,
+      "submitted_at": 1791736221.5846894,
+      "completed_at": 1791746229.6375432
+    },
+    {
+      "session": 7,
+      "ttft_s": 6107.623057389996,
+      "elapsed_s": 8006.883491244997,
+      "submitted_at": 1791736221.5931084,
+      "completed_at": 1791744228.4766004
+    },
+    {
+      "session": 8,
+      "ttft_s": 18114.369531004006,
+      "elapsed_s": 20013.565154861004,
+      "submitted_at": 1791736221.6200392,
+      "completed_at": 1791756235.1851737
+    },
+    {
+      "session": 9,
+      "ttft_s": 14112.287794281998,
+      "elapsed_s": 16011.613333459994,
+      "submitted_at": 1791736221.5388286,
+      "completed_at": 1791752233.1521616
+    }
+  ],
+  "engine_mean_ttft_seconds": 9109.038413739205,
+  "engine_mean_tpot_seconds": 0.05796593482802814,
+  "engine_mean_queue_seconds": 9006.731107171601,
+  "engine_mean_prefill_seconds": 101.96201949450115,
+  "engine_mean_decode_seconds": 1899.369786509998,
+  "engine_mean_e2e_seconds": 11008.408563804627,
+  "ttft_histogram_upper_bound_seconds": 2560.0,
+  "ttft_histogram_overflow_count": 8.0,
+  "e2e_histogram_upper_bound_seconds": 7680.0,
+  "e2e_histogram_overflow_count": 7.0,
+  "tpot_histogram_upper_bound_seconds": 80.0,
+  "tpot_histogram_overflow_count": 0.0,
+  "offload_limit": "Baseline configuration has no KV offload; missing metrics are not filled with zero.",
+  "source_sha256": {
+    "client": "f50bd94ef8bff7d5f22539a26ed7fbf6be8cb2a987bfd42de5752ea2f6e7c2c2",
+    "monitor": "21c043957c4fb0b4ada74e142a34db5205f3a03f6b009f902189d43012ac718b"
+  },
+  "public_source_sha256": {
+    "client": "5911c2ce4658ab7ab746345dc83f0442f7523f2b6e03eb6fec62bdc639de7af5",
+    "monitor": "d5f7cb5fd8434be98160fbcf795e58f1bdf838cded19830de0d8d9bc58f2ab85"
+  }
+}

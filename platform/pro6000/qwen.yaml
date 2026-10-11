@@ -1,0 +1,21 @@
+# Reference for explicit creation in the Deckhouse UI after Gemma releases GPUs.
+# Replace class/deviceClass with validated site values. Creation requests GPUs:
+# this CRD has no replicas/scaling field; keep the object absent until needed.
+# The installed recipe must be checked separately against the measured TP2 run;
+# this order alone does not pin 262144 tokens, max-num-seqs=10 or 160 GiB offload.
+apiVersion: ai.deckhouse.io/v1alpha1
+kind: InferenceService
+metadata:
+  name: selectel-qwen38-tp2
+  namespace: hardfest-demo
+spec:
+  inferenceServiceClassName: REPLACE_PRO6000_QWEN_TP2_CLASS
+  model:
+    src: ai-models
+    ref:
+      kind: Model
+      name: qwen3-8-flash-next-nvfp4
+  launchStrategy: Latency
+  resources:
+    accelerator:
+      deviceClasses: [REPLACE_GENERATED_PRO6000_DEVICECLASS]

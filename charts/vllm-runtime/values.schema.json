@@ -223,8 +223,10 @@
           "minimum": 1
         },
         "max-model-len": {
-          "type": "integer",
-          "minimum": 1
+          "oneOf": [
+            {"type": "integer", "minimum": 1},
+            {"const": -1}
+          ]
         },
         "enable-prefix-caching": {
           "type": "boolean"

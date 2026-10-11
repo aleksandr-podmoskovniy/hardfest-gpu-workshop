@@ -10,6 +10,9 @@
 
 Стенд: **две H100 для Gemma 4 31B и Qwen; A30 для небольших моделей**.
 
+[RTX PRO 6000: 256K, выход 32K и результаты прогона](RTXPRO6000.md),
+[RTX 5060 Ti](RTX5060.md)
+
 <a id="ab"></a>
 ## 1. Базовая модель под нагрузкой
 
@@ -111,7 +114,7 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo exec "deployment/hf-gemma-$SLO
 7. [Учёт в шлюзе](#results)
 8. [Qwen на двух GPU](#tp2)
 
-[Вариант на двух RTX 5060 Ti](RTX5060.md), [подготовка](#setup),
+[Вариант на двух RTX 5060 Ti](RTX5060.md), [RTX PRO 6000](RTXPRO6000.md), [подготовка](#setup),
 [завершение работы](#cleanup).
 
 </details>

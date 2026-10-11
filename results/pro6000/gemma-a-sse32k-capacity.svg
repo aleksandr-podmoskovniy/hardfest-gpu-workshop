@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1100" viewBox="0 0 1400 1100" role="img" aria-labelledby="title desc">
+<title id="title">Gemma A · без тюнинга: предел ёмкости, 10 запросов</title>
+<desc id="desc">Проверка полных контекстных окон. Ожидание первого токена и продолжительность генерации показаны отдельно для каждого запроса. Это не тест обычного чата.</desc>
+<rect width="1400" height="1100" fill="#f5f7fb"/>
+<style>text{font-family:Arial,sans-serif;fill:#172b4d}.body{font-size:18px}.small{font-size:16px}.title{font-size:28px;font-weight:700}.number{font-size:30px;font-weight:700}</style>
+<text x="40" y="47" class="title" text-anchor="start">Gemma A · без тюнинга: 10 / 10 запросов завершены</text>
+<text x="40" y="79" class="body" text-anchor="start">1 × RTX PRO 6000 на модель · Все 10 запросов поданы одновременно, не все выполнялись сразу.</text>
+<text x="40" y="109" class="body" text-anchor="start">Каждый запрос: 134 752 входных + 32 768 выходных = 167 520 токенов.</text>
+<rect x="40" y="134" width="315" height="96" rx="10" fill="white" stroke="#d8dfeb"/>
+<text x="55" y="173" class="number" text-anchor="start">333 мин 34 с</text>
+<text x="55" y="208" class="small" text-anchor="start">весь прогон</text>
+<rect x="375" y="134" width="315" height="96" rx="10" fill="white" stroke="#d8dfeb"/>
+<text x="390" y="173" class="number" text-anchor="start">301 мин 54 с</text>
+<text x="390" y="208" class="small" text-anchor="start">максимум до первого токена</text>
+<rect x="710" y="134" width="315" height="96" rx="10" fill="white" stroke="#d8dfeb"/>
+<text x="725" y="173" class="number" text-anchor="start">58,0 мс</text>
+<text x="725" y="208" class="small" text-anchor="start">средний TPOT движка</text>
+<rect x="1045" y="134" width="315" height="96" rx="10" fill="white" stroke="#d8dfeb"/>
+<text x="1060" y="173" class="number" text-anchor="start">1 из 10</text>
+<text x="1060" y="208" class="small" text-anchor="start">пик активных, по метрикам</text>
+<text x="40" y="278" class="title" text-anchor="start">Когда каждый запрос дождался ответа</text>
+<text x="40" y="312" class="small" text-anchor="start">TTFT: от отправки до первого токена, включая очередь и prefill. Это не только время очереди.</text>
+<rect x="40" y="336" width="20" height="16" fill="#2563eb"/>
+<text x="70" y="350" class="small" text-anchor="start">До первого токена</text>
+<rect x="350" y="336" width="20" height="16" fill="#d97706"/>
+<text x="380" y="350" class="small" text-anchor="start">После первого токена, до завершения</text>
+<path d="M155.00,385V810" stroke="#d8dfeb"/>
+<text x="155.0" y="837" class="small" text-anchor="middle">0,0</text>
+<path d="M377.00,385V810" stroke="#d8dfeb"/>
+<text x="377.0" y="837" class="small" text-anchor="middle">66,7</text>
+<path d="M599.00,385V810" stroke="#d8dfeb"/>
+<text x="599.0" y="837" class="small" text-anchor="middle">133,4</text>
+<path d="M821.00,385V810" stroke="#d8dfeb"/>
+<text x="821.0" y="837" class="small" text-anchor="middle">200,1</text>
+<path d="M1043.00,385V810" stroke="#d8dfeb"/>
+<text x="1043.0" y="837" class="small" text-anchor="middle">266,8</text>
+<path d="M1265.00,385V810" stroke="#d8dfeb"/>
+<text x="1265.0" y="837" class="small" text-anchor="middle">333,6</text>
+<text x="1265" y="863" class="small" text-anchor="end">минут от одновременной подачи</text>
+<text x="137" y="409" class="small" text-anchor="end">Запрос 1</text>
+<rect data-phase="first-token" x="155.001" y="385" width="893.685" height="31" fill="#2563eb"/>
+<rect data-phase="continuation" x="1048.686" y="385" width="105.332" height="31" fill="#d97706"/>
+<text x="137" y="450" class="small" text-anchor="end">Запрос 2</text>
+<rect data-phase="first-token" x="155.000" y="426" width="560.718" height="31" fill="#2563eb"/>
+<rect data-phase="continuation" x="715.719" y="426" width="105.341" height="31" fill="#d97706"/>
+<text x="137" y="491" class="small" text-anchor="end">Запрос 3</text>
+<rect data-phase="first-token" x="155.002" y="467" width="227.759" height="31" fill="#2563eb"/>
+<rect data-phase="continuation" x="382.761" y="467" width="105.336" height="31" fill="#d97706"/>
+<text x="137" y="532" class="small" text-anchor="end">Запрос 4</text>
+<rect data-phase="first-token" x="155.005" y="508" width="671.710" height="31" fill="#2563eb"/>
+<rect data-phase="continuation" x="826.715" y="508" width="105.334" height="31" fill="#d97706"/>
+<text x="137" y="573" class="small" text-anchor="end">Запрос 5</text>
+<rect data-phase="first-token" x="155.004" y="549" width="5.755" height="31" fill="#2563eb"/>
+<rect data-phase="continuation" x="160.759" y="549" width="105.345" height="31" fill="#d97706"/>
+<text x="137" y="614" class="small" text-anchor="end">Запрос 6</text>
+<rect data-phase="first-token" x="155.002" y="590" width="116.764" height="31" fill="#2563eb"/>
+<rect data-phase="continuation" x="271.766" y="590" width="105.340" height="31" fill="#d97706"/>
+<text x="137" y="655" class="small" text-anchor="end">Запрос 7</text>
+<rect data-phase="first-token" x="155.003" y="631" width="449.728" height="31" fill="#2563eb"/>
+<rect data-phase="continuation" x="604.731" y="631" width="105.340" height="31" fill="#d97706"/>
+<text x="137" y="696" class="small" text-anchor="end">Запрос 8</text>
+<rect data-phase="first-token" x="155.003" y="672" width="338.742" height="31" fill="#2563eb"/>
+<rect data-phase="continuation" x="493.745" y="672" width="105.337" height="31" fill="#d97706"/>
+<text x="137" y="737" class="small" text-anchor="end">Запрос 9</text>
+<rect data-phase="first-token" x="155.005" y="713" width="1004.662" height="31" fill="#2563eb"/>
+<rect data-phase="continuation" x="1159.667" y="713" width="105.333" height="31" fill="#d97706"/>
+<text x="137" y="778" class="small" text-anchor="end">Запрос 10</text>
+<rect data-phase="first-token" x="155.000" y="754" width="782.698" height="31" fill="#2563eb"/>
+<rect data-phase="continuation" x="937.698" y="754" width="105.341" height="31" fill="#d97706"/>
+<text x="40" y="906" class="title" text-anchor="start">Что этот тест доказывает — и чего не доказывает</text>
+<text x="40" y="941" class="body" text-anchor="start">Полные окна и длинный выход выдержаны. Приемлемую задержку обычного чата этот тест не подтверждает.</text>
+<text x="40" y="972" class="small" text-anchor="start">Синтетика: ignore_eos=true, прямой vLLM API. Персональный путь WebUI → Bifrost проверяется отдельно.</text>
+<text x="40" y="1000" class="small" text-anchor="start">A и B получили разный объём входа: по этим двум прогонам нельзя вычислять выигрыш от тюнинга.</text>
+<text x="40" y="1028" class="small" text-anchor="start">TPOT — среднее время выходного токена после первого; одинаковые 32 768 токенов в каждом запросе.</text>
+<text x="40" y="1064" class="small" text-anchor="start">Источник: клиентские отчёты + Prometheus · SHA256 client 5911c2ce4658ab7a · metrics d5f7cb5fd8434be9</text>
+</svg>

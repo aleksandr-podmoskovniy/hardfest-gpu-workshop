@@ -1,0 +1,1333 @@
+{
+  "kind": "matched direct-runtime chat comparison",
+  "started_at": 1791756441.18502,
+  "run_id": "03100d91e455410a9272c1bb36e98df1",
+  "capacity_report_sha256": {
+    "a": "fc7d045fd7d110198b0c43eeaac1b917fcbc4dc409dfc8c34be28b6bbd50d2ca",
+    "b": "4a26d4ad04b4c06c181b405d1fff93cb8a0e930745500cb1298e66e335fcb0df"
+  },
+  "sessions_per_wave": 10,
+  "original_capacity_report_sha256": {
+    "a": "f50bd94ef8bff7d5f22539a26ed7fbf6be8cb2a987bfd42de5752ea2f6e7c2c2",
+    "b": "d9407f5f3a041719115b42ca75b977e8c490d220a292aee8b14489b5352fc34f"
+  },
+  "output_cap": 32768,
+  "ignore_eos": false,
+  "input_tokens": {
+    "short": [
+      98,
+      98,
+      98,
+      98,
+      98,
+      98,
+      98,
+      98,
+      98,
+      98
+    ],
+    "long": [
+      98268,
+      98268,
+      98268,
+      98268,
+      98268,
+      98268,
+      98268,
+      98268,
+      98268,
+      98268
+    ]
+  },
+  "matched_token_ids_sha256": {
+    "short": [
+      "b0e47d38095d3fb2daac9ed9734fb0234e6b814469a31d2ca6da7559ee501059",
+      "7fdac6c74958aaea716b2a79f84487fa1933d530491c9d0c47e7978896612e11",
+      "5ea0dbabf06c41d16734392b5b9a16110d69798ec002fa7f78cac4a4b09f6497",
+      "59f001903e343920730fcf87ad91bf68f2384c6c4e6f5764c8de68bd965f469e",
+      "b51e07d3c8917719983481a9f438ec565f95ee6f0843cbb26e670e948f8b6d10",
+      "5bd084a8b5fb7135604d4f5ce4c6a91d97c24b11c79e365754bdbb83547c33f0",
+      "94a72db9950608b9ea56e4643ff2acea0eafa876573d34b7af71951c997f90c4",
+      "b7c09853e242f9b5671185a190971bc15b9404a2310ee98b14015b4b5fbf14a4",
+      "8dc6b41dcb3deb6524f9c84ee1287af728a6f2b47b327f665e8d083b240f240f",
+      "354a4fec25fed2d0e1e741b49635a5bf759eefcb8cdbc49cb6b35e8d37566c4c"
+    ],
+    "long": [
+      "785dff0e2c236929ba66fd0cae77402bcac13d0bf6147ffa2cdb7330e2bf92c6",
+      "eaeeae82a71749af60738ab407b52b2d207d8d6599d2963c8a2ccf23c90badf9",
+      "dd6b7b266b5dcb4f485a06c377623e1fb4c7daa12ccbb1f24f78a619ce0edf0e",
+      "185ce17ad36e0d0d613e6d76682d5ffbd4a5b323311fa40182795e5441541134",
+      "a2cc2a7a5b251515d4fbdbf5fb449b39cdb063e715811149ed392f8c1a026d97",
+      "c9f72fc81040c9185416505ee26c2f1e2601d490ec1686fe5081b56a258aeb6d",
+      "97d386b1c4c2239a6a5b539a33b0195778484cb5f45da39720ffbde667d4c301",
+      "e6564636fd9dbde8dd4af2453d3d8da86190d21ed559da0db662185d2fcdd058",
+      "062afbd0a21ca7055ff0adbb3b5fabe3ad489f66a9ccdcde6c363bd8b26eb815",
+      "86448a388b3c9cc8e891cec178dfdb3c01b7f396f292011bdee785243d1016ce"
+    ]
+  },
+  "waves": [
+    {
+      "model": "selectel-gemma-a",
+      "kind": "short",
+      "iteration": "cold",
+      "results": [
+        {
+          "session": 3,
+          "submitted_at": 1791756441.2461302,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.13782114799687406,
+          "client_ttft_visible_answer_s": 0.13783148500078823,
+          "elapsed_s": 0.8120459470010246,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 1,
+          "submitted_at": 1791756441.245524,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.13827623299584957,
+          "client_ttft_visible_answer_s": 0.13828712899703532,
+          "elapsed_s": 0.8124820349985384,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 6,
+          "submitted_at": 1791756441.244511,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.3084696520018042,
+          "client_ttft_visible_answer_s": 0.30847943000117084,
+          "elapsed_s": 2.3422474149992922,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 2,
+          "submitted_at": 1791756441.2448313,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.309308306001185,
+          "client_ttft_visible_answer_s": 0.3093178050039569,
+          "elapsed_s": 2.3431053450040054,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 9,
+          "submitted_at": 1791756441.243414,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.3098480400003609,
+          "client_ttft_visible_answer_s": 0.3098583770042751,
+          "elapsed_s": 2.3436031740056933,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 4,
+          "submitted_at": 1791756441.2459128,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.3079053350011236,
+          "client_ttft_visible_answer_s": 0.3079153920043609,
+          "elapsed_s": 2.341673040005844,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 8,
+          "submitted_at": 1791756441.2451324,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.30817855399800465,
+          "client_ttft_visible_answer_s": 0.30836796399671584,
+          "elapsed_s": 2.3436182599980384,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 5,
+          "submitted_at": 1791756441.2465546,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.3074192400017637,
+          "client_ttft_visible_answer_s": 0.3074334870034363,
+          "elapsed_s": 2.3415448119994835,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 7,
+          "submitted_at": 1791756441.246803,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.3077452590005123,
+          "client_ttft_visible_answer_s": 0.30775559500034433,
+          "elapsed_s": 2.341786183002114,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 0,
+          "submitted_at": 1791756441.244046,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.30963320799492067,
+          "client_ttft_visible_answer_s": 0.309643264998158,
+          "elapsed_s": 2.3470575229948736,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        }
+      ],
+      "ok": true,
+      "responses_ok": true
+    },
+    {
+      "model": "selectel-gemma-b",
+      "kind": "short",
+      "iteration": "cold",
+      "results": [
+        {
+          "session": 2,
+          "submitted_at": 1791756443.729105,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.10649426199961454,
+          "client_ttft_visible_answer_s": 0.10650403899489902,
+          "elapsed_s": 0.5002035189972958,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 9,
+          "submitted_at": 1791756443.7269127,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.1088610430015251,
+          "client_ttft_visible_answer_s": 0.10904542400385253,
+          "elapsed_s": 0.5027038370026276,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 4,
+          "submitted_at": 1791756443.7301247,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.4396952700044494,
+          "client_ttft_visible_answer_s": 0.43970560700108763,
+          "elapsed_s": 0.7421289600024465,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 0,
+          "submitted_at": 1791756443.7280297,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.44159439399663825,
+          "client_ttft_visible_answer_s": 0.4416047310005524,
+          "elapsed_s": 0.7440420529965195,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 7,
+          "submitted_at": 1791756443.728783,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.44151617199531756,
+          "client_ttft_visible_answer_s": 0.441525948997878,
+          "elapsed_s": 0.7448348899997654,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 1,
+          "submitted_at": 1791756443.7276886,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.4422902919977787,
+          "client_ttft_visible_answer_s": 0.442300349001016,
+          "elapsed_s": 0.7447904709988507,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 8,
+          "submitted_at": 1791756443.7311552,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.4394242850030423,
+          "client_ttft_visible_answer_s": 0.43943406300240895,
+          "elapsed_s": 0.7419174800015753,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 5,
+          "submitted_at": 1791756443.7284358,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.44247383499896387,
+          "client_ttft_visible_answer_s": 0.4424838920022012,
+          "elapsed_s": 0.7453913850040408,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 6,
+          "submitted_at": 1791756443.7294438,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.44129742799850646,
+          "client_ttft_visible_answer_s": 0.4413072059978731,
+          "elapsed_s": 0.7440345089999028,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 3,
+          "submitted_at": 1791756443.729816,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98,
+            "total_tokens": 111,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.44029758099350147,
+          "client_ttft_visible_answer_s": 0.44030735900014406,
+          "elapsed_s": 0.7446851509957924,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        }
+      ],
+      "ok": true,
+      "responses_ok": true
+    },
+    {
+      "model": "selectel-gemma-a",
+      "kind": "long",
+      "iteration": "cold",
+      "results": [
+        {
+          "session": 9,
+          "submitted_at": 1791756444.6574388,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 59.872692890996404,
+          "client_ttft_visible_answer_s": 59.87270322800032,
+          "elapsed_s": 60.437697661996935,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 8,
+          "submitted_at": 1791756444.6793158,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 119.80967575599789,
+          "client_ttft_visible_answer_s": 119.80968581299385,
+          "elapsed_s": 120.40425635299471,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 5,
+          "submitted_at": 1791756444.6969576,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 179.96377448400017,
+          "client_ttft_visible_answer_s": 179.9637845410034,
+          "elapsed_s": 180.53866458999983,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 1,
+          "submitted_at": 1791756444.6625576,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98282,
+            "completion_tokens": 14,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 240.28766322699812,
+          "client_ttft_visible_answer_s": 240.28769060500053,
+          "elapsed_s": 240.91030856400175,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО.",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 6,
+          "submitted_at": 1791756444.6852489,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 300.5317965819995,
+          "client_ttft_visible_answer_s": 300.53180691900343,
+          "elapsed_s": 301.1108489489998,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 4,
+          "submitted_at": 1791756444.7118824,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 360.5985328099996,
+          "client_ttft_visible_answer_s": 360.59854594000353,
+          "elapsed_s": 361.17096338500414,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 7,
+          "submitted_at": 1791756444.6677032,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 420.6754161370045,
+          "client_ttft_visible_answer_s": 420.67542591500387,
+          "elapsed_s": 421.26941258100123,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 0,
+          "submitted_at": 1791756444.6907482,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98282,
+            "completion_tokens": 14,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 480.78441555700556,
+          "client_ttft_visible_answer_s": 480.7844256140015,
+          "elapsed_s": 481.4211400580025,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО.",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 3,
+          "submitted_at": 1791756444.7032876,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 541.0521412970047,
+          "client_ttft_visible_answer_s": 541.0521544270014,
+          "elapsed_s": 541.650019519002,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 2,
+          "submitted_at": 1791756444.6729586,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98282,
+            "completion_tokens": 14,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 601.1910168600007,
+          "client_ttft_visible_answer_s": 601.191026638,
+          "elapsed_s": 601.8370802570062,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО.",
+          "answer_correct": true,
+          "ok": true
+        }
+      ],
+      "ok": true,
+      "responses_ok": true
+    },
+    {
+      "model": "selectel-gemma-b",
+      "kind": "long",
+      "iteration": "cold",
+      "results": [
+        {
+          "session": 9,
+          "submitted_at": 1791757046.6337113,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 37.38048724200053,
+          "client_ttft_visible_answer_s": 37.380498976002855,
+          "elapsed_s": 43.01897733799706,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 0,
+          "submitted_at": 1791757046.6382,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 75.02649957199901,
+          "client_ttft_visible_answer_s": 75.02650990900293,
+          "elapsed_s": 75.93275693299802,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 7,
+          "submitted_at": 1791757046.6609457,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 75.7980076849999,
+          "client_ttft_visible_answer_s": 75.79801774200314,
+          "elapsed_s": 76.0450242750012,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 4,
+          "submitted_at": 1791757046.6818457,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 75.77918378300092,
+          "client_ttft_visible_answer_s": 75.77919411900075,
+          "elapsed_s": 76.02508207500068,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 1,
+          "submitted_at": 1791757046.6562817,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 75.80382378699869,
+          "client_ttft_visible_answer_s": 75.80383384400193,
+          "elapsed_s": 76.04981371000031,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 3,
+          "submitted_at": 1791757046.6428893,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 75.81735483599914,
+          "client_ttft_visible_answer_s": 75.81736545199965,
+          "elapsed_s": 76.06383951599855,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 5,
+          "submitted_at": 1791757046.6728868,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 75.78828829199483,
+          "client_ttft_visible_answer_s": 75.7882980699942,
+          "elapsed_s": 76.03538505999313,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 6,
+          "submitted_at": 1791757046.6470633,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 75.81340600999829,
+          "client_ttft_visible_answer_s": 75.81341578799766,
+          "elapsed_s": 76.06188591499813,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 2,
+          "submitted_at": 1791757046.666721,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 75.79394487699756,
+          "client_ttft_visible_answer_s": 75.79395437600033,
+          "elapsed_s": 76.04237784900033,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 8,
+          "submitted_at": 1791757046.6518269,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98282,
+            "completion_tokens": 14,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 75.80901522799832,
+          "client_ttft_visible_answer_s": 75.80902528499428,
+          "elapsed_s": 76.15721646699967,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО.",
+          "answer_correct": true,
+          "ok": true
+        }
+      ],
+      "ok": true,
+      "responses_ok": true
+    },
+    {
+      "model": "selectel-gemma-a",
+      "kind": "long",
+      "iteration": "warm",
+      "results": [
+        {
+          "session": 9,
+          "submitted_at": 1791757122.9335604,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 59.76290850600344,
+          "client_ttft_visible_answer_s": 59.76291828400281,
+          "elapsed_s": 60.358504875002836,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 8,
+          "submitted_at": 1791757122.961036,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 119.82535787599772,
+          "client_ttft_visible_answer_s": 119.82536765400437,
+          "elapsed_s": 120.41962614300428,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 3,
+          "submitted_at": 1791757122.9468558,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 180.04623240799992,
+          "client_ttft_visible_answer_s": 180.0462421859993,
+          "elapsed_s": 180.64129323400266,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 1,
+          "submitted_at": 1791757122.9561236,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98282,
+            "completion_tokens": 14,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 240.02668113399704,
+          "client_ttft_visible_answer_s": 240.02669119100028,
+          "elapsed_s": 240.67539626500366,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО.",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 5,
+          "submitted_at": 1791757122.9706597,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 300.08041961900017,
+          "client_ttft_visible_answer_s": 300.08042939699953,
+          "elapsed_s": 300.67493288900005,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 0,
+          "submitted_at": 1791757122.9379158,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98282,
+            "completion_tokens": 14,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 360.31833235199883,
+          "client_ttft_visible_answer_s": 360.3183421299982,
+          "elapsed_s": 360.96199041499494,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО.",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 2,
+          "submitted_at": 1791757122.9422886,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98282,
+            "completion_tokens": 14,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 420.57415982799284,
+          "client_ttft_visible_answer_s": 420.5741698859929,
+          "elapsed_s": 421.2155625759988,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО.",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 4,
+          "submitted_at": 1791757122.951125,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 480.5183476489983,
+          "client_ttft_visible_answer_s": 480.51835770600155,
+          "elapsed_s": 481.1134894889983,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 6,
+          "submitted_at": 1791757122.966421,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 540.5528584000058,
+          "client_ttft_visible_answer_s": 540.5528681780052,
+          "elapsed_s": 541.1463715410064,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 7,
+          "submitted_at": 1791757122.974834,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 600.7695875609934,
+          "client_ttft_visible_answer_s": 600.769597339,
+          "elapsed_s": 601.3643676229985,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        }
+      ],
+      "ok": true,
+      "responses_ok": true
+    },
+    {
+      "model": "selectel-gemma-b",
+      "kind": "long",
+      "iteration": "warm",
+      "results": [
+        {
+          "session": 9,
+          "submitted_at": 1791757724.4812713,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.5791708159958944,
+          "client_ttft_visible_answer_s": 0.5791811519957264,
+          "elapsed_s": 1.2158377659943653,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 2,
+          "submitted_at": 1791757724.4901242,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98282,
+            "completion_tokens": 14,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 0.9155482040005154,
+          "client_ttft_visible_answer_s": 0.915557981999882,
+          "elapsed_s": 1.6805870559983305,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО.",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 0,
+          "submitted_at": 1791757724.4857488,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 1.1540413640032057,
+          "client_ttft_visible_answer_s": 1.1540511420025723,
+          "elapsed_s": 1.8609921070019482,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 8,
+          "submitted_at": 1791757724.4945695,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 1.379323626999394,
+          "client_ttft_visible_answer_s": 1.3793336849994375,
+          "elapsed_s": 2.079608439002186,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 5,
+          "submitted_at": 1791757724.5034661,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 1.6000469319988042,
+          "client_ttft_visible_answer_s": 1.6000567099981708,
+          "elapsed_s": 2.3034829829994123,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 1,
+          "submitted_at": 1791757724.4989843,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 1.8476180609941366,
+          "client_ttft_visible_answer_s": 1.8476283979980508,
+          "elapsed_s": 2.5370878119938425,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 4,
+          "submitted_at": 1791757724.5082908,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 2.065746622000006,
+          "client_ttft_visible_answer_s": 2.0657566789959674,
+          "elapsed_s": 2.759378074995766,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 3,
+          "submitted_at": 1791757724.51848,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 2.2883383200023673,
+          "client_ttft_visible_answer_s": 2.2883486560021993,
+          "elapsed_s": 2.913811948004877,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 6,
+          "submitted_at": 1791757724.522791,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 2.5131509710045066,
+          "client_ttft_visible_answer_s": 2.513161028000468,
+          "elapsed_s": 3.133912268000131,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        },
+        {
+          "session": 7,
+          "submitted_at": 1791757724.513245,
+          "done": true,
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 98268,
+            "total_tokens": 98281,
+            "completion_tokens": 13,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "client_ttft_generated_text_s": 2.7542006009971374,
+          "client_ttft_visible_answer_s": 2.754210658997181,
+          "elapsed_s": 3.3675981139967917,
+          "answer_tail": "Код: ORBIT-42. ГОТОВО",
+          "answer_correct": true,
+          "ok": true
+        }
+      ],
+      "ok": true,
+      "responses_ok": true
+    }
+  ],
+  "notes": [
+    "Maximum configured windows remain unchanged.",
+    "This matched workload is NOT the maximum-window capacity proof.",
+    "Cold means prefix absent before the wave; ten requests share the prefix within the wave.",
+    "This measures shared-prefix batching/APC, NOT ten independent cold prefills.",
+    "Client TTFT distinguishes generated reasoning from the first visible answer.",
+    "Short exact-answer task does not measure general answer quality."
+  ],
+  "ended_at": 1791757727.9632816
+}

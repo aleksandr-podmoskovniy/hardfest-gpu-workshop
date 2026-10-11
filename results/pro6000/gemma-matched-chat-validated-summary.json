@@ -1,0 +1,315 @@
+{
+  "run_id": "03100d91e455410a9272c1bb36e98df1",
+  "completed_responses": 60,
+  "waves": [
+    {
+      "model": "selectel-gemma-a",
+      "kind": "short",
+      "iteration": "cold",
+      "completed": 10,
+      "submitted_span_s": 0.003389120101928711,
+      "input_tokens_each": [
+        98,
+        98,
+        98,
+        98,
+        98,
+        98,
+        98,
+        98,
+        98,
+        98
+      ],
+      "output_tokens_each": [
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13
+      ],
+      "wall_seconds": 2.347689628601074,
+      "client_ttft_generated_text_s": {
+        "min": 0.13782114799687406,
+        "median": 0.3080419444995641,
+        "max": 0.3098480400003609,
+        "mean": 0.27446049749923984
+      },
+      "client_ttft_visible_answer_s": {
+        "min": 0.13783148500078823,
+        "median": 0.3081416780005384,
+        "max": 0.3098583770042751,
+        "mean": 0.2744889929010242
+      },
+      "elapsed_s": {
+        "min": 0.8120459470010246,
+        "median": 2.342016799000703,
+        "max": 2.3470575229948736,
+        "mean": 2.036916373400891
+      }
+    },
+    {
+      "model": "selectel-gemma-b",
+      "kind": "short",
+      "iteration": "cold",
+      "completed": 10,
+      "submitted_span_s": 0.004242420196533203,
+      "input_tokens_each": [
+        98,
+        98,
+        98,
+        98,
+        98,
+        98,
+        98,
+        98,
+        98,
+        98
+      ],
+      "output_tokens_each": [
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13
+      ],
+      "wall_seconds": 0.7475883960723877,
+      "client_ttft_generated_text_s": {
+        "min": 0.10649426199961454,
+        "median": 0.44079750449600397,
+        "max": 0.44247383499896387,
+        "mean": 0.37439445619893374
+      },
+      "client_ttft_visible_answer_s": {
+        "min": 0.10650403899489902,
+        "median": 0.4408072824990086,
+        "max": 0.4424838920022012,
+        "mean": 0.3744218619001913
+      },
+      "elapsed_s": {
+        "min": 0.5002035189972958,
+        "median": 0.7440382809982111,
+        "max": 0.7453913850040408,
+        "mean": 0.6954732254998817
+      }
+    },
+    {
+      "model": "selectel-gemma-a",
+      "kind": "long",
+      "iteration": "cold",
+      "completed": 10,
+      "submitted_span_s": 0.0544435977935791,
+      "input_tokens_each": [
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268
+      ],
+      "output_tokens_each": [
+        14,
+        14,
+        14,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13
+      ],
+      "wall_seconds": 601.8526000976562,
+      "client_ttft_generated_text_s": {
+        "min": 59.872692890996404,
+        "median": 330.56516469599956,
+        "max": 601.1910168600007,
+        "mean": 330.47671256010074
+      },
+      "client_ttft_visible_answer_s": {
+        "min": 59.87270322800032,
+        "median": 330.5651764295035,
+        "max": 601.191026638,
+        "mean": 330.47672496400116
+      },
+      "elapsed_s": {
+        "min": 60.437697661996935,
+        "median": 331.14090616700196,
+        "max": 601.8370802570062,
+        "mean": 331.0750391918009
+      }
+    },
+    {
+      "model": "selectel-gemma-b",
+      "kind": "long",
+      "iteration": "cold",
+      "completed": 10,
+      "submitted_span_s": 0.04813432693481445,
+      "input_tokens_each": [
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268
+      ],
+      "output_tokens_each": [
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        14,
+        13
+      ],
+      "wall_seconds": 76.17533206939697,
+      "client_ttft_generated_text_s": {
+        "min": 37.38048724200053,
+        "median": 75.79597628099873,
+        "max": 75.81735483599914,
+        "mean": 71.88100113119872
+      },
+      "client_ttft_visible_answer_s": {
+        "min": 37.380498976002855,
+        "median": 75.79598605900173,
+        "max": 75.81736545199965,
+        "mean": 71.88101135609978
+      },
+      "elapsed_s": {
+        "min": 43.01897733799706,
+        "median": 76.04370106200076,
+        "max": 76.15721646699967,
+        "mean": 72.74323591379871
+      }
+    },
+    {
+      "model": "selectel-gemma-a",
+      "kind": "long",
+      "iteration": "warm",
+      "completed": 10,
+      "submitted_span_s": 0.04127359390258789,
+      "input_tokens_each": [
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268
+      ],
+      "output_tokens_each": [
+        14,
+        14,
+        14,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13
+      ],
+      "wall_seconds": 601.4056413173676,
+      "client_ttft_generated_text_s": {
+        "min": 59.76290850600344,
+        "median": 330.1993759854995,
+        "max": 600.7695875609934,
+        "mean": 330.24748853329874
+      },
+      "client_ttft_visible_answer_s": {
+        "min": 59.76291828400281,
+        "median": 330.19938576349887,
+        "max": 600.769597339,
+        "mean": 330.2474983951004
+      },
+      "elapsed_s": {
+        "min": 60.358504875002836,
+        "median": 330.8184616519975,
+        "max": 601.3643676229985,
+        "mean": 330.85715350500107
+      }
+    },
+    {
+      "model": "selectel-gemma-b",
+      "kind": "long",
+      "iteration": "warm",
+      "completed": 10,
+      "submitted_span_s": 0.0415196418762207,
+      "input_tokens_each": [
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268,
+        98268
+      ],
+      "output_tokens_each": [
+        13,
+        13,
+        14,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13
+      ],
+      "wall_seconds": 3.3995718955993652,
+      "client_ttft_generated_text_s": {
+        "min": 0.5791708159958944,
+        "median": 1.7238324964964704,
+        "max": 2.7542006009971374,
+        "mean": 1.7097185517995968
+      },
+      "client_ttft_visible_answer_s": {
+        "min": 0.5791811519957264,
+        "median": 1.7238425539981108,
+        "max": 2.754210658997181,
+        "mean": 1.7097286090989656
+      },
+      "elapsed_s": {
+        "min": 1.2158377659943653,
+        "median": 2.4202853974966274,
+        "max": 3.3675981139967917,
+        "mean": 2.385229656798765
+      }
+    }
+  ],
+  "limits": [
+    "Direct runtime, not WebUI/Bifrost E2E.",
+    "Ten requests share a prefix inside each wave; not ten unrelated documents.",
+    "Sequential waves, one run: not a general model-speed guarantee.",
+    "Short exact-answer task; natural EOS, 32768 cap is not actual answer length.",
+    "Client time to visible answer includes queue, prefill and any reasoning."
+  ],
+  "source_sha256": "79e917b8f082f76b450d89fbae0df9b4c8ef140545d03ec040d6cce32a48caca",
+  "public_source_sha256": "41ae4f1104d5c7bb467a60f6a09c65cd05334d4cf229fcb8082768b6c60f06cd"
+}
