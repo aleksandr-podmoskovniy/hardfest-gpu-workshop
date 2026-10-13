@@ -84,7 +84,7 @@ class DiagramConnections(unittest.TestCase):
             self.assertTrue(green_routes[0].endswith("L720.0 346"))
             self.assertTrue(green_routes[1].endswith("L882 473.0"))
 
-    def test_stand_map_explains_support_paths_and_is_visible_in_both_guides(self):
+    def test_full_stand_map_explains_support_paths_in_setup(self):
         root = ET.parse(ROOT / "assets/01-topology.svg").getroot()
         text = " ".join(root.itertext())
         for role in ("Open WebUI", "База знаний", "Адаптер", "Bifrost",
@@ -100,9 +100,22 @@ class DiagramConnections(unittest.TestCase):
         routes = [n.attrib["d"] for n in root.iter(SVG + "path") if n.attrib.get("data-connector")]
         self.assertTrue(any(r.endswith("L906 712.0") for r in routes))
         self.assertTrue(any(r.endswith("L906 762.0") for r in routes))
-        for page in ("README.md", "RTX5060.md", "RTXPRO6000.md", "docs/SETUP.md"):
-            source = (ROOT / page).read_text()
-            self.assertRegex(source, r"!\[[^\]]+\]\((?:\.\./)?assets/01-topology.svg\)")
+        source = (ROOT / "docs/SETUP.md").read_text()
+        self.assertIn("../assets/01-topology.svg", source)
+
+    def test_intro_map_keeps_request_path_without_later_control_plane_terms(self):
+        root = ET.parse(ROOT / "assets/29-chat-path.svg").getroot()
+        text = " ".join(root.itertext())
+        for component in ("Open WebUI", "Bifrost", "vLLM", "A30", "Qwen", "Gemma"):
+            self.assertIn(component, text)
+        for later_term in ("DRA", "NodeCache", "InferenceService", "MIG", "MPS"):
+            self.assertNotIn(later_term, text)
+        routes = [p for p in root.iter(SVG + "path") if p.attrib.get("data-connector")]
+        self.assertEqual(len(routes), 3)
+        for page in ("README.md", "RTX5060.md", "RTXPRO6000.md"):
+            intro = (ROOT / page).read_text().split('id="memory"', 1)[0]
+            self.assertIn("assets/29-chat-path.svg", intro)
+            self.assertIn("docs/SETUP.md", intro)
 
     def test_latency_defines_time_to_first_token_and_generation(self):
         text = " ".join(ET.parse(ROOT / "assets/02-latency.svg").getroot().itertext())
@@ -132,7 +145,7 @@ class DiagramConnections(unittest.TestCase):
             values = [calculate(tokens, sessions, element_bytes)["all_sessions_gib"] * scale
                       for tokens, sessions in groups for element_bytes in (2, 1)]
             for value in values:
-                label = f"{value:g}".replace(".", ",")
+                label = f"{value:.2f}".rstrip("0").rstrip(".").replace(".", ",")
                 self.assertIn(f"{label} {unit}", text)
             bars = [rect for rect in root.iter(SVG + "rect") if rect.attrib.get("height") == "44"]
             self.assertEqual(len(bars), 4)

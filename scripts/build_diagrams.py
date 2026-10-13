@@ -171,6 +171,28 @@ def topology():
     d.save()
 
 
+def chat_path():
+    d = Diagram('29-chat-path', 'От сообщения до ответа модели',
+                'Чат один; шлюз направляет запрос выбранной модели.')
+    webui = d.card(48, 208, 320, 160, 'Open WebUI',
+                   ['Сообщение, документ', 'или голосовой вопрос'])
+    gateway = d.card(440, 208, 320, 160, 'Bifrost',
+                     ['Проверяет доступ', 'Выбирает маршрут'])
+    runtime = d.card(832, 208, 320, 160, 'vLLM / GPU',
+                     ['Gemma A или B', 'либо Qwen на 2 GPU'])
+    d.connect(webui, gateway)
+    d.connect(gateway, runtime)
+    a30 = d.card(832, 462, 320, 150, 'Отдельная A30',
+                 ['Поиск по документам', 'Речь → текст'], MINT, TEAL)
+    d.connect(gateway, a30, ('bottom', 'left'), via=((600, 537),), color=TEAL)
+    d.text(48, 484, 'Основная площадка: две карты', 27, bold=True, width=696)
+    d.text(48, 529, ['H100, RTX 5060 Ti или RTX PRO 6000.',
+                    'Gemma A и B сравниваются по очереди или рядом;',
+                    'финальная Qwen использует обе карты вместо них.'], 22, width=744)
+    d.footer('Стрелки показывают запросы. Ответ возвращается в чат тем же путём.')
+    d.save()
+
+
 def latency():
     d = Diagram('02-latency', 'Из чего складывается время ответа',
                 'Очередь, обработка входа и генерация — разные части задержки.')
@@ -351,7 +373,7 @@ def kv_reuse():
 
 
 def kv_capacity(name, title, groups, maximum, unit, footer):
-    d = Diagram(name, title, 'Полезные данные KV основной модели; общий кеш префикса здесь не учитывается.')
+    d = Diagram(name, title, 'Полезные данные KV без общего префикса; подписи округлены, пропорции точные.')
     for y, (label, bf16, fp8) in zip((190, 436), groups):
         d.text(48, y, label, 29, bold=True, width=1104)
         for offset, kind, value, color, fill in ((38, 'BF16', bf16, BLUE, PALE),
@@ -359,7 +381,7 @@ def kv_capacity(name, title, groups, maximum, unit, footer):
             d.text(48, y+offset+31, kind, 25, color, True)
             width = 680 * value / maximum
             d.rect(166, y+offset, width, 44, fill, color, 6)
-            number = str(value).rstrip('0').rstrip('.') if isinstance(value, float) else str(value)
+            number = f'{value:.2f}'.rstrip('0').rstrip('.')
             d.text(188+width, y+offset+31, number.replace('.', ',') + ' ' + unit,
                    26, color, True, width=278)
     d.text(48, 652, 'FP8: 1 байт на элемент вместо 2 в BF16 → вдвое меньше KV.', 26, bold=True)
@@ -421,12 +443,12 @@ def gitops():
     argo = d.card(48, 424, 528, 168, 'Argo CD / управляющий кластер',
            ['Читает выбранный коммит', 'Рендерит Helm-чарт', 'Применяет манифесты'])
     gpu = d.card(624, 424, 528, 168, 'GPU-кластер',
-           ['Ручной runtime или InferenceService', 'DRA-заявка → Pod', 'Service → ответ модели'], MINT, TEAL)
+           ['Подготовленные ручные Deployment', 'Реплики включаются через Console', 'DRA-заявка → Pod → Service'], MINT, TEAL)
     d.connect(github, gitlab)
     d.connect(gitlab, argo, ('bottom', 'top'), via=((888, 376), (312, 376)))
     d.connect(argo, gpu, color=TEAL)
     d.text(48, 651, 'Новые параметры vLLM → новый Pod → проверка готовности', 28, bold=True)
-    d.footer('Публичные workloads выключены, autosync нет. Секреты хранятся вне Git.')
+    d.footer('Новый InferenceService создаётся отдельно в Console. Секреты хранятся вне Git.')
     d.save()
 
 
@@ -485,7 +507,7 @@ def rtx_platform():
     d.save()
 
 
-BUILDERS = (topology, latency, kv_history, kv_reuse, scheduler, speculation, mig, platform, tp2,
+BUILDERS = (topology, chat_path, latency, kv_history, kv_reuse, scheduler, speculation, mig, platform, tp2,
             pro6000_kv_capacity, pro6000_tp2,
             gemma_formula, h100_kv_capacity, rtx_kv_capacity, gitops, rag, rtx_platform, rtx_tp2)
 

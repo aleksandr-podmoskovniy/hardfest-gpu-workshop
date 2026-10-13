@@ -27,7 +27,7 @@ class ThreeStands(unittest.TestCase):
             self.assertNotIn("InferenceService", text.split('id="platform"')[0])
             for link in PAGES:
                 self.assertIn(f"]({link})", text)
-            for asset in ("01-topology", "03-kv-history", "05-kv-reuse", "06-scheduler"):
+            for asset in ("29-chat-path", "03-kv-history", "05-kv-reuse", "06-scheduler"):
                 self.assertIn(f"assets/{asset}.svg", text)
             self.assertIn("32K", text)
 
@@ -43,7 +43,7 @@ class ThreeStands(unittest.TestCase):
         for length in (131072, 262144):
             for size in (1, 2):
                 amount = calculate_gemma(length, 10, size)["all_sessions_gib"]
-                self.assertIn(f"{amount:.10g}".replace(".", ",") + " GiB", labels)
+                self.assertIn(f"{amount:.2f}".replace(".", ",") + " GiB", labels)
         text = (ROOT / "RTXPRO6000.md").read_text().split('id="tp2"', 1)[1]
         self.assertLess(text.index("не сохранена"), text.index("Перед Qwen все ручные Gemma"))
 
@@ -95,6 +95,20 @@ class ThreeStands(unittest.TestCase):
                 if re.match(r"^\s*(?:[#|<>!]|---$|[-*] |\d+\. )", block):
                     continue
                 self.assertLessEqual(len(block.split()), 75, f"Long paragraph in {name}: {block}")
+
+    def test_explanation_precedes_attention_diagram(self):
+        for name in PAGES:
+            text = (ROOT / name).read_text().split('id="memory"', 1)[1]
+            image_at = text.index("assets/03-kv-history.svg")
+            self.assertLess(text.index("**Attention**"), image_at, name)
+            self.assertIn("sliding-window attention", text[:image_at], name)
+
+    def test_reader_does_not_receive_editorial_instructions(self):
+        for name in PAGES:
+            text = (ROOT / name).read_text()
+            for wording in ("Один и тот же путь на трёх стендах", "не индикатор его текущей доступности",
+                            "не выдаётся за проверку", "Проверочный вопрос", "данный проход"):
+                self.assertNotIn(wording, text, name)
 
 
 if __name__ == "__main__":
