@@ -1,7 +1,8 @@
 # Подготовка стенда
 
-Участник начинает с работающей Gemma A и переключает готовые ручные Deployment
-в Deckhouse. Администратор заранее доставляет модели, настраивает профили,
+Показ начинается с работающей Gemma A. Готовые ручные Deployment переключаются
+в Deckhouse Console администратором, а участники нагружают их через чат.
+Администратор заранее доставляет модели, настраивает профили,
 метрики и доступ. Проверка прямого API и проверка личного чата — отдельные шаги.
 
 ![Запросы, запуск и наблюдение](../assets/01-topology.svg)
@@ -61,7 +62,7 @@ Ready, ненулевой размер и digest; доставку в NodeCache 
 | Площадка | Ручные профили | Ограничение подготовки |
 | --- | --- | --- |
 | RTX PRO 6000 | `selectel-gemma-a`, `selectel-gemma-cache`, `selectel-gemma-b` | Параметры и результаты — в [основном маршруте](../RTXPRO6000.md) |
-| H100 | `hf-gemma-a`, затем `hf-gemma-b` Cache/Tune | На 128 GiB RAM запускать последовательно |
+| H100 | `hf-gemma-a`, `hf-gemma-cache`, `hf-gemma-b` | На 128 GiB RAM запускать последовательно |
 | RTX 5060 Ti | `rtx-gemma-base`, `rtx-gemma-cache`, `rtx-gemma-tune` | Две карты по 16 GiB; подготовка ниже |
 
 У H100 B требует 56/80 GiB RAM request/limit, Qwen — 80/104 GiB.
@@ -73,17 +74,23 @@ A30 находится на отдельной площадке: две част
 ## 3. Подготовить создание InferenceService
 
 InferenceService — заказ на модель, по которому AI Inference создаёт runtime.
-Участник сам создаёт его в Deckhouse из подготовленного YAML.
+Администратор создаёт его в Deckhouse из подготовленного YAML.
 До освобождения работающих GPU проверьте рецепт, класс сервиса, Model и точное имя заказа.
 
-Для RTX PRO 6000, namespace `hardfest-demo`:
+| Площадка / namespace | Имя InferenceService | Model | Стратегия |
+| --- | --- | --- | --- |
+| H100 / `hardfest-demo` | `hf-platform-gemma` | `gemma-4-31b` | `Throughput` |
+| H100 / `hardfest-demo` | `hf-qwen-platform` | `qwen3-8-flash-next-nvfp4` | `Throughput` |
+| 5060 / `hardfest-rtx` | `rtx-gemma-platform` | `rtx-gemma-e2b` | `Throughput` |
+| 5060 / `hardfest-rtx` | `rtx-qwen35-tp2` | `rtx-qwen35-9b` | `Throughput` |
+| PRO 6000 / `hardfest-demo` | `selectel-gemma31` | `gemma-4-31b` | `Latency` |
+| PRO 6000 / `hardfest-demo` | `selectel-qwen38-tp2` | `qwen3-8-flash-next-nvfp4` | `Latency` |
 
-| Имя InferenceService | Model | InferenceServiceClass |
-| --- | --- | --- |
-| `selectel-gemma31` | `gemma-4-31b` | `hardfest-selectel-gemma31` |
-| `selectel-qwen38-tp2` | `qwen3-8-flash-next-nvfp4` | `hardfest-selectel-qwen38-tp2` |
+На PRO используются классы `hardfest-selectel-gemma31` и
+`hardfest-selectel-qwen38-tp2`. На остальных площадках имя существующего класса
+администратор заранее вписывает в пример; `REPLACE_*` не является рабочим значением.
 
-Gemma использует стратегию `Latency` и DeviceClass `hardfest-selectel-blackwell`.
+На PRO 6000 Gemma использует стратегию `Latency` и DeviceClass `hardfest-selectel-blackwell`.
 Сверьте фактическую схему установленного модуля и план запуска.
 Для Qwen класс должен разрешать две карты: `acceleratorPolicy.maxAcceleratorCount ≥ 2`;
 для одной копии модели — `scalingPolicy.minReplicas = maxReplicas = 1`.
@@ -97,6 +104,41 @@ Gemma использует стратегию `Latency` и DeviceClass `hardfest
 Для H100 целевые рецепты: Gemma Tune 128K, FP8 KV, assistant, CPU KV 32 GiB;
 Qwen TP2 256K, MTP, CPU KV 16 GiB. Эти параметры не переносятся автоматически
 на PRO 6000 или RTX 5060.
+
+<a id="console-order"></a>
+### Создать заказ в Console без угадывания полей
+
+1. Выберите проект из таблицы → **AI-модели → Сервисы инференса → Создать**.
+2. Задайте точные имя, Model, класс и стратегию. Класс устройства — существующий,
+   выбранный при подготовке; новый DeviceClass здесь не создаётся.
+3. Перед подтверждением сравните план с нужным профилем: GPU, окно,
+   KV dtype, offload, assistant/MTP и RAM. Затем создайте заказ.
+4. После Ready проверьте API и модель в WebUI под обычным аккаунтом.
+   Маршрут и ACL настроены заранее; произвольное новое имя само к ним не подключится.
+
+**Если используется редактор YAML:** `platform/pro6000/*.yaml` — готовые
+манифесты, а остальные `platform/*.yaml` — Helm values. Их нельзя вставлять
+в редактор как Kubernetes-объект. Из корня публичного репозитория получите YAML:
+
+```bash
+# H100 Gemma; для другого заказа выберите его файл из platform/.
+: "${INFERENCE_CLASS:?Укажите существующий класс сервиса}"
+: "${DEVICE_CLASS:?Укажите существующий класс устройства}"
+helm template hf-platform-gemma charts/inference-service \
+  -n hardfest-demo -f platform/gemma.yaml --set order.enabled=true \
+  --set-string order.spec.inferenceServiceClassName="$INFERENCE_CLASS" \
+  --set-string "order.spec.resources.accelerator.deviceClasses[0]=$DEVICE_CLASS"
+```
+
+В выводе замените `REPLACE_*`, проверьте `metadata.namespace` и имя.
+Для проверки схемы сохранённого на своей площадке файла:
+
+```bash
+kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f "$ORDER_FILE"
+```
+
+`ORDER_FILE` — проверенный файл конкретного заказа. Dry-run не запускает CUDA.
+Публичное `order.enabled: false` не меняется: этот показ не передаёт заказ во владение Argo.
 
 ## 4. Подключить чат и наблюдение
 
@@ -136,6 +178,24 @@ B и ещё не созданные платформенные заказы не
 На PRO 6000 прямые прогоны опубликованы в [результатах](../results/pro6000/README.md).
 Личный путь WebUI/Bifrost ещё требует проверки после входа; платформенная Gemma —
 проверки SSE, каталога и heartbeat. Эти пункты не считаются готовыми по API-тесту.
+
+<a id="acceptance"></a>
+### Когда подготовка действительно закончена
+
+| Проверка | Чем подтверждается |
+| --- | --- |
+| Base запущена, Cache/Tune/Qwen не занимают GPU | Готовый Pod A, остальные ручные реплики 0, ненужных заказов нет |
+| Переключение выполняется через Console | Autosync OFF, исключение реплик и `RespectIgnoreDifferences=true` |
+| Участник видит нужные модели | Новый обычный аккаунт, вход по логину/паролю, одобрение, ответ в чате |
+| Личный запрос не теряет владельца | Правильные VK, модель, статус и токены в Bifrost |
+| Длинный ответ не обрывается | Завершённый SSE, `finish_reason`, фактическая длина; отдельно внешний доступ |
+| A/B видны на одних графиках | Разные Service, правильные namespace/нода и интервал нагрузки |
+| Документы и голос работают | Извлечённый текст, поиск источника, ответ с цитатой и транскрипция |
+
+PRO 6000 заморожен после прогона 12 октября. Перед новым запуском проверяется
+возврат ноды и дискового кеша; RAM-кеш пуст и должен прогреться заново.
+В этой редакции материалы проверяются офлайн. Таблица — критерии следующей
+приёмки, а не заявление, что выключенный стенд прошёл их сегодня.
 
 <a id="rtx"></a>
 ## RTX 5060 Ti: подготовка отдельной площадки
@@ -194,9 +254,15 @@ assistant, FP8 KV, CPU KV 4 GiB; Qwen — 128K, TP2, MTP, CPU KV 16 GiB,
 git switch "$WORKSHOP_BRANCH" || exit 1
 ```
 
+До включения Base вручную синхронизируйте **`rtx-gemma-base`,
+`rtx-gemma-cache` и `rtx-gemma-tune`** на тот же опубликованный SHA.
+При выключенном autosync регистрация Application сама Deployment не создаёт.
+Дождитесь завершения каждой операции; у всех трёх Deployment должно быть 0 реплик,
+а у Applications — исключение `/spec/replicas` и `RespectIgnoreDifferences=true`.
+
 Подключите [мониторинг](OBSERVABILITY.md) и включите `rtx-gemma-base` в Console.
-На исторической площадке без ручного управления репликами задайте
-`replicaCount: 1` в `gemma-base.yaml`, commit/push и ручной Sync.
+Старую площадку без исключения реплик сначала обновите из этих Applications;
+не смешивайте управление через Console и `replicaCount: 1` в Git.
 Проверьте ответ по шагу 5 с именами ниже; остальные модели пока выключены.
 
 | Подпись | Маршрут | Service:порт | Upstream |

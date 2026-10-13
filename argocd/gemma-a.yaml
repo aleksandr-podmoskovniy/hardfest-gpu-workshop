@@ -17,8 +17,15 @@ spec:
   destination:
     name: gpu-cluster
     namespace: hardfest-demo
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: hf-gemma-a
+      jsonPointers: [/spec/replicas]
   syncPolicy:
     syncOptions:
       - CreateNamespace=false
       - ServerSideApply=true
       - PruneLast=true
+      - RespectIgnoreDifferences=true
+      - FailOnSharedResource=true

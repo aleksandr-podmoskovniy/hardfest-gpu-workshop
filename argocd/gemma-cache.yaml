@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hardfest-gemma-cache
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://gitlab.example.com/team/k8s-config.git
+    targetRevision: hardfest-demo
+    path: argo-projects/gpu-cluster/hardfest-demo/charts/vllm-runtime
+    helm:
+      releaseName: hf-gemma-cache
+      valueFiles:
+        - ../../values/gemma-b.yaml
+        - ../../site/gemma.yaml
+      parameters:
+        - name: fullnameOverride
+          value: hf-gemma-cache
+  destination:
+    name: gpu-cluster
+    namespace: hardfest-demo
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: hf-gemma-cache
+      jsonPointers: [/spec/replicas]
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+      - FailOnSharedResource=true

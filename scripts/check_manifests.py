@@ -122,11 +122,17 @@ def check():
             errors.append(f"{path.name}: expected Helm source, not directory")
         else:
             helm = source["helm"]
-            if helm.get("parameters") or helm.get("valuesObject") or helm.get("values"):
+            expected_parameters = ([{"name": "fullnameOverride", "value": "hf-gemma-cache"}]
+                                   if path.stem == "gemma-cache" else [])
+            if helm.get("parameters", []) != expected_parameters or helm.get("valuesObject") or helm.get("values"):
                 errors.append(f"{path.name}: keep settings in explicit valueFiles")
-            if helm.get("valueFiles") != [f"../../values/{path.stem}.yaml",
-                                         "../../site/gemma.yaml" if path.stem.startswith("gemma")
-                                         else f"../../site/{path.stem}.yaml"]:
+            expected_files = {
+                "gemma-cache": ["../../values/gemma-b.yaml", "../../site/gemma.yaml"],
+                "gemma-b": ["../../values/gemma-b-spec.yaml", "../../site/gemma-assistant.yaml"],
+            }.get(path.stem, [f"../../values/{path.stem}.yaml",
+                             "../../site/gemma.yaml" if path.stem.startswith("gemma")
+                             else f"../../site/{path.stem}.yaml"])
+            if helm.get("valueFiles") != expected_files:
                 errors.append(f"{path.name}: unexpected values precedence")
         if "automated" in app["spec"].get("syncPolicy", {}) or app["metadata"].get("finalizers"):
             errors.append(f"{path.name}: autosync/cascade must not be enabled")

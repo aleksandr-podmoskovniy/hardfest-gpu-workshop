@@ -61,7 +61,10 @@ kubectl --context "$GPU_CONTEXT" get crd clusterobservabilitydashboards.observab
 
 Задайте `OBS_ROOT` каталогом площадки, `OBS_NAMESPACE` — её namespace.
 Для H100: `OBS_ROOT="$DEMO_DIR" OBS_NAMESPACE=hardfest-demo`;
-для RTX 5060: `OBS_ROOT="$RTX_DIR" OBS_NAMESPACE=hardfest-rtx`.
+для RTX 5060: `OBS_ROOT="$RTX_DIR" OBS_NAMESPACE=hardfest-rtx`;
+для RTX PRO 6000: `OBS_ROOT="$PRO_DIR" OBS_NAMESPACE=hardfest-demo`.
+Если H100 и PRO используют один namespace, общий сборщик и дашборд не создаются повторно:
+выбираются нужные Service и нода.
 Следующий блок предназначен только для нового каталога:
 
 ```bash

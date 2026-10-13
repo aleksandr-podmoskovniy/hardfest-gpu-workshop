@@ -36,8 +36,8 @@ class DiagramConnections(unittest.TestCase):
     def test_a30_stays_with_webui_and_includes_whisper(self):
         root = ET.parse(ROOT / "assets" / "01-topology.svg").getroot()
         text = " ".join(root.itertext())
-        self.assertIn("WebUI + A30 — один кластер", text)
-        self.assertIn("Шлюз + 2 H100 или 2 RTX 5060 Ti — другой", text)
+        self.assertIn("GPU-площадка: 2 × H100, RTX 5060 Ti или PRO 6000", text)
+        self.assertIn("A30 — отдельно", text)
         self.assertIn("A30 / 2 × 2g.12gb", text)
         self.assertIn("Whisper large-v3", text)
 
@@ -89,7 +89,7 @@ class DiagramConnections(unittest.TestCase):
         text = " ".join(root.itertext())
         for role in ("Open WebUI", "База знаний", "Адаптер", "Bifrost",
                      "Gemma A и B", "Qwen", "A30", "Whisper", "Deployment", "AI Inference",
-                     "Git + Helm", "Argo CD", "ai-models → NodeCache → веса для vLLM",
+                     "Git + Argo CD", "Console", "ai-models → NodeCache → веса для vLLM",
                      "Prometheus → Console"):
             self.assertIn(role, text)
         # Deployment, weight delivery and observation are separate paths,
@@ -100,7 +100,7 @@ class DiagramConnections(unittest.TestCase):
         routes = [n.attrib["d"] for n in root.iter(SVG + "path") if n.attrib.get("data-connector")]
         self.assertTrue(any(r.endswith("L906 712.0") for r in routes))
         self.assertTrue(any(r.endswith("L906 762.0") for r in routes))
-        for page in ("README.md", "RTX5060.md", "docs/SETUP.md"):
+        for page in ("README.md", "RTX5060.md", "RTXPRO6000.md", "docs/SETUP.md"):
             source = (ROOT / page).read_text()
             self.assertRegex(source, r"!\[[^\]]+\]\((?:\.\./)?assets/01-topology.svg\)")
 

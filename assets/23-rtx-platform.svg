@@ -24,7 +24,7 @@
 <tspan x="464" dy="0">2. Доставка</tspan>
 </text>
 <text x="464" y="245" font-size="20" fill="#17243b" text-anchor="start" data-max-width="272">
-<tspan x="464" dy="0">На нужную RTX-ноду</tspan>
+<tspan x="464" dy="0">На выбранную GPU-ноду</tspan>
 <tspan x="464" dy="28.0">Проверенный mount</tspan>
 </text>
 <rect x="832" y="175" width="320" height="136" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
@@ -69,7 +69,7 @@
 <tspan x="72" dy="0">Проверяем три разных результата</tspan>
 </text>
 <text x="72" y="646" font-size="22" fill="#17243b" text-anchor="start" data-max-width="1056">
-<tspan x="72" dy="0">Модель в каталоге → файлы на RTX → ответ сервиса через личный ключ.</tspan>
+<tspan x="72" dy="0">Модель в каталоге → файлы на узле → ответ сервиса через личный ключ.</tspan>
 </text>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">

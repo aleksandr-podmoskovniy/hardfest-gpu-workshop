@@ -7,7 +7,7 @@
 
 | Что меняется | Файлы | Что проверить |
 | --- | --- | --- |
-| Последовательность запуска | `README.md` и `RTX5060.md` | Полное руководство на одной странице, команды рядом с объяснением |
+| Последовательность запуска | `README.md`, `RTX5060.md`, `RTXPRO6000.md` | Одинаковые восемь глав и навигация; различаются железо, профили и доказательства |
 | Подготовка инфраструктуры | `docs/SETUP.md`, `docs/GITOPS.md` | Явные контексты, пути и действия в редакторе, без привязки к личному стенду |
 | Настройки runtime | `values/`, `charts/vllm-runtime/` | Helm render, schema, ConfigMap checksum, DRA и нулевые реплики |
 | Веса моделей | `models.lock.json`, `catalog/models.yaml`, `catalog/rtx.yaml`, `catalog/a30.yaml` | Одинаковые закреплённые ревизии, доступ и лицензии |
@@ -45,7 +45,7 @@
 
 ```bash
 python3 -m pip install -r requirements-dev.txt
-for profile in values/*.yaml; do
+for profile in values/*.yaml values/rtx/*.yaml values/pro6000/*.yaml; do
   helm lint charts/vllm-runtime --strict -f "$profile" || exit 1
 done
 helm lint charts/model-catalog --strict -f catalog/models.yaml

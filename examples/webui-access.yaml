@@ -1,5 +1,7 @@
 # Overlay for charts/webui-access. Names and prices belong to this example,
 # not to the adapter. Replace provider key IDs and image in private site values.
+# Minimal A/B example, not the complete workshop model list. Add Cache, platform
+# and Qwen routes from docs/CHAT_AND_ACCESS.md before provisioning workshop users.
 config:
   managed_by: workshop-webui
   key_name_prefix: Workshop

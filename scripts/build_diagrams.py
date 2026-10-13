@@ -146,19 +146,19 @@ def topology():
     d.text(48, 450, ['База знаний хранится в WebUI.',
                      'Найденный текст дополняет запрос к vLLM;',
                      'Whisper возвращает текст голосового сообщения.'], 20, width=774)
-    d.text(48, 573, 'WebUI + A30 — один кластер. Шлюз + 2 H100 или 2 RTX 5060 Ti — другой.',
+    d.text(48, 573, 'GPU-площадка: 2 × H100, RTX 5060 Ti или PRO 6000. A30 — отдельно.',
            20, MUTED, width=1104)
 
     d.path('M48 598 H1152', LINE, width=1)
     d.text(48, 634, '2. ДВА СПОСОБА ЗАПУСТИТЬ ТОТ ЖЕ ДВИЖОК', 20, MUTED, True)
-    git = d.card(48, 687, 228, 100, 'Git + Helm', ['Конфигурация'], compact=True)
-    argo = d.card(324, 687, 228, 100, 'Argo CD', ['Применяет из Git'], compact=True)
+    git = d.card(48, 655, 504, 78, 'Git + Argo CD', ['Заранее готовят Deployment'], compact=True)
+    console = d.card(48, 765, 504, 78, 'Deckhouse Console', ['Реплики / создание заказа'], compact=True)
     manual = d.card(624, 655, 240, 78, 'Deployment', ['Ручные параметры'], compact=True)
     platform = d.card(624, 765, 240, 78, 'AI Inference', ['Подбирает запуск'], LILAC, PURPLE, compact=True)
     engine = d.card(912, 687, 240, 100, 'vLLM', ['Исполняет модель'], compact=True)
-    d.connect(git, argo)
-    d.connector([argo.port('right', .25), (588, 712), (588, 694), manual.port('left')])
-    d.connector([argo.port('right', .75), (588, 762), (588, 804), platform.port('left')], PURPLE)
+    d.connect(git, manual)
+    d.connector([console.port('right', .25), (588, 784.5), (588, 717.4), manual.port('left', .8)], dash=True)
+    d.connect(console, platform, color=PURPLE)
     d.connector([manual.port('right'), (884, 694), (884, 712), engine.port('left', .25)])
     d.connector([platform.port('right'), (884, 804), (884, 762), engine.port('left', .75)], PURPLE)
 
@@ -381,6 +381,17 @@ def rtx_kv_capacity():
                 '128K — максимум этой E2B. 8 историй — расчёт; Tune допускает 2 активные последовательности.')
 
 
+def pro6000_kv_capacity():
+    kv_capacity('27-pro6000-kv-capacity', 'Gemma 31B: цена десяти длинных историй',
+                [('10 независимых историй × 128K токенов', 107.8125, 53.90625),
+                 ('10 независимых историй × 256K токенов', 207.8125, 103.90625)], 207.8125, 'GiB',
+                'На одной PRO 6000 только KV десяти окон 256K больше VRAM — ещё до весов и буферов.')
+
+
+def pro6000_tp2():
+    tp2('28-pro6000-tp2', 'RTX PRO 6000', 'NCCL', 'VRAM')
+
+
 def gemma_formula():
     d = Diagram('11-gemma-kv', 'KV-кэш Gemma: считаем память',
                 'Контекст S — 128K или 256K; 1024 — окно только локальных слоёв.')
@@ -453,7 +464,7 @@ def rtx_platform():
     model = d.card(48, 175, 320, 136, '1. Model',
                    ['Источник + revision', 'Артефакт + digest'], compact=True)
     delivery = d.card(440, 175, 320, 136, '2. Доставка',
-                      ['На нужную RTX-ноду', 'Проверенный mount'], MINT, TEAL, compact=True)
+                      ['На выбранную GPU-ноду', 'Проверенный mount'], MINT, TEAL, compact=True)
     runtime = d.card(832, 175, 320, 136, '3. Runtime',
                      ['vLLM + локальные веса', 'Ответ API и MTP'], compact=True)
     d.connect(model, delivery)
@@ -469,12 +480,13 @@ def rtx_platform():
     d.connect(runtime, ui, ('bottom', 'top'))
     d.rect(48, 577, 1104, 100, SAND)
     d.text(72, 610, 'Проверяем три разных результата', 24, AMBER, True, width=1056)
-    d.text(72, 646, 'Модель в каталоге → файлы на RTX → ответ сервиса через личный ключ.', 22, width=1056)
+    d.text(72, 646, 'Модель в каталоге → файлы на узле → ответ сервиса через личный ключ.', 22, width=1056)
     d.footer('Gemma с MTP получает два артефакта: основную модель и совместимый assistant.')
     d.save()
 
 
 BUILDERS = (topology, latency, kv_history, kv_reuse, scheduler, speculation, mig, platform, tp2,
+            pro6000_kv_capacity, pro6000_tp2,
             gemma_formula, h100_kv_capacity, rtx_kv_capacity, gitops, rag, rtx_platform, rtx_tp2)
 
 if __name__ == '__main__':

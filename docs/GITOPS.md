@@ -1,6 +1,6 @@
 # Конфигурация стенда и управление запуском
 
-На подготовленном стенде участник меняет `spec.replicas` ручного Deployment
+На подготовленном стенде администратор меняет `spec.replicas` ручного Deployment
 в Deckhouse: `1` запускает модель, `0` останавливает её. Argo autosync выключен,
 а `/spec/replicas` исключён из сравнения. Параметры vLLM, образы и привязки
 устройств по-прежнему хранятся в частном `k8s-config`.
@@ -58,6 +58,7 @@ cp ../hardfest-gpu-workshop/examples/site-gemma-catalog.yaml "$DEMO_DIR/site/gem
 cp ../hardfest-gpu-workshop/examples/site-gemma-assistant-catalog.yaml "$DEMO_DIR/site/gemma-assistant.yaml"
 cp ../hardfest-gpu-workshop/argocd/gemma-a.yaml "$DEMO_DIR/argo-app/"
 cp ../hardfest-gpu-workshop/argocd/gemma-b.yaml "$DEMO_DIR/argo-app/"
+cp ../hardfest-gpu-workshop/argocd/gemma-cache.yaml "$DEMO_DIR/argo-app/"
 ```
 
 На существующей площадке переносите diff, сохраняя её `site/`.
@@ -70,13 +71,30 @@ cp ../hardfest-gpu-workshop/argocd/gemma-b.yaml "$DEMO_DIR/argo-app/"
 helm:
   releaseName: hf-gemma-b
   valueFiles:
-    - ../../values/gemma-b.yaml
-    - ../../site/gemma.yaml
+    - ../../values/gemma-b-spec.yaml
+    - ../../site/gemma-assistant.yaml
 ```
 
 Site задаёт ноду, существующий DeviceClass, `modelRefs` и пути весов.
 У Tune нужны основная модель и assistant. Списки Helm заменяет целиком.
 Все профили поставляются с `replicaCount: 0`; autosync выключен.
+
+| H100 Application | Deployment | Профиль |
+| --- | --- | --- |
+| `hardfest-gemma-a` | `hf-gemma-a` | `gemma-a.yaml` |
+| `hardfest-gemma-cache` | `hf-gemma-cache` | `gemma-b.yaml`, имя переопределено Helm parameter |
+| `hardfest-gemma-b` | `hf-gemma-b` | `gemma-b-spec.yaml` + assistant |
+
+У всех трёх сохранены `ignoreDifferences` для `/spec/replicas`
+и [RespectIgnoreDifferences=true](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/#respect-ignore-differences-configs).
+Это сохраняет реплики существующего Deployment при Sync; новый создаётся с `0`.
+Cache и Tune используют одну свободную карту
+по очереди; их Pod не должны существовать одновременно.
+
+**Обновление старой площадки:** если `hardfest-gemma-b` ещё запускает Cache,
+сначала завершите запросы и остановите его. Затем перенесите новый diff,
+проверьте три уникальных имени Deployment/Service/ResourceClaimTemplate и Sync.
+Это подготовительная миграция, не действие в середине сравнения.
 
 <a id="pro6000-bootstrap"></a>
 ### Отдельная площадка RTX PRO 6000
@@ -141,17 +159,19 @@ kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply -f "$PRO_DIR/argo-a
 
 ## 3. Проверить и отправить изменение
 
-Пример для A. Для Cache задайте `SLOT=b SITE=gemma APP=hardfest-gemma-b`,
-для Tune — `SLOT=b SITE=gemma-assistant APP=hardfest-gemma-b`.
+Пример для A. Для Cache задайте `PROFILE=gemma-b SERVICE=hf-gemma-cache SITE=gemma APP=hardfest-gemma-cache`,
+для Tune — `PROFILE=gemma-b-spec SERVICE=hf-gemma-b SITE=gemma-assistant APP=hardfest-gemma-b`.
 Перед commit просмотрите staged diff; открытые Secret и токены в Git не попадают.
 
 ```bash
-export SLOT=a SITE=gemma APP=hardfest-gemma-a
+export PROFILE=gemma-a SERVICE=hf-gemma-a SITE=gemma APP=hardfest-gemma-a
 test "$(git branch --show-current)" = "$WORKSHOP_BRANCH" || exit 1
 helm lint "$DEMO_DIR/charts/vllm-runtime" --strict \
-  -f "$DEMO_DIR/values/gemma-$SLOT.yaml" -f "$DEMO_DIR/site/$SITE.yaml" || exit 1
-helm template "hf-gemma-$SLOT" "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
-  -f "$DEMO_DIR/values/gemma-$SLOT.yaml" -f "$DEMO_DIR/site/$SITE.yaml" |
+  -f "$DEMO_DIR/values/$PROFILE.yaml" -f "$DEMO_DIR/site/$SITE.yaml" \
+  --set-string fullnameOverride="$SERVICE" || exit 1
+helm template "$SERVICE" "$DEMO_DIR/charts/vllm-runtime" -n hardfest-demo \
+  -f "$DEMO_DIR/values/$PROFILE.yaml" -f "$DEMO_DIR/site/$SITE.yaml" \
+  --set-string fullnameOverride="$SERVICE" |
   kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f - || exit 1
 git add -- "$DEMO_DIR"
 git diff --cached --check || exit 1
@@ -170,9 +190,9 @@ Applications регистрируются в управляющем класте
 
 ```bash
 kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply --dry-run=server \
-  -f "$DEMO_DIR/argo-app/gemma-a.yaml" -f "$DEMO_DIR/argo-app/gemma-b.yaml" || exit 1
+  -f "$DEMO_DIR/argo-app/gemma-a.yaml" -f "$DEMO_DIR/argo-app/gemma-cache.yaml" -f "$DEMO_DIR/argo-app/gemma-b.yaml" || exit 1
 kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" apply \
-  -f "$DEMO_DIR/argo-app/gemma-a.yaml" -f "$DEMO_DIR/argo-app/gemma-b.yaml" || exit 1
+  -f "$DEMO_DIR/argo-app/gemma-a.yaml" -f "$DEMO_DIR/argo-app/gemma-cache.yaml" -f "$DEMO_DIR/argo-app/gemma-b.yaml" || exit 1
 REVISION=$(git rev-parse HEAD)
 kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" patch application "$APP" \
   --type merge --patch "{\"operation\":{\"sync\":{\"revision\":\"$REVISION\",\"prune\":false}}}"
@@ -181,14 +201,15 @@ kubectl --context "$ARGO_CONTEXT" -n "$ARGO_NAMESPACE" get application "$APP" \
 ```
 
 Дождитесь окончания операции и сверьте SHA. Не запускайте следующую Sync-операцию
-поверх текущей. Для первого применения B повторите Sync с `APP=hardfest-gemma-b`.
+поверх текущей. Для Cache/Tune повторите Sync с `APP=hardfest-gemma-cache`
+и `APP=hardfest-gemma-b`. На этом этапе все три Deployment имеют 0 реплик.
 
 <a id="запуск-a"></a>
 ## 5. Запустить A
 
 В подготовленной Console откройте Deployment A и задайте `spec.replicas: 1`.
-B остаётся выключенной. Для исторического стенда без исключения `/spec/replicas`
-используется `replicaCount: 1` в values и шаги 3–4.
+B остаётся выключенной. Исходный `replicaCount: 0` в Git не меняется.
+Старую площадку без исключения `/spec/replicas` сначала обновите по шагам 2–4.
 
 ```bash
 kubectl --context "$GPU_CONTEXT" -n hardfest-demo rollout status deployment/hf-gemma-a --timeout=40m
@@ -200,9 +221,8 @@ kubectl --context "$GPU_CONTEXT" -n hardfest-demo logs deployment/hf-gemma-a --t
 
 ## 6. Переключить B
 
-Если Cache и Tune подготовлены отдельными Deployment, остановите текущий
-и включите следующий в Console. При замене профиля одного Deployment
-сначала остановите его, затем замените values целиком и выполните шаги 3–4.
+Cache и Tune подготовлены отдельными Deployment на всех трёх площадках.
+Остановите текущий и включите следующий в Console.
 Для H100 Tune используется `gemma-b-spec.yaml` и `site/gemma-assistant.yaml`.
 На узле 128 GiB A останавливается до B; продолжайте после удаления её Pod.
 

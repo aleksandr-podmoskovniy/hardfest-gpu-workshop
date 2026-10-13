@@ -15,7 +15,7 @@ Deployment, шаблон заявки DRA, Service и NetworkPolicy. Платф�
 | [gemma-b-spec](../../values/gemma-b-spec.yaml) | Итерация 2: 128K, кэши первой, prefill 2048, graphs и assistant |
 | [qwen-tp2](../../values/qwen-tp2.yaml) | Ручной эталон параметров; основной запуск — AI Inference |
 
-Для RTX — отдельные [профили и маршрут](../../RTX5060.md).
+Для [RTX 5060 Ti](../../RTX5060.md) и [RTX PRO 6000](../../RTXPRO6000.md) — отдельные профили.
 Размер порции prefill не ограничивает окно: Tune обрабатывает 128K частями.
 
 **Один профиль, затем привязка площадки.** Несколько вариантов B через `-f`
@@ -28,7 +28,8 @@ Deployment, шаблон заявки DRA, Service и NetworkPolicy. Платф�
 
 ```bash
 helm lint charts/vllm-runtime --strict -f values/gemma-b.yaml
-helm template hf-gemma-b charts/vllm-runtime -n hardfest-demo -f values/gemma-b.yaml
+helm template hf-gemma-cache charts/vllm-runtime -n hardfest-demo \
+  -f values/gemma-b.yaml --set-string fullnameOverride=hf-gemma-cache
 ```
 
 Добавьте `-f site/gemma.yaml` после профиля. Примеры привязки:
@@ -58,7 +59,9 @@ API по умолчанию закрыт для других namespace; учас
 
 Доставка — через [GitOps](../../docs/GITOPS.md), без `helm upgrade/rollback`
 поверх Argo. Изменение vLLM обновляет checksum Pod, изменение DRA — имя шаблона.
-Стратегия Recreate освобождает GPU перед новым Pod; Cache и Tune заменяют один B.
+Стратегия Recreate освобождает GPU перед новым Pod одного Deployment.
+Cache и Tune — разные Deployment для двух итераций B. Сначала остановите Cache
+в Deckhouse и дождитесь освобождения GPU, затем включайте Tune.
 
 Startup probe допускает 30 минут, Deployment — 40 минут на размещение и старт.
 Это предел ожидания, не обещанная скорость. Готовность подтверждается ответом API.

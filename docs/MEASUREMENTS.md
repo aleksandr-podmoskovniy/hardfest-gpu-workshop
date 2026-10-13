@@ -72,7 +72,7 @@
 `TOKENIZER_PATH=/data/modelcache/models/rtx-gemma-e2b`, `LONG_INPUT=3072`, `OUTPUT=128`.
 
 ```bash
-export NS=hardfest-demo SERVICE=hf-gemma-b MODEL=gemma-4-31b
+export NS=hardfest-demo SERVICE=hf-gemma-cache MODEL=gemma-4-31b
 export TOKENIZER_PATH=/data/modelcache/models/gemma-4-31b
 export LONG_INPUT=8192 OUTPUT=512 PHASE=cache
 export TRACE_ID=$(date +%s)
@@ -85,7 +85,8 @@ printf '{"timestamp":0.05,"input_length":128,"output_length":%s,"hash_ids":[%s]}
 ```
 
 Создайте trace один раз на пару. Выполните блок на Cache, переключите профиль
-и повторите с `PHASE=tune`; на RTX также `SERVICE=rtx-gemma-tune MODEL=rtx-gemma-tune`.
+и повторите с `PHASE=tune SERVICE=hf-gemma-b`;
+на RTX — `PHASE=tune SERVICE=rtx-gemma-tune MODEL=rtx-gemma-tune`.
 
 ```bash
 export RESULT="mixed-$TRACE_ID-$PHASE.json"
@@ -136,7 +137,7 @@ start_times[1] < start_times[0] + ttfts[0]
 Клиенту нужен `jq`.
 
 ```bash
-export NS=hardfest-demo SERVICE=hf-gemma-b MODEL=gemma-4-31b
+export NS=hardfest-demo SERVICE=hf-gemma-cache MODEL=gemma-4-31b
 export TOKENIZER=/data/modelcache/models/gemma-4-31b INPUT=8192
 mkdir -p results/offload
 set -o pipefail

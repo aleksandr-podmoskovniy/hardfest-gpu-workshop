@@ -16,5 +16,10 @@ spec:
   destination:
     name: gpu-cluster
     namespace: hardfest-rtx
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: rtx-gemma-tune
+      jsonPointers: [/spec/replicas]
   syncPolicy:
-    syncOptions: [CreateNamespace=false, ServerSideApply=true, FailOnSharedResource=true]
+    syncOptions: [CreateNamespace=false, ServerSideApply=true, RespectIgnoreDifferences=true, FailOnSharedResource=true]

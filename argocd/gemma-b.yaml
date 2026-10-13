@@ -12,13 +12,20 @@ spec:
     helm:
       releaseName: hf-gemma-b
       valueFiles:
-        - ../../values/gemma-b.yaml
-        - ../../site/gemma.yaml
+        - ../../values/gemma-b-spec.yaml
+        - ../../site/gemma-assistant.yaml
   destination:
     name: gpu-cluster
     namespace: hardfest-demo
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: hf-gemma-b
+      jsonPointers: [/spec/replicas]
   syncPolicy:
     syncOptions:
       - CreateNamespace=false
       - ServerSideApply=true
       - PruneLast=true
+      - RespectIgnoreDifferences=true
+      - FailOnSharedResource=true

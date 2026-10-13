@@ -13,23 +13,23 @@ CHART = ROOT / "charts/inference-service"
 
 class InferenceOrders(unittest.TestCase):
     def test_inline_launch_commands_use_real_helm_values(self):
-        # Exercise the filenames shown in the walkthroughs, not a separate lab.
+        # Walkthroughs create orders in Console; preparation renders each
+        # documented reference. Do not require Git/Argo launch commands in prose.
         expected = {"README.md": {"gemma", "qwen"},
                     "RTX5060.md": {"rtx-gemma", "rtx-qwen"}}
+        setup = (ROOT / "docs/SETUP.md").read_text()
+        self.assertIn("helm template hf-platform-gemma charts/inference-service", setup)
+        self.assertIn("--set order.enabled=true", setup)
+        self.assertIn('order.spec.inferenceServiceClassName="$INFERENCE_CLASS"', setup)
         for filename, orders in expected.items():
             text = (ROOT / filename).read_text()
-            commands = re.findall(r"helm template [^`]*?\|\n\s+kubectl[^\n]*", text)
-            found = set()
-            for command in commands:
-                if "/charts/inference-service" not in command:
-                    continue
-                name = re.search(r'/platform/([\w-]+)\.yaml', command)[1]
-                self.assertNotIn('apply --dry-run=server -f "$', command)
-                self.assertIn("apply --dry-run=server -f -", command)
+            self.assertIn("docs/SETUP.md#console-order", text)
+            for name in orders:
                 rendered = self.render(name, overrides=self.enabled())
                 self.assertEqual([doc["kind"] for doc in rendered], ["InferenceService"])
-                found.add(name)
-            self.assertEqual(found, orders)
+                order_name = rendered[0]["metadata"]["name"]
+                self.assertIn(order_name, text)
+                self.assertIn(order_name, setup)
 
     def render(self, name, enabled=False, overrides=None, success=True):
         with tempfile.TemporaryDirectory() as tmp:

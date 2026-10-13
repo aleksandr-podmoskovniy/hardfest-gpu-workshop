@@ -16,7 +16,7 @@ jobs:
           version: v3.17.3
       - name: Lint all runtime profiles
         run: |
-          for profile in values/*.yaml; do
+          for profile in values/*.yaml values/rtx/*.yaml values/pro6000/*.yaml; do
             helm lint charts/vllm-runtime --strict -f "$profile"
           done
       - name: Lint model catalog

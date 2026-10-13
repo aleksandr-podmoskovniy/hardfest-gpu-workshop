@@ -72,7 +72,7 @@ class Guide(unittest.TestCase):
         self.assertIn("не измерение вклада одного MTP", second)
         self.assertIn("122 880", second)
         self.assertIn("cpu_bytes_to_use: 34359738368", ram)
-        self.assertRegex(ram, r"128 GiB[\s\S]{0,200}A останавливается через Git/Argo")
+        self.assertRegex(ram, r"128 GiB[\s\S]{0,200}A останавливается в Deckhouse Console")
         for stale in ("gemma-b-128k.yaml", "gemma-b-ram.yaml"):
             self.assertNotIn(stale, readme)
 
@@ -108,7 +108,8 @@ class Guide(unittest.TestCase):
             self.assertNotIn("labs/", text)
             self.assertNotIn("лаборатор", text.lower())
             self.assertIn("<summary>", text)
-            self.assertIn("helm template", text)
+            self.assertIn("docs/SETUP.md#console-order", text)
+            self.assertIn("spec.replicas: 0", text)
             self.assertIn("vllm bench serve", text)
             self.assertIn("nvidia-smi mig -lgi", text)
 
@@ -172,15 +173,14 @@ class Guide(unittest.TestCase):
         chapter = readme.split('id="platform"', 1)[1].split('id="conclusion"', 1)[0]
         for term in ("128K", "RAM-offload", "assistant", "hf-platform-gemma", "Gemma A — DP"):
             self.assertIn(term, chapter)
-        for term in ("charts/inference-service", "order.enabled: true", "model", "Ready",
-                     "helm template"):
+        for term in ("Deckhouse Console", "Throughput", "model", "Ready"):
             self.assertIn(term, readme)
-        self.assertIn("charts/inference-service", chapter)
-        self.assertIn("`replicaCount: 0`", chapter)
+        self.assertIn("Сервисы инференса → Создать", chapter)
+        self.assertIn("`spec.replicas: 0`", chapter)
         self.assertIn("исчезновения Pod", chapter)
         self.assertIn("192 GiB RAM", chapter)
         self.assertRegex(chapter, r"128 GiB[\s\S]{0,100}результат B сохраняется до её остановки")
-        self.assertLess(chapter.index("исчезновения Pod"), chapter.index("order.enabled: true"))
+        self.assertLess(chapter.index("исчезновения Pod"), chapter.index("Сервисы инференса → Создать"))
 
     def test_original_teaching_chain_is_preserved_for_current_models(self):
         for name in ("README.md", "RTX5060.md"):
@@ -220,11 +220,11 @@ class Guide(unittest.TestCase):
         self.assertNotIn("бонус", chapter.lower())
         self.assertLess(readme.index('id="tp2"'), readme.index('id="cleanup"'))
         for term in ("tensor-parallel-size: 2", "acceleratorCount=2",
-                     "VK", "MTP", "order.enabled: true", "values/qwen-tp2.yaml",
+                     "VK", "MTP", "spec.replicas: 0", "values/qwen-tp2.yaml",
                      "262144", "122 880", "8192"):
             self.assertIn(term, chapter)
-        self.assertIn('helm template hf-qwen-platform', chapter)
-        self.assertIn('charts/inference-service', chapter)
+        self.assertIn('hf-qwen-platform', chapter)
+        self.assertIn('docs/SETUP.md#console-order', chapter)
         self.assertNotIn('kind: InferenceService', chapter)
 
     def test_platform_preflight_precedes_releasing_working_gpus(self):
@@ -284,7 +284,7 @@ class Guide(unittest.TestCase):
         self.assertIn("Gemma B — Tune", readme)
         self.assertIn("маршрут", readme)
         self.assertIn("Bifrost", readme)
-        self.assertIn("через AI Inference", readme)
+        self.assertIn("**AI Inference**", readme)
         self.assertIn("docs/CHAT_AND_ACCESS.md", readme)
         guide = (ROOT / "docs/CHAT_AND_ACCESS.md").read_text()
         for term in ("pending", "Virtual Key", "OIDC", "MCP", "ACL", "отзыв"):
@@ -318,7 +318,7 @@ class Guide(unittest.TestCase):
         self.assertIn("GITOPS.md#запуск-a", setup)
         gitops = (ROOT / "docs/GITOPS.md").read_text()
         launch = gitops.split('<a id="запуск-a"></a>', 1)[1].split("## 6.", 1)[0]
-        for setting in ("replicaCount: 1", "B остаётся выключенной", "rollout status deployment/hf-gemma-a"):
+        for setting in ("spec.replicas: 1", "B остаётся выключенной", "rollout status deployment/hf-gemma-a"):
             self.assertIn(setting, launch)
         self.assertIn("/v1/chat/completions", setup)
         rtx = setup.split('id="rtx"', 1)[1]
@@ -373,7 +373,7 @@ class Guide(unittest.TestCase):
         diagrams = list((ROOT / "assets").glob("[0-9][0-9]-*.svg"))
         from build_diagrams import BUILDERS
         self.assertEqual(len(diagrams), len(BUILDERS))
-        docs = "\n".join(path.read_text() for path in [ROOT / "README.md", ROOT / "RTX5060.md"] +
+        docs = "\n".join(path.read_text() for path in [ROOT / "README.md", ROOT / "RTX5060.md", ROOT / "RTXPRO6000.md"] +
                          list((ROOT / "docs").rglob("*.md")) +
                          list((ROOT / "labs").glob("*.md")))
         for path in diagrams:
