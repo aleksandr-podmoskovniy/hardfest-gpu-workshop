@@ -81,6 +81,10 @@ InferenceService — заказ на модель, по которому AI Infe
 Администратор создаёт его в Deckhouse из подготовленного YAML.
 До освобождения работающих GPU проверьте рецепт, класс сервиса, Model и точное имя заказа.
 
+В основном сценарии после A30 запускается Qwen на двух GPU.
+Платформенная Gemma нужна только для необязательного сравнения с ручной Tune;
+её создание не является условием запуска Qwen.
+
 | Площадка / namespace | Имя InferenceService | Model | Стратегия |
 | --- | --- | --- | --- |
 | H100 / `hardfest-demo` | `hf-platform-gemma` | `gemma-4-31b` | `Throughput` |
@@ -128,11 +132,11 @@ Qwen TP2 256K, MTP, CPU KV 16 GiB. Эти параметры не перенос
 в редактор как Kubernetes-объект. Из корня публичного репозитория получите YAML:
 
 ```bash
-# H100 Gemma; для другого заказа выберите его файл из platform/.
+# H100 Qwen; для другого заказа выберите его файл из platform/.
 : "${INFERENCE_CLASS:?Укажите существующий класс сервиса}"
 : "${DEVICE_CLASS:?Укажите существующий класс устройства}"
-helm template hf-platform-gemma charts/inference-service \
-  -n hardfest-demo -f platform/gemma.yaml --set order.enabled=true \
+helm template hf-qwen-platform charts/inference-service \
+  -n hardfest-demo -f platform/qwen.yaml --set order.enabled=true \
   --set-string order.spec.inferenceServiceClassName="$INFERENCE_CLASS" \
   --set-string "order.spec.resources.accelerator.deviceClasses[0]=$DEVICE_CLASS"
 ```

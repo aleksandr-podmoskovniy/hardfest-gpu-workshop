@@ -253,7 +253,7 @@ class RTXProfiles(unittest.TestCase):
         guide = (ROOT / "RTX5060.md").read_text()
         self.assertIn("(RTX5060.md)", (ROOT / "README.md").read_text())
         stages = ["ab", "monitoring", "memory", "ram", "speculation", "latency",
-                  "placement", "platform", "conclusion", "tp2", "cleanup", "setup"]
+                  "placement", "platform", "tp2", "conclusion", "cleanup", "setup"]
         positions = [guide.index(f'id="{name}"') for name in stages]
         self.assertEqual(positions, sorted(positions))
         self.assertLess(guide.index('id="tp2"'), guide.index('id="results"'))

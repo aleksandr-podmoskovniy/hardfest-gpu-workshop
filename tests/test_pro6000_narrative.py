@@ -17,7 +17,7 @@ class PRO6000Narrative(unittest.TestCase):
         text = (ROOT / "RTXPRO6000.md").read_text()
         self.assertIn("# Инференс без простоя GPU: чиним LLM-сервис руками и делим карту на живом кластере", text)
         sections = re.findall(r"^## (\d+)\.", text, re.M)
-        self.assertEqual(sections, list("12345678"))
+        self.assertEqual(sections, list("1234567"))
         platform = text.index("## 5.")
         self.assertNotIn("InferenceService", text[:platform])
         for term in ("Key–Value cache", "Dynamic Resource Allocation", "Multi-Instance GPU", "Multi-Process Service"):

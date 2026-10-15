@@ -84,10 +84,12 @@ class Guide(unittest.TestCase):
         for command in ("apply --dry-run=server -f", "git commit -S -s", "git push"):
             self.assertIn(command, (ROOT / "docs/GITOPS.md").read_text())
         self.assertNotIn("kustomize", readme.lower())
-        # Copyable equations may use text fences; paragraphs belong in prose.
+        # Equations and exact Console names may use text fences, not paragraphs.
         for formula in re.findall(r"```text\n(.*?)```", readme, re.S):
             lines = [line for line in formula.splitlines() if line.strip()]
             self.assertLessEqual(len(lines), 3)
+            if lines == ["hf-qwen-platform"]:
+                continue
             self.assertTrue(all(re.search(r"(?:=|≈)", line) for line in lines))
         gitops = (ROOT / "docs/GITOPS.md").read_text()
         for term in ("ARGO_CONTEXT", "GPU_CONTEXT", '--type merge --patch',
@@ -163,7 +165,7 @@ class Guide(unittest.TestCase):
         self.assertTrue(targets)
         self.assertTrue(set(targets).issubset(anchors))
         stages = ['ab', 'monitoring', 'memory', 'ram', 'speculation', 'latency',
-                  'placement', 'platform', 'conclusion', 'tp2', 'cleanup', 'setup']
+                  'placement', 'platform', 'tp2', 'conclusion', 'cleanup', 'setup']
         positions = [readme.index(f'id="{stage}"') for stage in stages]
         self.assertEqual(positions, sorted(positions))
         self.assertEqual(readme.count('<a id="speculation">'), 1)
@@ -172,6 +174,10 @@ class Guide(unittest.TestCase):
     def test_platform_chapter_describes_recipe_workflow(self):
         readme = (ROOT / "README.md").read_text()
         chapter = readme.split('id="platform"', 1)[1].split('id="conclusion"', 1)[0]
+        for term in ("hf-qwen-platform", "262144", "acceleratorCount=2", "MTP"):
+            self.assertIn(term, chapter)
+        # The former Gemma comparison is still runnable, but not required.
+        chapter = chapter.split('id="platform-gemma"', 1)[1].split("</details>", 1)[0]
         for term in ("128K", "RAM-offload", "assistant", "hf-platform-gemma", "Gemma A — DP"):
             self.assertIn(term, chapter)
         for term in ("Deckhouse Console", "Throughput", "model", "Ready"):
@@ -214,10 +220,10 @@ class Guide(unittest.TestCase):
         self.assertNotIn("## ", alias)
         self.assertNotIn("```", alias)
 
-    def test_qwen_is_a_required_final_stage_with_operational_checks(self):
+    def test_qwen_is_the_required_platform_stage_with_operational_checks(self):
         readme = (ROOT / "README.md").read_text()
-        chapter = readme.split('id="tp2"', 1)[1].split('id="cleanup"', 1)[0]
-        self.assertRegex(chapter, r"## 8\.")
+        chapter = readme.split('id="tp2"', 1)[1].split('id="platform-gemma"', 1)[0]
+        self.assertIn("### Почему одной модели нужны две карты", chapter)
         self.assertNotIn("бонус", chapter.lower())
         self.assertLess(readme.index('id="tp2"'), readme.index('id="cleanup"'))
         for term in ("tensor-parallel-size: 2", "acceleratorCount=2",

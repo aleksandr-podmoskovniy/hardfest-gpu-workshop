@@ -19,15 +19,15 @@ def main_path(text):
 
 
 class Readability(unittest.TestCase):
-    def test_closed_route_keeps_eight_distinct_stories_in_the_requested_order(self):
+    def test_closed_route_keeps_seven_distinct_stories_in_the_requested_order(self):
         for path in GUIDES:
             with self.subTest(guide=path.name):
                 visible = main_path(path.read_text())
                 headings = re.findall(r"^## (\d+)\. (.+)$", visible, re.M)
-                self.assertEqual([n for n, _ in headings], list("12345678"))
+                self.assertEqual([n for n, _ in headings], list("1234567"))
                 parts = re.split(r"(?m)^## \d+\. .+$", visible)[1:]
                 parts[0] = visible.split("## 1.", 1)[0] + parts[0]
-                stages = ("Gemma A", "Cache", "Tune", "A30", "InferenceService", "GPU", "Bifrost", "Qwen")
+                stages = ("Gemma A", "Cache", "Tune", "A30", "InferenceService", "GPU", "Bifrost")
                 for stage, (_, title), part in zip(stages, headings, parts):
                     self.assertIn(stage, title + part)
                 # Base behavior is explained before the terms
@@ -44,7 +44,7 @@ class Readability(unittest.TestCase):
                 self.assertNotRegex(main_path(manual), r"(?i)платформенн\w+ (?:сервис|запуск)")
                 positions = [text.index(f'<a id="{stage}"></a>') for stage in
                              ("ab", "monitoring", "memory", "ram", "speculation",
-                              "latency", "placement", "platform", "conclusion", "tp2")]
+                              "latency", "placement", "platform", "tp2", "conclusion")]
                 self.assertEqual(positions, sorted(positions))
                 baseline = main_path(text).split('<a id="memory"></a>', 1)[0]
                 for symptom in ("Waiting", "памят", "GPU"):
@@ -186,7 +186,6 @@ class Readability(unittest.TestCase):
             "Один симптом — три уровня проверки",
             "Графики после Cache: повторный запрос и реальная память",
             "Графики после Tune: быстрее начинается или быстрее продолжается?",
-            "Графики: ручная Tune и запуск через платформу",
             "Самая дорогая карта в кластере — та, которая простаивает",
             "Графики Qwen: работают ли обе карты",
         ):

@@ -18,7 +18,8 @@ class InferenceOrders(unittest.TestCase):
         expected = {"README.md": {"gemma", "qwen"},
                     "RTX5060.md": {"rtx-gemma", "rtx-qwen"}}
         setup = (ROOT / "docs/SETUP.md").read_text()
-        self.assertIn("helm template hf-platform-gemma charts/inference-service", setup)
+        self.assertIn("helm template hf-qwen-platform charts/inference-service", setup)
+        self.assertIn("-f platform/qwen.yaml", setup)
         self.assertIn("--set order.enabled=true", setup)
         self.assertIn('order.spec.inferenceServiceClassName="$INFERENCE_CLASS"', setup)
         for filename, orders in expected.items():

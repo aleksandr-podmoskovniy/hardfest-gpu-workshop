@@ -15,14 +15,14 @@ PAGES = ("README.md", "RTX5060.md", "RTXPRO6000.md")
 
 
 class ThreeStands(unittest.TestCase):
-    def test_same_visible_navigation_and_eight_story_headings(self):
+    def test_same_visible_navigation_and_seven_story_headings(self):
         reference = None
         for name in PAGES:
             text = (ROOT / name).read_text()
             headings = re.findall(r"^## (\d+\. .+)$", text, re.M)
             reference = reference or headings
             self.assertEqual(headings, reference, name)
-            self.assertEqual(len(headings), 8)
+            self.assertEqual(len(headings), 7)
             self.assertLess(text.index('id="contents"'), text.index("## 1."))
             self.assertNotIn("InferenceService", text.split('id="platform"')[0])
             for link in PAGES:
@@ -30,6 +30,45 @@ class ThreeStands(unittest.TestCase):
             for asset in ("29-chat-path", "03-kv-history", "05-kv-reuse", "06-scheduler"):
                 self.assertIn(f"assets/{asset}.svg", text)
             self.assertIn("32K", text)
+
+    def test_qwen_is_the_main_platform_demo_after_a30(self):
+        from test_readability import main_path
+        services = dict(zip(PAGES, ("hf-qwen-platform", "rtx-qwen35-tp2", "selectel-qwen38-tp2")))
+        for name in PAGES:
+            with self.subTest(page=name):
+                raw = (ROOT / name).read_text()
+                visible = main_path(raw)
+                anchors = ("placement", "platform", "tp2", "platform-gemma", "conclusion")
+                positions = [visible.index(f'<a id="{anchor}"></a>') for anchor in anchors]
+                self.assertEqual(positions, sorted(positions))
+                chapter = visible.split('<a id="platform"></a>', 1)[1].split('<a id="conclusion"></a>', 1)[0]
+                for term in ("AI Inference", "InferenceService", "Qwen", "TP2", "Deckhouse Console"):
+                    self.assertIn(term, chapter)
+                self.assertIn("```text\n" + services[name] + "\n```", chapter)
+                self.assertEqual(raw.count('<a id="tp2"></a>'), 1)
+                # Qwen must not require the optional Gemma API walkthrough.
+                self.assertNotIn("процедура Gemma", chapter)
+                self.assertNotIn("API по разделу 5", chapter)
+
+    def test_platform_gemma_comparison_is_one_optional_disclosure(self):
+        from test_readability import main_path
+        services = dict(zip(PAGES, ("hf-platform-gemma", "rtx-gemma-platform", "selectel-gemma31")))
+        for name in PAGES:
+            with self.subTest(page=name):
+                raw = (ROOT / name).read_text()
+                optional = raw.split('<a id="platform-gemma"></a>', 1)[1].split("</details>", 1)[0]
+                self.assertIn("<summary>Необязательное сравнение:", optional)
+                self.assertEqual(optional.count("<details>"), 1)
+                self.assertIn(services[name], optional)
+                self.assertIn("после её остановки", optional)
+                self.assertIn("удаляется\nтолько её InferenceService", optional)
+                self.assertLess(optional.index("завершаются текущие запросы"), optional.index("удаляется"))
+                self.assertNotIn("### Создание Gemma", main_path(raw))
+                self.assertNotIn("### Создать платформенную Gemma", main_path(raw))
+                if name == "README.md":
+                    self.assertIn("Графики: ручная Tune и запуск через платформу", optional)
+                if name == "RTX5060.md":
+                    self.assertIn("<!-- result:rtx-platform -->", optional)
 
     def test_pro6000_diagrams_and_memory_numbers_match_its_hardware(self):
         root = ET.parse(ROOT / "assets/28-pro6000-tp2.svg").getroot()
@@ -45,7 +84,7 @@ class ThreeStands(unittest.TestCase):
                 amount = calculate_gemma(length, 10, size)["all_sessions_gib"]
                 self.assertIn(f"{amount:.2f}".replace(".", ",") + " GiB", labels)
         text = (ROOT / "RTXPRO6000.md").read_text().split('id="tp2"', 1)[1]
-        self.assertLess(text.index("Если подходящего рецепта нет"), text.index("Перед запуском все ручные Gemma"))
+        self.assertLess(text.index("Если подходящего рецепта нет"), text.index("Перед запуском закрывается доступ"))
 
     def test_reader_docs_do_not_embed_run_diaries(self):
         paths = [ROOT / name for name in PAGES] + list((ROOT / "docs").glob("*.md"))

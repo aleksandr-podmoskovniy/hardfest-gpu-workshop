@@ -66,4 +66,4 @@ Cache и Tune — разные Deployment для двух итераций B. С
 Startup probe допускает 30 минут, Deployment — 40 минут на размещение и старт.
 Это предел ожидания, не обещанная скорость. Готовность подтверждается ответом API.
 
-A30 и финальный Qwen запускаются через [заказ AI Inference](../inference-service/README.md).
+A30 и Qwen запускаются через [заказ AI Inference](../inference-service/README.md).
