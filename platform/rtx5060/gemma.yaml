@@ -1,0 +1,18 @@
+# Manual Console order, not an Argo-managed workload. Reserve one free RTX first.
+apiVersion: ai.deckhouse.io/v1alpha1
+kind: InferenceService
+metadata:
+  name: rtx-gemma-platform
+  namespace: hardfest-rtx
+spec:
+  inferenceServiceClassName: hardfest-rtx-gemma
+  launchStrategy: Throughput
+  model:
+    src: ai-models
+    ref:
+      kind: Model
+      name: rtx-gemma-e2b
+  resources:
+    accelerator:
+      deviceClasses:
+        - hardfest-rtx

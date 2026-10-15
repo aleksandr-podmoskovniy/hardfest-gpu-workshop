@@ -195,6 +195,37 @@ class RTXProfiles(unittest.TestCase):
             model = yaml.safe_load(result.stdout)["spec"]["model"]
             self.assertEqual(model, {"src": "ai-models", "ref": {"kind": "Model", "name": ref}})
 
+    def test_console_orders_match_bound_helm_values_and_copyable_names(self):
+        guide = (ROOT / "RTX5060.md").read_text()
+        for variant, values, name, service_class in (
+            ("gemma", "rtx-gemma", "rtx-gemma-platform", "hardfest-rtx-gemma"),
+            ("qwen", "rtx-qwen", "rtx-qwen35-tp2", "hardfest-rtx-qwen35"),
+        ):
+            with self.subTest(variant=variant):
+                direct = yaml.safe_load((ROOT / "platform/rtx5060" / f"{variant}.yaml").read_text())
+                result = subprocess.run([
+                    "helm", "template", name, str(ROOT / "charts/inference-service"),
+                    "-n", "hardfest-rtx", "-f", str(ROOT / "platform" / f"{values}.yaml"),
+                    "--set", "order.enabled=true",
+                    "--set", f"order.spec.inferenceServiceClassName={service_class}",
+                    "--set", "order.spec.resources.accelerator.deviceClasses[0]=hardfest-rtx",
+                ], capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                rendered = yaml.safe_load(result.stdout)
+                for key in ("apiVersion", "kind", "spec"):
+                    self.assertEqual(direct[key], rendered[key])
+                self.assertEqual(direct["metadata"], {"name": name, "namespace": "hardfest-rtx"})
+                self.assertEqual(direct["spec"]["launchStrategy"], "Throughput")
+                self.assertIn(f"```text\n{name}\n```", guide)
+                self.assertIn(f"(platform/rtx5060/{variant}.yaml)", guide)
+
+    def test_access_reference_covers_all_five_rtx_backends(self):
+        access = (ROOT / "docs/CHAT_AND_ACCESS.md").read_text()
+        guide = (ROOT / "RTX5060.md").read_text()
+        for suffix in ("gemma-base", "gemma-cache", "gemma-tune", "gemma-platform", "qwen35-tp2"):
+            self.assertIn(f"workshop.vllm/rtx-{suffix}", access)
+            self.assertIn(f"`rtx-{suffix}`", guide)
+
     def test_rtx_catalog_is_pinned_and_matches_consumers(self):
         result = subprocess.run(["helm", "template", "rtx-models", str(ROOT / "charts/model-catalog"),
             "-n", "hardfest-rtx", "-f", str(ROOT / "catalog/rtx.yaml")], capture_output=True, text=True)

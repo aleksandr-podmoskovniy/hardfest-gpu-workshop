@@ -1,0 +1,18 @@
+# Manual Console order. Stop both Gemma workloads before requesting two RTX.
+apiVersion: ai.deckhouse.io/v1alpha1
+kind: InferenceService
+metadata:
+  name: rtx-qwen35-tp2
+  namespace: hardfest-rtx
+spec:
+  inferenceServiceClassName: hardfest-rtx-qwen35
+  launchStrategy: Throughput
+  model:
+    src: ai-models
+    ref:
+      kind: Model
+      name: rtx-qwen35-9b
+  resources:
+    accelerator:
+      deviceClasses:
+        - hardfest-rtx

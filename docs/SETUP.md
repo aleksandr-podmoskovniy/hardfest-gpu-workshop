@@ -90,8 +90,10 @@ InferenceService — заказ на модель, по которому AI Infe
 | PRO 6000 / `hardfest-demo` | `selectel-gemma31` | `gemma-4-31b` | `Latency` |
 | PRO 6000 / `hardfest-demo` | `selectel-qwen38-tp2` | `qwen3-8-flash-next-nvfp4` | `Latency` |
 
+На RTX 5060 используются классы `hardfest-rtx-gemma` и `hardfest-rtx-qwen35`,
+DeviceClass `hardfest-rtx`. [Все варианты и копируемые имена](../RTX5060.md#model-names).
 На PRO используются классы `hardfest-selectel-gemma31` и
-`hardfest-selectel-qwen38-tp2`. На остальных площадках имя существующего класса
+`hardfest-selectel-qwen38-tp2`. На H100 имя существующего класса
 администратор заранее вписывает в пример; `REPLACE_*` не является рабочим значением.
 
 На PRO 6000 Gemma использует стратегию `Latency` и DeviceClass `hardfest-selectel-blackwell`.
@@ -120,7 +122,8 @@ Qwen TP2 256K, MTP, CPU KV 16 GiB. Эти параметры не перенос
 4. После Ready проверьте API и модель в WebUI под обычным аккаунтом.
    Маршрут и ACL настроены заранее; произвольное новое имя само к ним не подключится.
 
-**Если используется редактор YAML:** `platform/pro6000/*.yaml` — готовые
+**Если используется редактор YAML:** `platform/rtx5060/*.yaml` и
+`platform/pro6000/*.yaml` — готовые
 манифесты, а остальные `platform/*.yaml` — Helm values. Их нельзя вставлять
 в редактор как Kubernetes-объект. Из корня публичного репозитория получите YAML:
 

@@ -64,6 +64,9 @@ Prefix cache самого vLLM остаётся частью сравнивае�
 
 | Карточка в «Рабочее пространство → Модели» | База в «Администрирование → Модели» |
 | --- | --- |
+| Gemma A — RTX 5060 Ti · Base | `workshop.vllm/rtx-gemma-base` |
+| Gemma B — RTX 5060 Ti · Cache | `workshop.vllm/rtx-gemma-cache` |
+| Gemma B — RTX 5060 Ti · Tune | `workshop.vllm/rtx-gemma-tune` |
 | Gemma A — PRO 6000 · базовая | `workshop.vllm/selectel-gemma-a` |
 | Gemma B — PRO 6000 · KV cache | `workshop.vllm/selectel-gemma-cache` |
 | Gemma B — PRO 6000 · полный тюнинг | `workshop.vllm/selectel-gemma-b` |
