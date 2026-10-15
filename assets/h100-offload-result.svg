@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
+<title id="title">H100: повтор документа после вытеснения</title><desc id="desc">Один клиент, 65 536 токенов входа + 128 выхода. Offload включён в обоих запросах.</desc>
+<defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}.formula{font-family:"DejaVu Sans Mono",Menlo,Consolas,monospace}</style>
+<rect x="1" y="1" width="1198" height="758" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
+<text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
+<tspan x="70" dy="0">H100: повтор документа после вытеснения</tspan>
+</text>
+<text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Один клиент, 65 536 токенов входа + 128 выхода. Offload включён в обоих запросах.</tspan>
+</text>
+<path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="48" y="164" width="540" height="274" rx="12" fill="#eef4ff" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="72" y="205" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="492">
+<tspan x="72" dy="0">Первое обращение</tspan>
+</text>
+<text x="72" y="246" font-size="20" fill="#536278" text-anchor="start">
+<tspan x="72" dy="0">До первого токена</tspan>
+</text>
+<text x="72" y="309" font-size="48" fill="#1554dc" text-anchor="start" font-weight="700">
+<tspan x="72" dy="0">57,29 с</tspan>
+</text>
+<text x="72" y="388" font-size="26" fill="#17243b" text-anchor="start" data-max-width="492">
+<tspan x="72" dy="0">Полный ответ: 62,22 с</tspan>
+</text>
+<rect x="612" y="164" width="540" height="274" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="636" y="205" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="492">
+<tspan x="636" dy="0">Повтор из RAM</tspan>
+</text>
+<text x="636" y="246" font-size="20" fill="#536278" text-anchor="start">
+<tspan x="636" dy="0">До первого токена</tspan>
+</text>
+<text x="636" y="309" font-size="48" fill="#087d78" text-anchor="start" font-weight="700">
+<tspan x="636" dy="0">1,47 с</tspan>
+</text>
+<text x="636" y="388" font-size="26" fill="#17243b" text-anchor="start" data-max-width="492">
+<tspan x="636" dy="0">Полный ответ: 6,41 с</tspan>
+</text>
+<rect x="48" y="462" width="1104" height="129" rx="12" fill="#eaf7f3" stroke="#d9e2ee" stroke-width="1.5" data-node="true"/>
+<text x="72" y="504" font-size="25" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="1056">
+<tspan x="72" dy="0">Возврат из RAM подтверждён счётчиками</tspan>
+</text>
+<text x="72" y="544" font-size="22" fill="#17243b" text-anchor="start" data-max-width="1056">
+<tspan x="72" dy="0">2,89 GiB передано на GPU; 65 504 токена восстановлены.</tspan>
+<tspan x="72" dy="30.799999999999997">32 токена вычислены заново; локальных GPU cache hits в повторе — 0.</tspan>
+</text>
+<text x="48" y="635" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Один повтор на vLLM 0.30. Не сравнение Base / Tune.</tspan>
+<tspan x="48" dy="28.0">Контроль без CPU KV не завершён; общего коэффициента ускорения здесь нет.</tspan>
+</text>
+<path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Источник: results/kv-ram/observations.json. Это проверка механизма, не ёмкости.</tspan>
+</text>
+</svg>

@@ -246,9 +246,10 @@ class RTXProfiles(unittest.TestCase):
                 self.assertNotIn(fragment, text, (filename, fragment))
         guide = (ROOT / "RTX5060.md").read_text()
         self.assertIn('<a id="results"></a>', guide)
-        # Evidence remains auditable, without putting old rehearsals in the story.
+        # Measured comparisons link to evidence, but do not restore dated status diaries.
         self.assertTrue((ROOT / "results/rtx5060-rehearsal-20261008.json").is_file())
-        self.assertNotIn("rtx5060-rehearsal-20261008.json", guide)
+        self.assertIn("[Исходные результаты и конфигурации](results/rtx5060-rehearsal-20261008.json)", guide)
+        self.assertNotIn("В прогоне 8 октября", guide)
         self.assertIn("docs/CHAT_AND_ACCESS.md", guide)
 
     def test_catalog_chat_routing_uses_served_model_names(self):
