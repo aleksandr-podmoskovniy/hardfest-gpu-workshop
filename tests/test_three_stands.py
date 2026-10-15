@@ -45,7 +45,17 @@ class ThreeStands(unittest.TestCase):
                 amount = calculate_gemma(length, 10, size)["all_sessions_gib"]
                 self.assertIn(f"{amount:.2f}".replace(".", ",") + " GiB", labels)
         text = (ROOT / "RTXPRO6000.md").read_text().split('id="tp2"', 1)[1]
-        self.assertLess(text.index("не сохранена"), text.index("Перед Qwen все ручные Gemma"))
+        self.assertLess(text.index("Если нужного рецепта нет"), text.index("Перед Qwen все ручные Gemma"))
+
+    def test_reader_docs_do_not_embed_run_diaries(self):
+        paths = [ROOT / name for name in PAGES] + list((ROOT / "docs").glob("*.md"))
+        stale = re.compile(r"Историческ|Прежняя серия|прежним площадкам|"
+                           r"заморожен после прогона|после этих прогонов|"
+                           r"Три серии по десять одновременно поданных|"
+                           r"Медиана видимого TTFT для одинаковой нагрузки|"
+                           r"\d{1,2} октября|\| Метрика предельной серии")
+        for path in paths:
+            self.assertIsNone(stale.search(path.read_text()), path.name)
 
     def test_each_stand_has_three_independent_stopped_console_workloads(self):
         groups = (

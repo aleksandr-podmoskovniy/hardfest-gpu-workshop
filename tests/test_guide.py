@@ -70,7 +70,8 @@ class Guide(unittest.TestCase):
         self.assertNotIn("возврат к `16384`", second)
         self.assertRegex(second, r"сравнение \*\*набора настроек\*\*")
         self.assertIn("не измерение вклада одного MTP", second)
-        self.assertIn("122 880", second)
+        self.assertIn("98304", second)
+        self.assertIn("32768", second)
         self.assertIn("cpu_bytes_to_use: 34359738368", ram)
         self.assertRegex(ram, r"128 GiB[\s\S]{0,200}A останавливается в Deckhouse Console")
         for stale in ("gemma-b-128k.yaml", "gemma-b-ram.yaml"):
@@ -221,10 +222,11 @@ class Guide(unittest.TestCase):
         self.assertLess(readme.index('id="tp2"'), readme.index('id="cleanup"'))
         for term in ("tensor-parallel-size: 2", "acceleratorCount=2",
                      "VK", "MTP", "spec.replicas: 0", "values/qwen-tp2.yaml",
-                     "262144", "122 880", "8192"):
+                     "262144", "229 376", "32 768", "--ignore-eos"):
             self.assertIn(term, chapter)
         self.assertIn('hf-qwen-platform', chapter)
         self.assertIn('docs/SETUP.md#console-order', chapter)
+        self.assertIn('NUM_PROMPTS=1 CONCURRENCY=1', chapter)
         self.assertNotIn('kind: InferenceService', chapter)
 
     def test_platform_preflight_precedes_releasing_working_gpus(self):
@@ -241,7 +243,7 @@ class Guide(unittest.TestCase):
     def test_long_requests_use_the_ready_tune_profile(self):
         doc = (ROOT / "README.md").read_text()
         extension = doc.split('id="long-context"', 1)[1].split('id="platform"', 1)[0]
-        for setting in ("max-model-len", "131072", "Tune", "8192"):
+        for setting in ("98304", "32768", "Tune", "131 072"):
             self.assertIn(setting, extension)
         self.assertIn("Tune уже настроен на 128K", extension)
         self.assertNotIn("max-model-len: 65536", extension)
@@ -268,14 +270,16 @@ class Guide(unittest.TestCase):
         rtx = (ROOT / "RTX5060.md").read_text()
         long_context = rtx.split('id="long-context"', 1)[1].split('id="placement"', 1)[0]
         self.assertIn('--random-output-len "$OUTPUT_TOKENS"', long_context)
-        self.assertIn("| Длинный ответ | 122880 | 8192 | `gemma-long-output` |", long_context)
+        self.assertIn("INPUT_TOKENS=98304 OUTPUT_TOKENS=32768", long_context)
         for variable in ("INPUT_TOKENS", "OUTPUT_TOKENS", "RUN_NAME"):
             self.assertIn(variable, long_context)
         cleanup = rtx.split('id="cleanup"', 1)[1].split('id="setup"', 1)[0]
-        self.assertIn("Tune сохраняет окно 128K", cleanup)
+        self.assertNotIn("max-model-len", cleanup)
+        self.assertIn("spec.replicas: 0", cleanup)
         self.assertNotIn("0.90", cleanup)
         h100 = (ROOT / "README.md").read_text()
-        self.assertIn("| Длинный ответ | 122 880 | 8192 | 1 / 1 |", h100)
+        self.assertIn("| `--random-input-len` | 98304 |", h100)
+        self.assertIn("| `--random-output-len` | 32768 |", h100)
 
     def test_chat_path_is_present_from_manual_to_platform_stages(self):
         readme = (ROOT / "README.md").read_text()
@@ -322,7 +326,8 @@ class Guide(unittest.TestCase):
             self.assertIn(setting, launch)
         self.assertIn("/v1/chat/completions", setup)
         rtx = setup.split('id="rtx"', 1)[1]
-        self.assertIn("replicaCount: 1", rtx)
+        self.assertIn("replicaCount: 0", rtx)
+        self.assertIn("включите `rtx-gemma-base` в Console", rtx)
         self.assertIn("rtx-gemma-base", rtx)
         self.assertIn("заказы — `order.enabled: false`", rtx)
 

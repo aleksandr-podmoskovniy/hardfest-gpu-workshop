@@ -246,8 +246,9 @@ class RTXProfiles(unittest.TestCase):
                 self.assertNotIn(fragment, text, (filename, fragment))
         guide = (ROOT / "RTX5060.md").read_text()
         self.assertIn('<a id="results"></a>', guide)
-        # Link the complete rehearsal, not every superseded short profile.
-        self.assertIn("rtx5060-rehearsal-20261008.json", guide)
+        # Evidence remains auditable, without putting old rehearsals in the story.
+        self.assertTrue((ROOT / "results/rtx5060-rehearsal-20261008.json").is_file())
+        self.assertNotIn("rtx5060-rehearsal-20261008.json", guide)
         self.assertIn("docs/CHAT_AND_ACCESS.md", guide)
 
     def test_catalog_chat_routing_uses_served_model_names(self):
@@ -259,7 +260,8 @@ class RTXProfiles(unittest.TestCase):
             self.assertTrue(row.endswith(f"`{served}` |"))
         guide = (ROOT / "RTX5060.md").read_text()
         self.assertIn("--model rtx-qwen35-9b", guide)
-        self.assertIn("Tune сохраняет окно 128K", guide)
+        self.assertIn("max-model-len: 131072", guide)
+        self.assertIn("INPUT_TOKENS=98304 OUTPUT_TOKENS=32768", guide)
         self.assertIn("docs/MEASUREMENTS.md#offload-replay", guide)
         self.assertIn("simple_kv_offload_load_blocks_total",
                       (ROOT / "docs/MEASUREMENTS.md").read_text())

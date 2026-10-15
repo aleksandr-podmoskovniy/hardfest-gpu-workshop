@@ -26,13 +26,16 @@ class PRO6000Narrative(unittest.TestCase):
 
     def test_visible_limits_and_long_budget(self):
         text = (ROOT / "RTXPRO6000.md").read_text()
-        for value in ("134 752", "229 376", "32 768", "262 144", "107,81", "207,81", "103,91"):
+        for value in ("229 376", "32 768", "262 144", "107,81", "207,81", "103,91"):
             self.assertIn(value, text)
-        for caveat in ("13–14 токенов", "не на каждом коротком", "ещё не принят сквозным тестом",
-                       "не создавали расход VK", "не сохранена в публичном", "одного активного"):
+        for caveat in ("несколько настроек", "Ручная B и платформенная Gemma",
+                       "не попадает в учёт VK", "Заказ не фиксирует все параметры",
+                       "Десять отправленных запросов не означают десять активных"):
             self.assertIn(caveat, text)
         self.assertIn("examples/pro6000-load-client/README.md", text)
-        self.assertIn("gemma-matched-chat-ttft.svg", text)
+        self.assertIn("results/pro6000/README.md", text)
+        evidence = (ROOT / "results/pro6000/README.md").read_text()
+        self.assertIn("gemma-matched-chat-ttft.svg", evidence)
 
     def test_archived_clients_have_exact_checksums_and_parse(self):
         entries = (CLIENT / "SHA256SUMS").read_text().splitlines()
