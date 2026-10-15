@@ -150,12 +150,33 @@ class Readability(unittest.TestCase):
         for path in GUIDES:
             with self.subTest(guide=path.name):
                 memory = main_path(path.read_text()).split('id="memory"', 1)[1].split('id="speculation"', 1)[0]
-                formulas = re.findall(r"```text\n(.*?)```", memory, re.S)
+                formulas = re.findall(r"```(?:text|math)\n(.*?)```", memory, re.S)
                 self.assertTrue(any("KV" in formula and ("=" in formula or "≈" in formula)
                                     for formula in formulas), "Formula must not be buried in running prose")
                 self.assertIn("128K", memory)
                 self.assertTrue("|" in memory or "26-rtx-kv-capacity.svg" in memory,
                                 "Keep the worked long-context comparison as a table or diagram")
+
+    def test_main_page_separates_observation_points_from_explanations(self):
+        text = (ROOT / "README.md").read_text()
+        visible = main_path(text)
+        for heading in (
+            "Графики: очередь, память и загрузка GPU",
+            "Один симптом — три уровня проверки",
+            "Графики после Cache: повторный запрос и реальная память",
+            "Графики после Tune: быстрее начинается или быстрее продолжается?",
+            "Графики: ручная Tune и запуск через платформу",
+            "Самая дорогая карта в кластере — та, которая простаивает",
+            "Графики Qwen: работают ли обе карты",
+        ):
+            self.assertIn("### " + heading + "\n\n", visible)
+        math_blocks = re.findall(r"```math\n(.*?)```", visible, re.S)
+        self.assertGreaterEqual(len(math_blocks), 4)
+        self.assertTrue(all(r"\Large" in block for block in math_blocks))
+        appendix = text.split("<summary>Другие архитектуры:", 1)[1].split("</details>", 1)[0]
+        for model in ("Gemma 4 31B", "Gemma 4 E2B", "Qwen3.5-9B"):
+            self.assertIn("### " + model, appendix)
+        self.assertIn("нельзя переносить на Qwen3.8", appendix)
 
     def test_session_symbol_is_unambiguous_in_both_routes(self):
         for path in GUIDES:
