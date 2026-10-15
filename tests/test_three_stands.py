@@ -45,7 +45,7 @@ class ThreeStands(unittest.TestCase):
                 amount = calculate_gemma(length, 10, size)["all_sessions_gib"]
                 self.assertIn(f"{amount:.2f}".replace(".", ",") + " GiB", labels)
         text = (ROOT / "RTXPRO6000.md").read_text().split('id="tp2"', 1)[1]
-        self.assertLess(text.index("Если нужного рецепта нет"), text.index("Перед Qwen все ручные Gemma"))
+        self.assertLess(text.index("Если подходящего рецепта нет"), text.index("Перед запуском все ручные Gemma"))
 
     def test_reader_docs_do_not_embed_run_diaries(self):
         paths = [ROOT / name for name in PAGES] + list((ROOT / "docs").glob("*.md"))
@@ -110,8 +110,8 @@ class ThreeStands(unittest.TestCase):
         for name in PAGES:
             text = (ROOT / name).read_text().split('id="memory"', 1)[1]
             image_at = text.index("assets/03-kv-history.svg")
-            self.assertLess(text.index("**Attention**"), image_at, name)
-            self.assertIn("sliding-window attention", text[:image_at], name)
+            self.assertLess(text.lower().index("**attention**"), image_at, name)
+            self.assertIn("sliding-window attention", text[:image_at].lower(), name)
 
     def test_reader_does_not_receive_editorial_instructions(self):
         for name in PAGES:
@@ -119,6 +119,17 @@ class ThreeStands(unittest.TestCase):
             for wording in ("Один и тот же путь на трёх стендах", "не индикатор его текущей доступности",
                             "не выдаётся за проверку", "Проверочный вопрос", "данный проход"):
                 self.assertNotIn(wording, text, name)
+
+    def test_headings_name_the_topic_without_decorative_transitions(self):
+        # A narrow guard for a specifically rejected pattern, not a score
+        # for prose quality. Causality and tone still need human review.
+        paths = [ROOT / name for name in PAGES] + list((ROOT / "docs").glob("*.md"))
+        for path in paths:
+            prose = re.sub(r"(?ms)^```[^\n]*\n.*?^```\s*$", "", path.read_text())
+            headings = re.findall(r"(?m)^#{1,6} (.+)$|<summary>(.*?)</summary>", prose)
+            for markdown, disclosure in headings:
+                with self.subTest(page=path.name, heading=markdown or disclosure):
+                    self.assertNotRegex(markdown or disclosure, r"[→⇒↔↑↓]")
 
 
 if __name__ == "__main__":

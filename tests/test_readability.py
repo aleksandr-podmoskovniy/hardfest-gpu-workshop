@@ -200,7 +200,7 @@ class Readability(unittest.TestCase):
                              "Dynamic Resource Allocation", "W4A16", "BF16", "FP8"):
                     self.assertIn(term, text)
                 self.assertRegex(text, r"(?:два|двух) байт")
-                self.assertIn("CPU→GPU", text)
+                self.assertRegex(text, r"CPU(?:→|_to_)GPU")
 
 
 if __name__ == "__main__":

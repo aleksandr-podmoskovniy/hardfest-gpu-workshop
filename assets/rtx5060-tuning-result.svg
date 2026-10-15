@@ -25,7 +25,7 @@
 </text>
 <rect x="48" y="197" width="1104" height="108" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
 <text x="68" y="240" font-size="23" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="370">
-<tspan x="68" dy="0">До первого токена, мс ↓</tspan>
+<tspan x="68" dy="0">До первого токена, мс</tspan>
 </text>
 <text x="486" y="255" font-size="31" fill="#536278" text-anchor="start" font-weight="700" data-max-width="185">
 <tspan x="486" dy="0">336,7</tspan>
@@ -38,7 +38,7 @@
 </text>
 <rect x="48" y="327" width="1104" height="108" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
 <text x="68" y="370" font-size="23" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="370">
-<tspan x="68" dy="0">На выходной токен, мс ↓</tspan>
+<tspan x="68" dy="0">На выходной токен, мс</tspan>
 </text>
 <text x="486" y="385" font-size="31" fill="#536278" text-anchor="start" font-weight="700" data-max-width="185">
 <tspan x="486" dy="0">63,07</tspan>
@@ -51,7 +51,7 @@
 </text>
 <rect x="48" y="457" width="1104" height="108" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
 <text x="68" y="500" font-size="23" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="370">
-<tspan x="68" dy="0">Общий выход, ток/с ↑</tspan>
+<tspan x="68" dy="0">Общий выход, ток/с</tspan>
 </text>
 <text x="486" y="515" font-size="31" fill="#536278" text-anchor="start" font-weight="700" data-max-width="185">
 <tspan x="486" dy="0">30,7</tspan>

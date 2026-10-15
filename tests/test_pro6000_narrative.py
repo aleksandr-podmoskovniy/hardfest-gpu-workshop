@@ -28,9 +28,9 @@ class PRO6000Narrative(unittest.TestCase):
         text = (ROOT / "RTXPRO6000.md").read_text()
         for value in ("229 376", "32 768", "262 144", "107,81", "207,81", "103,91"):
             self.assertIn(value, text)
-        for caveat in ("несколько настроек", "Ручная B и платформенная Gemma",
-                       "не попадает в учёт VK", "Заказ не фиксирует все параметры",
-                       "Десять отправленных запросов не означают десять активных"):
+        for caveat in ("несколько настроек", "ручная B и платформенная Gemma",
+                       "не попадают в учёт VK", "YAML сервиса\nне фиксирует все параметры",
+                       "Десять одновременно отправленных запросов ещё не означают десять активных"):
             self.assertIn(caveat, text)
         self.assertIn("examples/pro6000-load-client/README.md", text)
         self.assertIn("results/pro6000/README.md", text)

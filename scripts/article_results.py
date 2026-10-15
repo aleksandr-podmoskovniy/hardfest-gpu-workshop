@@ -105,8 +105,8 @@ def build():
         raise ValueError("H100 replay counters do not reconcile")
     blocks["h100-replay"] = table(
         ["Один и тот же документ", "Первое обращение", "Повтор после вытеснения"],
-        [["До первого токена, с ↓", number(first["ttft_s"]), number(repeat["ttft_s"])],
-         ["Полный ответ, с ↓", number(first["e2e_s"]), number(repeat["e2e_s"])],
+        [["До первого токена, с", number(first["ttft_s"]), number(repeat["ttft_s"])],
+         ["Полный ответ, с", number(first["e2e_s"]), number(repeat["e2e_s"])],
          ["Фактический вход / выход", "65 536 / 128", "65 536 / 128"]])
     d = Diagram("h100-offload-result", "H100: повтор документа после вытеснения",
                 "Один клиент, 65 536 токенов входа + 128 выхода. Offload включён в обоих запросах.")
@@ -131,7 +131,7 @@ def build():
     r = rtx_results(read("results/rtx5060-rehearsal-20261008.json"))
     stages = (("base-4k", "Base"), ("cache-4k", "Cache"), ("tune-4k", "Tune"))
     blocks["rtx-stages"] = table(
-        ["Профиль / проход", "TTFT, мс ↓", "TPOT, мс ↓", "Выход, ток/с ↑", "Вся серия, с ↓"],
+        ["Профиль / проход", "TTFT, мс", "TPOT, мс", "Выход, ток/с", "Вся серия, с"],
         [[f"{name} — {'первый' if series == 0 else 'повтор'}",
           *(number(r[label, series][key]) for key in
             ("mean_ttft_ms", "mean_tpot_ms", "output_throughput", "duration"))]
@@ -141,14 +141,14 @@ def build():
         "Повтор серии: 8 запросов по 2048 + 128 токенов; до двух одновременно. Все профили 4K.",
         ["Метрика", "Base", "Cache", "Tune"],
         [(label, [number(r[stage, 1][key], places) for stage, _ in stages]) for label, key, places in
-         [("До первого токена, мс ↓", "mean_ttft_ms", 1),
-          ("На выходной токен, мс ↓", "mean_tpot_ms", 2),
-          ("Общий выход, ток/с ↑", "output_throughput", 1)]],
+         [("До первого токена, мс", "mean_ttft_ms", 1),
+          ("На выходной токен, мс", "mean_tpot_ms", 2),
+          ("Общий выход, ток/с", "output_throughput", 1)]],
         ["TTFT и TPOT — средние по запросам; ток/с — вся серия. Все 8/8 ответов завершены.",
          "Повтор использует те же входы. Результат 4K не измеряет текущий Tune с окном 128K."],
         "Источник: results/rtx5060-rehearsal-20261008.json. Первые проходы — в таблице статьи.")
     blocks["rtx-platform"] = table(
-        ["Окно 128K / проход", "Ручная Tune, ток/с ↑", "AI Inference, ток/с ↑"],
+        ["Окно 128K / проход", "Ручная Tune, ток/с", "AI Inference, ток/с"],
         [[name, number(r["tune-128k-short", series]["output_throughput"]),
           number(r["dp-128k-short", series]["output_throughput"])]
          for series, name in ((0, "Первый проход"), (1, "Повтор"))])
@@ -163,7 +163,7 @@ def build():
         rows.append([label, number(av, 3), number(bv, 3),
                      f"на {number(abs(delta), 3)} с {'позже' if delta > 0 else 'раньше'}"])
         chart_rows.append((label.replace(", ", "\n").splitlines(), [number(av, 3), number(bv, 3)]))
-    blocks["pro-chat"] = table(["Одинаковый запрос A/B", "Base, с ↓", "Tune, с ↓", "Изменение"], rows)
+    blocks["pro-chat"] = table(["Одинаковый запрос A/B", "Base, с", "Tune, с", "Изменение"], rows)
     # Use separate numeric cells: no compressed warm bar or hidden log scale.
     d = Diagram("pro6000-chat-result", "PRO 6000: когда тюнинг помогает",
                 "До первого видимого ответа, секунды. Медиана 10 запросов в каждой волне; меньше лучше.")
@@ -188,8 +188,8 @@ def build():
         [["Вход + выход на запрос", *(f'{number(s["input_tokens_each"], 0)} + 32 768' for s in capacity)],
          ["Завершено / подано одновременно", "10 / 10", "10 / 10"],
          ["Максимум активных по метрикам", *(number(s["sampled_max_running"], 0) for s in capacity)],
-         ["Максимальный TTFT, мин ↓", *(number(s["client_ttft_max_seconds"] / 60, 1) for s in capacity)],
-         ["Время всей серии, мин ↓", *(number(s["wall_seconds"] / 60, 1) for s in capacity)]])
+         ["Максимальный TTFT, мин", *(number(s["client_ttft_max_seconds"] / 60, 1) for s in capacity)],
+         ["Время всей серии, мин", *(number(s["wall_seconds"] / 60, 1) for s in capacity)]])
     q = validate_capacity(read("results/pro6000/qwen-10x256k-summary.json"), 229376)
     blocks["pro-qwen"] = table(
         ["Qwen TP2: полное окно", "Измерено"],

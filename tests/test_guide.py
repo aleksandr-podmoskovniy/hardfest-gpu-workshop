@@ -176,12 +176,12 @@ class Guide(unittest.TestCase):
             self.assertIn(term, chapter)
         for term in ("Deckhouse Console", "Throughput", "model", "Ready"):
             self.assertIn(term, readme)
-        self.assertIn("Сервисы инференса → Создать", chapter)
+        self.assertRegex(chapter, r"Сервисы инференса[\s\S]{0,40}Создать")
         self.assertIn("`spec.replicas: 0`", chapter)
         self.assertIn("исчезновения Pod", chapter)
         self.assertIn("192 GiB RAM", chapter)
-        self.assertRegex(chapter, r"128 GiB[\s\S]{0,100}результат B сохраняется до её остановки")
-        self.assertLess(chapter.index("исчезновения Pod"), chapter.index("Сервисы инференса → Создать"))
+        self.assertRegex(chapter, r"128 GiB[\s\S]{0,100}сохраняется результат B, затем она останавливается")
+        self.assertLess(chapter.index("исчезновения Pod"), chapter.index("Сервисы инференса"))
 
     def test_original_teaching_chain_is_preserved_for_current_models(self):
         for name in ("README.md", "RTX5060.md"):
@@ -245,7 +245,7 @@ class Guide(unittest.TestCase):
         extension = doc.split('id="long-context"', 1)[1].split('id="platform"', 1)[0]
         for setting in ("98304", "32768", "Tune", "131 072"):
             self.assertIn(setting, extension)
-        self.assertIn("Tune уже настроен на 128K", extension)
+        self.assertIn("Gemma Tune использует 128K", extension)
         self.assertNotIn("max-model-len: 65536", extension)
 
     def test_kv_visuals_are_in_both_main_stories_before_optimization(self):
@@ -342,7 +342,8 @@ class Guide(unittest.TestCase):
                 self.assertRegex(setup, r"выключен")
                 self.assertIn("(#a30-orders)", text)
                 self.assertLess(text.index('id="platform"'), text.index('id="a30-orders"'))
-                self.assertRegex(text, r"(?:части существовали раньше|Sync готовых частей не доказывает их создание)")
+                self.assertRegex(text, r"(?:части существовали раньше|Sync готовых частей не доказывает их создание|"
+                                      r"отличить новое выделение частей от использования уже готовых)")
 
     def test_readme_has_no_decorative_tagline_or_boilerplate_labels(self):
         readme = (ROOT / "README.md").read_text()

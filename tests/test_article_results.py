@@ -76,14 +76,14 @@ class ArticleResults(unittest.TestCase):
 
     def test_main_prose_does_not_hide_negative_or_capacity_findings(self):
         pro = (ROOT / "RTXPRO6000.md").read_text()
-        for phrase in ("На коротком входе Tune начинает немного позже", "не скорости длинной генерации",
-                       "Входы различаются", "неприемлемо для чата", "полный runtime-рецепт не сохранён"):
+        for phrase in ("На коротком входе B Tune начинает немного позже", "не о скорости длинной генерации",
+                       "Входы различаются", "неприемлемо для чата", "полный набор параметров vLLM не сохранён"):
             self.assertIn(phrase, pro)
         rtx = (ROOT / "RTX5060.md").read_text()
         for phrase in ("первые проходы", "не проверка полного окна", "CPU-лимиты профилей различались"):
             self.assertIn(phrase, rtx)
         h100 = (ROOT / "README.md").read_text()
-        self.assertIn("Сопоставимого отчёта Base → Cache → Tune для H100", h100)
+        self.assertIn("Сопоставимого отчёта по всем трём профилям H100 — Base, Cache и Tune — в материалах нет", h100)
 
 
 if __name__ == "__main__":
