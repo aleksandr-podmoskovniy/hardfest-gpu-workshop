@@ -37,6 +37,20 @@ class PRO6000Narrative(unittest.TestCase):
                       '**Running = 0 и Waiting = 0**'):
             self.assertLess(text.index(guard), stop)
 
+    def test_stop_guidance_accounts_for_requests_waiting_before_vllm(self):
+        guide = (ROOT / 'docs/CHAT_AND_ACCESS.md').read_text()
+        before_stop = guide.split('<a id="before-stop"></a>', 1)[1].split('\n## ', 1)[0]
+        for point in ('завершение отправленных сообщений в WebUI',
+                      'связанных запросов шлюза', 'включая фоновые',
+                      '**Пустая очередь vLLM недостаточна:**',
+                      'или удалять InferenceService нельзя'):
+            self.assertIn(point, before_stop)
+        article = (ROOT / 'RTXPRO6000.md').read_text()
+        repeat = article.split('<summary>Удалить свой заказ и создать его снова с тем же именем</summary>', 1)[1]
+        repeat = repeat.split('</details>', 1)[0]
+        self.assertLess(repeat.index('docs/CHAT_AND_ACCESS.md#before-stop'),
+                        repeat.index('В Console удалить только'))
+
     def test_visible_limits_and_long_budget(self):
         text = (ROOT / "RTXPRO6000.md").read_text()
         for value in ("229 376", "32 768", "262 144", "107,81", "207,81", "103,91"):
