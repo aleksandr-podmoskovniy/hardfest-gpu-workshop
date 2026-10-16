@@ -1,0 +1,19 @@
+# Ready-to-paste order for the optional platform comparison; reserve one GPU.
+# Creating this object starts the model; it has no replicas/pause field.
+apiVersion: ai.deckhouse.io/v1alpha1
+kind: InferenceService
+metadata:
+  name: hf-platform-gemma
+  namespace: hardfest-demo
+spec:
+  inferenceServiceClassName: hardfest-h100-gemma
+  launchStrategy: Throughput
+  model:
+    src: ai-models
+    ref:
+      kind: Model
+      name: gemma-4-31b
+  resources:
+    accelerator:
+      deviceClasses:
+        - hardfest-h100

@@ -1,0 +1,19 @@
+# Ready-to-paste order for the prepared H100 workshop. Reserve both GPUs first.
+# Creating this object starts the model; it has no replicas/pause field.
+apiVersion: ai.deckhouse.io/v1alpha1
+kind: InferenceService
+metadata:
+  name: hf-qwen-platform
+  namespace: hardfest-demo
+spec:
+  inferenceServiceClassName: hardfest-h100-tp2
+  launchStrategy: Throughput
+  model:
+    src: ai-models
+    ref:
+      kind: Model
+      name: qwen3-8-flash-next-nvfp4
+  resources:
+    accelerator:
+      deviceClasses:
+        - hardfest-h100

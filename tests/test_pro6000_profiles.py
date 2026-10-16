@@ -116,9 +116,11 @@ class PRO6000Profiles(unittest.TestCase):
             self.assertEqual(set(spec), {"inferenceServiceClassName", "model", "launchStrategy", "resources"})
             self.assertEqual(spec["launchStrategy"], "Latency")
             self.assertEqual(spec["model"], {"src": "ai-models", "ref": {"kind": "Model", "name": model}})
-            self.assertTrue(spec["inferenceServiceClassName"].startswith("REPLACE_"))
+            self.assertEqual(spec["inferenceServiceClassName"],
+                             {"gemma.yaml": "hardfest-selectel-gemma31",
+                              "qwen.yaml": "hardfest-selectel-qwen38-tp2"}[filename])
             self.assertEqual(spec["resources"]["accelerator"]["deviceClasses"],
-                             ["REPLACE_GENERATED_PRO6000_DEVICECLASS"])
+                             ["hardfest-selectel-blackwell"])
         for path in (ROOT / "argocd/pro6000").glob("*.yaml"):
             self.assertTrue(checker.load(path)["spec"]["source"]["path"].endswith("/charts/vllm-runtime"))
 

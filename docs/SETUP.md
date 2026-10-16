@@ -85,20 +85,24 @@ InferenceService — заказ на модель, по которому AI Infe
 Платформенная Gemma нужна только для необязательного сравнения с ручной Tune;
 её создание не является условием запуска Qwen.
 
-| Площадка / namespace | Имя InferenceService | Model | Стратегия |
-| --- | --- | --- | --- |
-| H100 / `hardfest-demo` | `hf-platform-gemma` | `gemma-4-31b` | `Throughput` |
-| H100 / `hardfest-demo` | `hf-qwen-platform` | `qwen3-8-flash-next-nvfp4` | `Throughput` |
-| 5060 / `hardfest-rtx` | `rtx-gemma-platform` | `rtx-gemma-e2b` | `Throughput` |
-| 5060 / `hardfest-rtx` | `rtx-qwen35-tp2` | `rtx-qwen35-9b` | `Throughput` |
-| PRO 6000 / `hardfest-demo` | `selectel-gemma31` | `gemma-4-31b` | `Latency` |
-| PRO 6000 / `hardfest-demo` | `selectel-qwen38-tp2` | `qwen3-8-flash-next-nvfp4` | `Latency` |
+Для каждого запуска подготовлен один файл. На стенде его можно копировать
+целиком: имена и классы уже заполнены и согласованы с подключением чата.
+
+| Площадка / namespace | Создаваемый сервис | Готовый YAML |
+| --- | --- | --- |
+| H100 / `hardfest-demo` | `hf-platform-gemma` | [Gemma](../platform/h100/gemma.yaml) |
+| H100 / `hardfest-demo` | `hf-qwen-platform` | [Qwen TP2](../platform/h100/qwen.yaml) |
+| 5060 / `hardfest-rtx` | `rtx-gemma-platform` | [Gemma](../platform/rtx5060/gemma.yaml) |
+| 5060 / `hardfest-rtx` | `rtx-qwen35-tp2` | [Qwen TP2](../platform/rtx5060/qwen.yaml) |
+| PRO 6000 / `hardfest-demo` | `selectel-gemma31` | [Gemma](../platform/pro6000/gemma.yaml) |
+| PRO 6000 / `hardfest-demo` | `selectel-qwen38-tp2` | [Qwen TP2](../platform/pro6000/qwen.yaml) |
 
 На RTX 5060 используются классы `hardfest-rtx-gemma` и `hardfest-rtx-qwen35`,
 DeviceClass `hardfest-rtx`. [Все варианты и копируемые имена](../RTX5060.md#model-names).
 На PRO используются классы `hardfest-selectel-gemma31` и
-`hardfest-selectel-qwen38-tp2`. На H100 имя существующего класса
-администратор заранее вписывает в пример; `REPLACE_*` не является рабочим значением.
+`hardfest-selectel-qwen38-tp2`, на H100 — `hardfest-h100-gemma` и
+`hardfest-h100-tp2`, DeviceClass `hardfest-h100`.
+Это привязки подготовленного стенда, не универсальные имена для любого кластера.
 
 На PRO 6000 Gemma использует стратегию `Latency` и DeviceClass `hardfest-selectel-blackwell`.
 Сверьте фактическую схему установленного модуля и план запуска.
@@ -119,17 +123,25 @@ Qwen TP2 256K, MTP, CPU KV 16 GiB. Эти параметры не перенос
 ### Создать заказ в Console
 
 1. Выберите проект из таблицы → **AI-модели → Сервисы инференса → Создать**.
-2. Задайте точные имя, Model, класс и стратегию. Класс устройства — существующий,
-   выбранный при подготовке; новый DeviceClass здесь не создаётся.
-3. Перед подтверждением сравните план с нужным профилем: GPU, окно,
-   KV dtype, offload, assistant/MTP и RAM. Затем создайте заказ.
-4. После Ready проверьте API и модель в WebUI под обычным аккаунтом.
+2. Откройте готовый YAML из таблицы и скопируйте его целиком в редактор.
+   Имена, модель, классы и стратегию не меняйте. Нажмите **Применить** один раз.
+3. В созданном сервисе сравните план с заранее проверенным рецептом:
+   GPU, окно, KV dtype, offload, assistant/MTP и RAM.
+4. После Ready получите законченный ответ через WebUI, затем откройте доступ
+   участникам и повторите запрос обычным аккаунтом.
    Маршрут и ACL настроены заранее; произвольное новое имя само к ним не подключится.
 
-**Если используется редактор YAML:** `platform/rtx5060/*.yaml` и
-`platform/pro6000/*.yaml` — готовые
-манифесты, а остальные `platform/*.yaml` — Helm values. Их нельзя вставлять
-в редактор как Kubernetes-объект. Из корня публичного репозитория получите YAML:
+Ручные Gemma A, Cache и Tune заново не создаются: у подготовленных Deployment
+меняется только число реплик. Файлы Gemma из таблицы нужны для необязательного
+сравнения с платформенным запуском.
+
+<details>
+<summary>Подготовка другой площадки через Helm</summary>
+
+`platform/h100/*.yaml`, `platform/rtx5060/*.yaml` и `platform/pro6000/*.yaml`
+из таблицы — готовые манифесты стенда. Корневые `platform/*.yaml` — Helm values
+для подготовки другой установки; их нельзя вставлять в редактор Console
+как Kubernetes-объект. Из корня репозитория получите YAML:
 
 ```bash
 # H100 Qwen; для другого заказа выберите его файл из platform/.
@@ -150,6 +162,8 @@ kubectl --context "$GPU_CONTEXT" apply --dry-run=server -f "$ORDER_FILE"
 
 `ORDER_FILE` — проверенный файл конкретного заказа. Dry-run не запускает CUDA.
 Публичное `order.enabled: false` не меняется: этот показ не передаёт заказ во владение Argo.
+
+</details>
 
 ## 4. Подключить чат и наблюдение
 

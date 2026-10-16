@@ -44,7 +44,13 @@ class ThreeStands(unittest.TestCase):
                 chapter = visible.split('<a id="platform"></a>', 1)[1].split('<a id="conclusion"></a>', 1)[0]
                 for term in ("AI Inference", "InferenceService", "Qwen", "TP2", "Deckhouse Console"):
                     self.assertIn(term, chapter)
-                self.assertIn("```text\n" + services[name] + "\n```", chapter)
+                # Copyable name or an entire ready-to-paste order; neither
+                # requires the presenter to retype identifiers in the form.
+                yaml_orders = [yaml.safe_load(s) for s in re.findall(r"```yaml\n(.*?)\n```", chapter, re.S)]
+                copyable_order = any(isinstance(o, dict) and o.get("kind") == "InferenceService"
+                                     and o.get("metadata", {}).get("name") == services[name]
+                                     for o in yaml_orders)
+                self.assertTrue("```text\n" + services[name] + "\n```" in chapter or copyable_order)
                 self.assertEqual(raw.count('<a id="tp2"></a>'), 1)
                 # Qwen must not require the optional Gemma API walkthrough.
                 self.assertNotIn("процедура Gemma", chapter)

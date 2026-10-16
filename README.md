@@ -809,10 +809,11 @@ hf-qwen-platform
 Профиль задаёт `max-model-len: 262144`, `max-num-seqs: 16` и **16 GiB RAM для KV**.
 
 У всех ручных Gemma в Console задаётся `spec.replicas: 0`.
-После освобождения обеих GPU в **AI-модели / Сервисы инференса / Создать**
-задаётся **`hf-qwen-platform`**, Model `qwen3-8-flash-next-nvfp4`,
-стратегия `Throughput` и подготовленный класс H100 TP2.
-[Поля формы и YAML заказа](docs/SETUP.md#console-order).
+После освобождения обеих GPU в проекте `hardfest-demo`:
+**AI-модели → Сервисы инференса → Создать**. В редактор вставляется целиком
+[готовый YAML Qwen](platform/h100/qwen.yaml), без изменений, затем **Применить**.
+Имя `hf-qwen-platform`, модель `qwen3-8-flash-next-nvfp4`, стратегия `Throughput`
+и классы H100 уже заполнены. [Проверка создания](docs/SETUP.md#console-order).
 
 План должен содержать `acceleratorCount=2`, ResourceClaim — две разные GPU одной ноды,
 а Pod — `tensor-parallel-size: 2`.
@@ -939,10 +940,11 @@ RAM-offload, assistant и параметры выполнения.
 ### Создание Gemma в Console и проверка ответа
 
 У ручной A: `spec.replicas: 0`; продолжение после исчезновения Pod.
-В разделе **AI-модели / Сервисы инференса** действие **Создать** открывает форму.
-В ней задаётся имя
-**`hf-platform-gemma`**, Model `gemma-4-31b`, стратегия `Throughput`
-и подготовленный класс H100. [Поля заказа и проверка плана](docs/SETUP.md#inference-readiness).
+В проекте `hardfest-demo`: **AI-модели → Сервисы инференса → Создать**.
+В редактор вставляется целиком [готовый YAML Gemma](platform/h100/gemma.yaml),
+без изменений, затем **Применить**. Имя `hf-platform-gemma`, модель
+`gemma-4-31b`, стратегия `Throughput` и классы H100 уже заполнены.
+[Проверка плана](docs/SETUP.md#inference-readiness).
 
 Имя `hf-platform-gemma` совпадает с подготовленным маршрутом.
 Участникам не нужно выдавать новые ключи. После Ready проверяется ответ API,
