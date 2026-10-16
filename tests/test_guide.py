@@ -200,7 +200,7 @@ class Guide(unittest.TestCase):
             self.assertLess(text.index('id="memory"'), text.index('id="ram"'))
         readme = (ROOT / "README.md").read_text()
         for tokens in (131072, 262144):
-            for histories, element_bytes in ((1, 2), (8, 2), (8, 1)):
+            for histories, element_bytes in ((1, 2), (10, 2), (10, 1)):
                 value = maths.calculate_gemma(tokens=tokens, sessions=histories,
                                               element_bytes=element_bytes)["all_sessions_gib"]
                 self.assertIn(str(value).rstrip("0").rstrip(".").replace(".", ",") + " GiB", readme)
@@ -210,7 +210,7 @@ class Guide(unittest.TestCase):
                   for value in re.findall(r"\d+(?:\.\d+)?", cell)]
         expected = [maths.calculate_gemma_e2b(131072, histories, element_bytes)
                     ["all_sessions_gib"] * 1024
-                    for histories in (1, 8) for element_bytes in (2, 1)]
+                    for histories in (1, 10) for element_bytes in (2, 1)]
         self.assertEqual(actual, expected)
 
     def test_workshop_redirects_to_guides_without_a_duplicate_scenario(self):
@@ -232,7 +232,8 @@ class Guide(unittest.TestCase):
             self.assertIn(term, chapter)
         self.assertIn('hf-qwen-platform', chapter)
         self.assertIn('docs/SETUP.md#console-order', chapter)
-        self.assertIn('NUM_PROMPTS=1 CONCURRENCY=1', chapter)
+        self.assertIn('NUM_PROMPTS=10 CONCURRENCY=10', chapter)
+        self.assertIn('activeDeadlineSeconds: 43200', chapter)
         self.assertNotIn('kind: InferenceService', chapter)
 
     def test_platform_preflight_precedes_releasing_working_gpus(self):
@@ -251,7 +252,11 @@ class Guide(unittest.TestCase):
         extension = doc.split('id="long-context"', 1)[1].split('id="platform"', 1)[0]
         for setting in ("98304", "32768", "Tune", "131 072"):
             self.assertIn(setting, extension)
-        self.assertIn("Gemma Tune использует 128K", extension)
+        self.assertIn("128K — окно нынешнего Tune, не доказанный предел H100", extension)
+        self.assertIn('| `NUM_PROMPTS` / `CONCURRENCY` | 10 / 10 |', extension)
+        self.assertIn('на отдельной CPU-ноде', extension)
+        self.assertIn('BENCH_TARGET=manual', extension)
+        self.assertNotIn('В команде раздела 1', extension)
         self.assertNotIn("max-model-len: 65536", extension)
 
     def test_kv_visuals_are_in_both_main_stories_before_optimization(self):
@@ -284,8 +289,8 @@ class Guide(unittest.TestCase):
         self.assertIn("spec.replicas: 0", cleanup)
         self.assertNotIn("0.90", cleanup)
         h100 = (ROOT / "README.md").read_text()
-        self.assertIn("| `--random-input-len` | 98304 |", h100)
-        self.assertIn("| `--random-output-len` | 32768 |", h100)
+        self.assertIn("| `INPUT_TOKENS` | 98304 |", h100)
+        self.assertIn("| `OUTPUT_TOKENS` | 32768 |", h100)
 
     def test_chat_path_is_present_from_manual_to_platform_stages(self):
         readme = (ROOT / "README.md").read_text()

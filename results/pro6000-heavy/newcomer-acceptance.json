@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "scope": "One fresh ordinary participant, Base browser response and a separate external HTTPS API probe; not concurrent-load acceptance.",
+  "captured_at_utc": "2026-10-15T21:41:36.885244+00:00",
+  "signup_and_access": {
+    "pending_models_http_status": 401,
+    "approved_role": "user",
+    "browser_password_form": true,
+    "token_injected": false,
+    "manual_personal_key_creation": false,
+    "manual_participant_model_grants": false,
+    "automatic_personal_key_stable_across_repeat_login": true,
+    "native_card_and_backend_public_read_during_test": true,
+    "native_card_backend_configuration_unchanged": true,
+    "native_acl_restored_private_after_test": true,
+    "mcp_visible_connections": 0,
+    "mcp_key_configs": 0,
+    "mcp_tool_execution_tested": false
+  },
+  "browser_base_reply": {
+    "status": "passed",
+    "role": "user",
+    "stream": true,
+    "done": true,
+    "answer_chars": 176,
+    "answer_sha256": "e07b73012456c8b2722cd725fffb19a05e25dd226959774f7f6473d91712d0e7",
+    "question_sha256": "c7ee13b718768e047a312ce80fe830988f5c6e66df07b619e3e9cb73024866c6",
+    "usage": {
+      "prompt_tokens": 37,
+      "completion_tokens": 42,
+      "total_tokens": 79
+    },
+    "gateway_usage_matches": true,
+    "gateway_personal_key_matches": true,
+    "correlation": "Unique same-key/model/stream/token-usage log in the browser request time window; no exact request-ID binding.",
+    "external_browser_network_tested": false
+  },
+  "external_base_api": {
+    "status": "passed",
+    "http_status": 200,
+    "tls_verified": true,
+    "public_interface_route": true,
+    "proxy_used": false,
+    "matching_ipsec_policies": 0,
+    "ordinary_password_login": true,
+    "stream": false,
+    "max_output_tokens": 16,
+    "duration_seconds": 1.1,
+    "finish_reason": "stop",
+    "answer_sha256": "57778825e18b9bd09765a2eada5302dc489308415222863b520582734e59ff54",
+    "usage": {
+      "prompt_tokens": 24,
+      "completion_tokens": 3,
+      "total_tokens": 27
+    },
+    "gateway_usage_matches": true,
+    "gateway_personal_key_matches": true,
+    "browser_ui_tested": false
+  },
+  "billing": {
+    "status": "not_passed",
+    "observed_stream_cost": 0,
+    "tariff": "Not configured for the actual Base model in the complete observed before/after pricing-overrides snapshots.",
+    "pricing_snapshots": [
+      {
+        "position": "before_requests",
+        "captured_at_utc": "2026-10-15T19:49:22+00:00",
+        "time_source": "Collector-generated receipt filename, seconds resolution",
+        "total_rules": 91,
+        "matching_actual_model_rules": 0
+      },
+      {
+        "position": "after_requests",
+        "captured_at_utc": "2026-10-15T22:12:41+00:00",
+        "time_source": "Collector-generated receipt filename, seconds resolution",
+        "total_rules": 91,
+        "matching_actual_model_rules": 0
+      }
+    ],
+    "post_request_gateway_version": "v2.0.38-d8-edition",
+    "limitation": "Two override snapshots are not a continuous configuration history or billing reconciliation. Zero cost does not prove correct billing or free inference; no charge is calculated here."
+  },
+  "remaining": {
+    "qwen_browser_reply": "not_tested_in_this_receipt",
+    "qwen_recreation": "not_tested_in_this_receipt",
+    "ten_simultaneous_webui_users": "not_tested_in_this_receipt",
+    "long_context": "not_tested_in_this_receipt"
+  },
+  "screenshot": {
+    "path": "assets/results/pro6000-newcomer-base-ui.png",
+    "sha256": "031b430fadbff03af6462e9de061d1c31e7c83e679610b589e25f45feab58b06",
+    "width": 1440,
+    "height": 1100,
+    "visual_review": "Previously reviewed exact image; this exporter verifies only bytes and dimensions."
+  },
+  "private_input_sha256": {
+    "registration": "69f11ffab5559832dc5134215fa0ad7934bd9f993a6ec70aba2e88c8930f0c42",
+    "approval": "ec2b8a17e7bab7befe00a97e5e824cc5f3a4372043cbd438c94312bc942a726e",
+    "password_ui": "165834fa6c992a956eb5020c87e3eb47ac655ad342c58dfa11483bdc22ee795a",
+    "policy": "82f3636e69a35d7e0ba352990f194f6e0b01c55691745c305530cc445d61f3f7",
+    "key_first": "18f1ac98db3267dbe77111c195528f47d1c7072f19bd58fb4fe8576f7f8cc871",
+    "key_repeat": "8a676c793801f74b46da871016ff9c216cbf8fc36eb5e951c70c4f123b4815fb",
+    "acl_before": "4a3382b0306f1ca0f8b0bb9bc47ba0d07e6743d9493b7ebc0695c8823487b54f",
+    "acl_open": "b91b463f3b1533e3ea72b23f9e2f52063c7f83414ebb0a90113043249b9a1186",
+    "acl_close": "519d51a48f3cd8451f5ed701134efa478a3be10bd657c6b35724b136c33e87b6",
+    "browser_reply": "b822474b6fac81c3b99dfa102ba7710f1e8853a28420cfa9e12d9cd662834087",
+    "gateway": "95ab4e68a73e644a998ec6d22dd0a26e4e98097ec8adde7ad216fa23b5a524f5",
+    "external": "acdbde731a1ac2475b46139939025a344051e13f6bfe0aeb5128659ad37e84ce",
+    "pricing": "ae421bc8555751b56fdcab1199e064555bb95c2df908f72c713760a66ef283e1",
+    "pricing_after": "790877c546bc789790d6aadca6c4daa5492d280bbf4ecab2a5283effb3b0ede5"
+  }
+}

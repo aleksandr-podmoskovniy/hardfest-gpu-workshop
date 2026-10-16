@@ -152,7 +152,7 @@ class WebUIAccessChart(unittest.TestCase):
         self.assertEqual(len(config["chat_models"]), 2)
         self.assertEqual(config["pricing"][0]["input_usd_per_million_tokens"], 10)
 
-    def test_webui_background_tasks_have_bounded_parallel_capacity(self):
+    def test_bridge_concurrency_defaults_are_bounded_and_configurable(self):
         before = self.render()
         config = json.loads(before["ConfigMap"]["data"]["config.json"])
         self.assertEqual(config["max_concurrent_per_user"], 3)

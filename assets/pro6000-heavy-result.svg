@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1200 820" role="img" aria-labelledby="title desc" data-design="hardfest-v2">
+<title id="title">PRO 6000: проверка длинных запросов</title><desc id="desc">Каждая серия: 10 поданных и 10 завершённых запросов, по 32 768 выходных токенов.</desc>
+<defs><marker id="arrow-1554dc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#1554dc"/></marker><marker id="arrow-087d78" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#087d78"/></marker><marker id="arrow-7041b8" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7041b8"/></marker><marker id="arrow-536278" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536278"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}.formula{font-family:"DejaVu Sans Mono",Menlo,Consolas,monospace}</style>
+<rect x="1" y="1" width="1198" height="818" rx="20" fill="#ffffff" stroke="#d9e2ee" stroke-width="1.5"/>
+<rect x="48" y="38" width="5" height="34" rx="2" fill="#1554dc" stroke="#1554dc" stroke-width="1.5"/>
+<text x="70" y="64" font-size="32" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1082">
+<tspan x="70" dy="0">PRO 6000: проверка длинных запросов</tspan>
+</text>
+<text x="48" y="104" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Каждая серия: 10 поданных и 10 завершённых запросов, по 32 768 выходных токенов.</tspan>
+</text>
+<path d="M48 128 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="68" y="165" font-size="20" fill="#536278" text-anchor="start" font-weight="700" data-max-width="246">
+<tspan x="68" dy="0">Модель и полное окно</tspan>
+</text>
+<text x="342" y="165" font-size="20" fill="#536278" text-anchor="start" font-weight="700" data-max-width="242">
+<tspan x="342" dy="0">Первый токен</tspan>
+<tspan x="342" dy="28.0">медиана, мин</tspan>
+</text>
+<text x="620" y="165" font-size="20" fill="#536278" text-anchor="start" font-weight="700" data-max-width="218">
+<tspan x="620" dy="0">Вся серия,</tspan>
+<tspan x="620" dy="28.0">минуты</tspan>
+</text>
+<text x="884" y="165" font-size="20" fill="#536278" text-anchor="start" font-weight="700" data-max-width="244">
+<tspan x="884" dy="0">Пик Running</tspan>
+<tspan x="884" dy="28.0">по метрикам</tspan>
+</text>
+<rect x="48" y="219" width="1104" height="90" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="68" y="253" font-size="24" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="246">
+<tspan x="68" dy="0">Gemma Base</tspan>
+</text>
+<text x="68" y="284" font-size="19" fill="#536278" text-anchor="start" data-max-width="246">
+<tspan x="68" dy="0">167 520 токенов</tspan>
+</text>
+<text x="342" y="274" font-size="30" fill="#946017" text-anchor="start" font-weight="700" data-max-width="242">
+<tspan x="342" dy="0">151,78</tspan>
+</text>
+<text x="620" y="274" font-size="30" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="218">
+<tspan x="620" dy="0">333,47</tspan>
+</text>
+<text x="884" y="274" font-size="30" fill="#536278" text-anchor="start" font-weight="700" data-max-width="244">
+<tspan x="884" dy="0">1</tspan>
+</text>
+<rect x="48" y="324" width="1104" height="90" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="68" y="358" font-size="24" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="246">
+<tspan x="68" dy="0">Gemma Cache</tspan>
+</text>
+<text x="68" y="389" font-size="19" fill="#536278" text-anchor="start" data-max-width="246">
+<tspan x="68" dy="0">262 144 токенов</tspan>
+</text>
+<text x="342" y="379" font-size="30" fill="#946017" text-anchor="start" font-weight="700" data-max-width="242">
+<tspan x="342" dy="0">80,11</tspan>
+</text>
+<text x="620" y="379" font-size="30" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="218">
+<tspan x="620" dy="0">191,27</tspan>
+</text>
+<text x="884" y="379" font-size="30" fill="#536278" text-anchor="start" font-weight="700" data-max-width="244">
+<tspan x="884" dy="0">2</tspan>
+</text>
+<rect x="48" y="429" width="1104" height="90" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="68" y="463" font-size="24" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="246">
+<tspan x="68" dy="0">Gemma Tune</tspan>
+</text>
+<text x="68" y="494" font-size="19" fill="#536278" text-anchor="start" data-max-width="246">
+<tspan x="68" dy="0">262 144 токенов</tspan>
+</text>
+<text x="342" y="484" font-size="30" fill="#946017" text-anchor="start" font-weight="700" data-max-width="242">
+<tspan x="342" dy="0">128,53</tspan>
+</text>
+<text x="620" y="484" font-size="30" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="218">
+<tspan x="620" dy="0">311,89</tspan>
+</text>
+<text x="884" y="484" font-size="30" fill="#536278" text-anchor="start" font-weight="700" data-max-width="244">
+<tspan x="884" dy="0">2</tspan>
+</text>
+<rect x="48" y="534" width="1104" height="90" rx="12" fill="#f5f7fa" stroke="#d9e2ee" stroke-width="1.5"/>
+<text x="68" y="568" font-size="24" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="246">
+<tspan x="68" dy="0">Qwen TP2</tspan>
+</text>
+<text x="68" y="599" font-size="19" fill="#536278" text-anchor="start" data-max-width="246">
+<tspan x="68" dy="0">262 144 токенов</tspan>
+</text>
+<text x="342" y="589" font-size="30" fill="#946017" text-anchor="start" font-weight="700" data-max-width="242">
+<tspan x="342" dy="0">7,09</tspan>
+</text>
+<text x="620" y="589" font-size="30" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="218">
+<tspan x="620" dy="0">25,39</tspan>
+</text>
+<text x="884" y="589" font-size="30" fill="#536278" text-anchor="start" font-weight="700" data-max-width="244">
+<tspan x="884" dy="0">6</tspan>
+</text>
+<text x="48" y="665" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Синтетический тест вместимости. Длинное ожидание не является нормой для чата.</tspan>
+<tspan x="48" dy="28.0">Running включает prefill; это не число полностью размещённых окон.</tspan>
+<tspan x="48" dy="28.0">Разные окна и пересечение нагрузок: ускорение A/B здесь не измеряется.</tspan>
+</text>
+<path d="M48 758 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="48" y="791" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
+<tspan x="48" dy="0">Источник: results/pro6000-heavy; четыре завершённые серии, прямой API vLLM.</tspan>
+</text>
+</svg>

@@ -1,0 +1,32 @@
+{
+  "captured_at": 1792092796.5322711,
+  "model_card": "hardfest-gemma-cache",
+  "ordinary_password_account": true,
+  "done": true,
+  "usage": {
+    "prompt_tokens": 2582,
+    "completion_tokens": 161,
+    "completion_tokens_details": {},
+    "total_tokens": 2743,
+    "input_tokens": 2582,
+    "output_tokens": 161
+  },
+  "knowledge_and_attachment_citations": true,
+  "source_containers": 2,
+  "retrieved_chunks_shown_in_ui": 6,
+  "workload": "Synthetic pizza incident knowledge collection plus own synthetic DOCX update.",
+  "expected_answer": {
+    "order": "P-402",
+    "repeat_payment_needed": false,
+    "kitchen_time": "18:24",
+    "delivery_time": "unknown"
+  },
+  "screenshot": "webui-knowledge.png",
+  "screenshot_sha256": "978b1fe585d3662186f98ca05c14f38a639121990fee2102a63cbcf39effd195",
+  "limitations": [
+    "The model card and hidden backend temporarily granted read access only to this fixture.",
+    "This does not establish the final public ACL for newly approved participants.",
+    "Public HTTPS hostname was accessed from the current LAN, not a separately tested external network.",
+    "One source-grounded short answer, not a full-context quality benchmark."
+  ]
+}

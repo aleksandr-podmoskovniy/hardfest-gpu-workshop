@@ -45,9 +45,10 @@ spec:
                 --dataset-name random --seed 42 \
                 --random-input-len "$INPUT_TOKENS" --random-output-len "$OUTPUT_TOKENS" \
                 --random-range-ratio 0 --num-prompts "$NUM_PROMPTS" \
-                --max-concurrency "$CONCURRENCY" --ignore-eos --temperature 0 \
+                --max-concurrency "$CONCURRENCY" --request-rate inf --random-prefix-len 0 \
+                --ignore-eos --temperature 0 --ready-check-timeout-sec 0 --num-warmups 0 \
                 --percentile-metrics ttft,tpot,itl --metric-percentiles 95,99 \
-                --save-result --result-dir /work/results --result-filename result.json
+                --save-result --save-detailed --result-dir /work/results --result-filename result.json
               printf 'RESULT_JSON_BEGIN\n'
               cat /work/results/result.json
               printf '\nRESULT_JSON_END\n'

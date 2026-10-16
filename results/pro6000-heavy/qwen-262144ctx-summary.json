@@ -1,0 +1,188 @@
+{
+  "run_id": "heavy-pro-qwen38-tp2-262144ctx-32k-10",
+  "model": "qwen3-8-flash-next-nvfp4",
+  "service": "selectel-qwen38-tp2",
+  "input_tokens_each": 229376,
+  "output_tokens_each": 32768,
+  "window_tokens": 262144,
+  "submitted_concurrently": 10,
+  "completed": 10,
+  "failed": 0,
+  "wall_seconds": 1523.375168629922,
+  "aggregate_output_tokens_per_second": 215.10131368013933,
+  "synthetic_ignore_eos": true,
+  "output_counter_reconciled": true,
+  "traffic_path": "Separate CPU client to private vLLM; not WebUI/Bifrost",
+  "comparison_limit": "Repeated synthetic filler with independent session prefixes; not normal chat quality or representative speculative-decoding acceptance.",
+  "parallelism_limit": "Running counts scheduled requests, including prefill. This does not prove that ten full contexts decoded simultaneously.",
+  "client_ttft_median_seconds": 425.3156960371416,
+  "client_ttft_max_seconds": 1189.8654178571887,
+  "client_mean_decode_seconds_per_token": 0.020218827843015312,
+  "preemptions": 2.0,
+  "monitoring_step_seconds": 10,
+  "requests": [
+    {
+      "session": 0,
+      "ttft_s": 309.51022293325514,
+      "elapsed_s": 1102.6656831782311,
+      "last_content_s": 1102.6655248338357,
+      "submitted_at": 1792114346.7540576,
+      "completed_at": 1792115449.4197388,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 1,
+      "ttft_s": 1189.8654178571887,
+      "elapsed_s": 1523.0964016793296,
+      "last_content_s": 1523.095927122049,
+      "submitted_at": 1792114346.9633102,
+      "completed_at": 1792115870.0597115,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 2,
+      "ttft_s": 155.34786665532738,
+      "elapsed_s": 946.7155471784063,
+      "last_content_s": 946.7153503801674,
+      "submitted_at": 1792114346.782391,
+      "completed_at": 1792115293.4979377,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 3,
+      "ttft_s": 948.2535576922819,
+      "elapsed_s": 1519.4416991663165,
+      "last_content_s": 1519.4415279789828,
+      "submitted_at": 1792114346.8705099,
+      "completed_at": 1792115866.3122072,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 4,
+      "ttft_s": 78.77440388360992,
+      "elapsed_s": 870.2000117609277,
+      "last_content_s": 870.1998065887019,
+      "submitted_at": 1792114346.8100364,
+      "completed_at": 1792115217.0100486,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 5,
+      "ttft_s": 232.76579818408936,
+      "elapsed_s": 1024.6516449628398,
+      "last_content_s": 1024.651479901746,
+      "submitted_at": 1792114347.0185602,
+      "completed_at": 1792115371.6702046,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 6,
+      "ttft_s": 1035.515325773973,
+      "elapsed_s": 1520.9455994949676,
+      "last_content_s": 1520.9453835692257,
+      "submitted_at": 1792114346.8981142,
+      "completed_at": 1792115867.843713,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 7,
+      "ttft_s": 1113.3163604140282,
+      "elapsed_s": 1522.203499676194,
+      "last_content_s": 1522.2033183001913,
+      "submitted_at": 1792114346.837129,
+      "completed_at": 1792115869.0406277,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 8,
+      "ttft_s": 386.911245805677,
+      "elapsed_s": 1255.7369181378745,
+      "last_content_s": 1255.736646655947,
+      "submitted_at": 1792114346.9263954,
+      "completed_at": 1792115602.6633124,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 9,
+      "ttft_s": 463.7201462686062,
+      "elapsed_s": 1253.4297027518041,
+      "last_content_s": 1253.428699458018,
+      "submitted_at": 1792114346.7254293,
+      "completed_at": 1792115600.1551325,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    }
+  ],
+  "sampled_max_running": 6.0,
+  "sampled_max_waiting": 9.0,
+  "sampled_max_gpu_kv_fraction": 0.9960552268244576,
+  "engine_mean_ttft_seconds": 588.9747591972351,
+  "engine_mean_tpot_seconds": 0.020220612653364663,
+  "engine_mean_queue_seconds": 509.46172108090104,
+  "engine_mean_prefill_seconds": 78.95196345639924,
+  "engine_mean_decode_seconds": 662.5688148127999,
+  "engine_mean_e2e_seconds": 1251.548271226883,
+  "source_sha256": {
+    "client": "2609cc7d97a745a7b714ddc26c10d7db43183119d18c342489a690520eee6f83",
+    "monitor": "43275b4fdb1fb9534286f2f6a59a5d05847937f21da2efdf18549f6181758421"
+  }
+}

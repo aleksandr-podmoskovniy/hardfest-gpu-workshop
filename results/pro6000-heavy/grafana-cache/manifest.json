@@ -1,0 +1,43 @@
+{
+  "captured_at": "2026-10-15T19:29:13.747Z",
+  "service": "selectel-gemma-cache",
+  "start_unix": 1792080800,
+  "end_unix": 1792092330,
+  "time_zone": "UTC",
+  "dashboard_uid": "dkpce-llm-live-performance",
+  "dashboard_version": 1,
+  "installed_dashboard_sha256": "e950a3f853d302ec60a6e0205118ba690012b0f34dc32b262ca0c1aaa2e3badb",
+  "panels": [
+    {
+      "panel_id": 18,
+      "title": "Concurrent requests by service",
+      "file": "panel-18.png",
+      "sha256": "b8abf0a419747ea38fca1a1e3cf038873a9fb0cb47165a4477482635f31f377d"
+    },
+    {
+      "panel_id": 203,
+      "title": "TPOT после первого токена",
+      "file": "panel-203.png",
+      "sha256": "59c28f2a6922752e6c4538ff03bce7d9e0d604bea1d4f7bbc9657d9c6a00c147"
+    },
+    {
+      "panel_id": 24,
+      "title": "KV-cache fill by service",
+      "file": "panel-24.png",
+      "sha256": "f15b602ab4cfa5dabec245d83015e864b7a433fca2f89cbecdb57e61705e6fb4"
+    },
+    {
+      "panel_id": 33,
+      "title": "Memory footprint",
+      "file": "panel-33.png",
+      "sha256": "c868cc19222dfd419ff467fd3307be4b68d6b1d045eb4a6b92c80671ef0d6b2d"
+    },
+    {
+      "panel_id": 261,
+      "title": "KV: GPU ↔ RAM, bytes/s",
+      "file": "panel-261.png",
+      "sha256": "276ec64689599b81bb60aa8919b30351fcf8ca8ca1d4f7a98e16399fa881e8b1"
+    }
+  ],
+  "note": "Unmodified installed Grafana panels. UTC axes. Dashboards may resample; raw 10-second series are the numeric authority. Memory footprint includes both node GPUs; the RAM series belongs only to the selected runtime. TPOT panel is a short-window completed-request histogram: empty intervals are not zero latency."
+}

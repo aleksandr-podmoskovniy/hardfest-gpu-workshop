@@ -45,10 +45,10 @@ class KVTeaching(unittest.TestCase):
         stage = doc.split('id="speculation"', 1)[1].split('id="platform"', 1)[0]
         # The current full-window check reserves 32K for output, without
         # replaying superseded 512/8192-output rehearsals in the guide.
-        for term in ("131072", "98304", "32768", "assistant", "completed=1", "failed=0"):
+        for term in ("131072", "98304", "32768", "assistant", "completed=10", "failed=0"):
             self.assertIn(term, stage)
         qwen = (ROOT / "RTX5060.md").read_text().split('id="qwen-long-context"', 1)[1]
         self.assertIn("--endpoint /v1/completions --model rtx-qwen35-9b", qwen)
-        self.assertIn("--max-concurrency 8", qwen)
+        self.assertIn("--num-prompts 10 --max-concurrency 10", qwen)
         self.assertIn("INPUT_TOKENS=98304 OUTPUT_TOKENS=32768", qwen)
         self.assertRegex(qwen, r"(?i)Состояние linear attention")

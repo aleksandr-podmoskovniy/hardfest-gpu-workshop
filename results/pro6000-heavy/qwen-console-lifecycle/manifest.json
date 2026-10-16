@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "scope": "Initial ordinary-user Qwen reply within the accepted Console create-delete-recreate cycle",
+  "image": "qwen-console-initial-reply.png",
+  "image_sha256": "5570f435e1f33bf510f82edb73d3973403f58579b055e8d14e426e55da6d0fb7",
+  "width": 1440,
+  "height": 1100,
+  "original_pixels": true,
+  "visual_review": "Sidebar closed; no personal identifiers or credentials visible",
+  "actual_usage": {
+    "prompt_tokens": 77,
+    "completion_tokens": 481,
+    "total_tokens": 558
+  },
+  "reasoning_tokens": 429,
+  "answer_sha256": "ba75409f286ada563b74e26e5adfa23eba6863932415657579f6c19db914bf16",
+  "gateway_cost": {
+    "main_stream": "0.01039",
+    "three_fresh_logs_sum": "0.03256",
+    "personal_budget_current_usage": "0.01039",
+    "aggregate_billing_verified": false,
+    "currency": "Gateway cost units; no currency inferred from this receipt"
+  },
+  "source_sha256": {
+    "browser_reply": "e63bdd2c5d8baad49e9281b0d22b58d8743555ce2eadb33dc9061d4dfa510c94",
+    "gateway_logs": "5b3441a7a135339361f04c0bcff30c1f8e91b30d1dc6ed8d2c374c011f0caa21",
+    "gateway_configuration": "4399ad10ff1bb9e126318ed9071e8537cba262387879f1a9db4e87fc08fa41ca"
+  },
+  "screenshot_exporter_sha256": "8f6c67e02b51b90c941820819c0abc42a2538067e068f9674c8195d900c4bc9c",
+  "limitations": [
+    "Screenshot alone does not prove runtime allocation or delete/recreate success.",
+    "Only the three recorded requests in the browser-reply interval are summed.",
+    "Current budget usage differs from the three-log sum; aggregate billing is not accepted.",
+    "No claim about ten concurrent WebUI users, full-context chat quality or external-network access."
+  ],
+  "lifecycle": {
+    "schema_version": 1,
+    "status": "passed",
+    "scenario": "Qwen Console create-delete-recreate",
+    "acceptance_scope": "functional_create_delete_recreate",
+    "user": {
+      "ordinary_password_login": true,
+      "pending_then_approved": true,
+      "same_automatically_issued_virtual_key": true,
+      "mcp_granted": false,
+      "historical_key_observations": [
+        {
+          "observation": "first",
+          "identity_and_active_state_verified": true,
+          "provider_permissions_captured": false,
+          "mcp_count_captured": false
+        },
+        {
+          "observation": "repeat",
+          "identity_and_active_state_verified": true,
+          "provider_permissions_captured": true,
+          "mcp_count_captured": true
+        }
+      ],
+      "current_exact_qwen_permissions_and_zero_mcp_verified": true,
+      "ordinary_policy_snapshot_zero_mcp_verified": true
+    },
+    "console": {
+      "initial_create": true,
+      "delete_exact_initial_object": true,
+      "recreate": true,
+      "distinct_object_and_gpu_claim_uids": true,
+      "same_spec_and_prepared_route": true,
+      "old_workload_pod_and_owned_claims_absent": true,
+      "shared_models_and_pvcs_preserved": true,
+      "deletion_atomic_uid_precondition": false
+    },
+    "runtime": {
+      "context_limit_tokens": 262144,
+      "tensor_parallel": 2,
+      "distinct_ready_allocated_gpus": 2,
+      "max_num_seqs": 10,
+      "offload_gib": 160,
+      "mtp_tokens": 1,
+      "same_runtime_bracketed_each_reply": true
+    },
+    "replies": [
+      {
+        "stage": "initial",
+        "finished": true,
+        "actual_usage": {
+          "prompt_tokens": 77,
+          "completion_tokens": 481,
+          "total_tokens": 558
+        },
+        "answer_chars": 226,
+        "answer_sha256": "ba75409f286ada563b74e26e5adfa23eba6863932415657579f6c19db914bf16",
+        "browser_correlation": "single-browser-request+chat-timestamp",
+        "gateway_latency_ms": 6530,
+        "observed_background_requests": {
+          "observed_count": 2,
+          "observed_success_count": 2,
+          "observed_error_count": 0,
+          "requests": [
+            {
+              "status": "success",
+              "gateway_latency_ms": 6268,
+              "provider_key_verified": true
+            },
+            {
+              "status": "success",
+              "gateway_latency_ms": 2344,
+              "provider_key_verified": true
+            }
+          ],
+          "pagination_completeness_verified": false,
+          "correlation_scope": "Same personal key, canonical model, prepared route and browser reply interval; not proof of parent/child request identity."
+        }
+      },
+      {
+        "stage": "recreate",
+        "finished": true,
+        "actual_usage": {
+          "prompt_tokens": 77,
+          "completion_tokens": 132,
+          "total_tokens": 209
+        },
+        "answer_chars": 259,
+        "answer_sha256": "ee939fb42ce796c0598c994ef6ae6bc93fbd9b5975447ad24a69e83a1673988e",
+        "browser_correlation": "single-browser-request+chat-timestamp",
+        "gateway_latency_ms": 135978,
+        "observed_background_requests": {
+          "observed_count": 2,
+          "observed_success_count": 1,
+          "observed_error_count": 1,
+          "requests": [
+            {
+              "status": "error",
+              "gateway_latency_ms": 133267,
+              "provider_key_verified": false
+            },
+            {
+              "status": "success",
+              "gateway_latency_ms": 4570,
+              "provider_key_verified": true
+            }
+          ],
+          "pagination_completeness_verified": false,
+          "correlation_scope": "Same personal key, canonical model, prepared route and browser reply interval; not proof of parent/child request identity."
+        }
+      }
+    ],
+    "performance": {
+      "status": "degraded",
+      "latency_slo_accepted": false,
+      "reliability_slo_accepted": false,
+      "background_error_observed": true,
+      "latency_measurement": "Bifrost request duration in milliseconds, not TTFT.",
+      "acceptance_limit": "Functional completion only; no latency or reliability SLO was defined."
+    },
+    "gateway": {
+      "same_personal_key_route_and_provider_key_ids": true,
+      "visible_configuration_snapshots_equal": true,
+      "url_visibility": "redacted_not_verified",
+      "hidden_url_equality_verified": false,
+      "actual_browser_replies_correlated_by_usage_model_stream_and_time": true
+    },
+    "limitations": [
+      "Snapshots and successful replies are not continuous configuration history.",
+      "Gateway correlation uses exact key/model/stream/usage/time, not a shared end-to-end request ID.",
+      "Console deletion is name-based, with exact UID checks before and absence checks afterwards.",
+      "Deletion absence/preservation is attested by the guarded helper receipt, not re-read by this exporter.",
+      "Two ordinary browser chats do not prove ten concurrent WebUI sessions or long-context throughput.",
+      "A completed chat may coexist with slow or failed background requests; functional status does not accept performance.",
+      "Background counts cover observed same-key/model/route interval rows only; pagination completeness is not proven.",
+      "A background error may lack the selected provider-key identity; this is marked unverified, not inferred.",
+      "Historical key snapshots without permission fields prove identity and active state only; missing permissions are not inferred.",
+      "Current exact Qwen permissions and zero MCP are verified from the final full key snapshot and the separate ordinary-user policy proof.",
+      "This receipt makes no billing or external-network acceptance claim."
+    ],
+    "private_evidence_sha256": {
+      "registration": "69f11ffab5559832dc5134215fa0ad7934bd9f993a6ec70aba2e88c8930f0c42",
+      "approval": "ec2b8a17e7bab7befe00a97e5e824cc5f3a4372043cbd438c94312bc942a726e",
+      "login": "165834fa6c992a956eb5020c87e3eb47ac655ad342c58dfa11483bdc22ee795a",
+      "policy": "82f3636e69a35d7e0ba352990f194f6e0b01c55691745c305530cc445d61f3f7",
+      "key_first": "18f1ac98db3267dbe77111c195528f47d1c7072f19bd58fb4fe8576f7f8cc871",
+      "key_repeat": "8a676c793801f74b46da871016ff9c216cbf8fc36eb5e951c70c4f123b4815fb",
+      "route_before": "4399ad10ff1bb9e126318ed9071e8537cba262387879f1a9db4e87fc08fa41ca",
+      "route_after": "aa54e5c1c0b5ae98445ee588dc5bd05edcf2a37074a75085ffef21c7ad89a144",
+      "reply_initial": "e63bdd2c5d8baad49e9281b0d22b58d8743555ce2eadb33dc9061d4dfa510c94",
+      "reply_recreate": "5e9a11182ce328b3a4242a4c1c0c032321438457bf6bb1d0486de32c45a59e0b",
+      "initial_staged": "9e1058b31aec85dde673c059f211c824eb1b747a8cc734569b181712fa888754",
+      "initial_submit-intent": "d5824e0d26c3d30a5358e478ac2d987fd380869eef6ff0c4aa4636c40761e72c",
+      "initial_observed": "4ba95c9142091840025315be5a0489e50cb2bca04ca0043d392f320507f98b70",
+      "initial_verified": "d2ba0677738abea549c9d3e7a227fb1503b95d6dee635fb0bc0ee4cc57e5704d",
+      "initial_before": "fd768f9c09f2427c609c91853e945a58f1a928717f12fd4d033b8fe021313c6a",
+      "initial_after": "df21de6c0d6aea9ff2a6cd5587f96dba68f4ac23c6f1f654198e3e91f3e5d2f4",
+      "recreate_staged": "afd4acf30741bbbf7f213e4980382aa332e46ab308710dae2ab5ac472d4b7c46",
+      "recreate_submit-intent": "7b3eb10131e6930cce9a728c7078197210f07963ec754238cf5c9775fe3063c9",
+      "recreate_observed": "7058d548763c05cbb66686b9fed10fba06a42086ff6af8af7a1beba3df967845",
+      "recreate_verified": "8979bdcd05adf386a59424b3e85bcc9b22ce827815d81f4211f1af4a04ecca17",
+      "recreate_before": "8eb9e5feeba4683937822883b86c5c8211f3f3fc3ac880f00302a054826e7a9f",
+      "recreate_after": "5ac45d0577362d7e735048c4fd5e0c38ac26b95baefc0160434e1f0528cd6b32",
+      "delete_staged": "9bcfdff719b60d46a403ba22167355b8a8b839af7aa80c9cf2ee7518f96a825a",
+      "delete_submit-intent": "8001fc9dd58d27494cd44c39dda371766b1959dee1d267e5a8984a6c907619cc",
+      "delete_verified": "1dbb4d70a56b88a7bfe0c0d9161111370e71a14a7eb539a41275a960b66f74b3",
+      "logs_initial": "5b3441a7a135339361f04c0bcff30c1f8e91b30d1dc6ed8d2c374c011f0caa21",
+      "logs_recreate": "1be5edd6c052b413155218c595051d9b325a35c80caef53babfa0ab06e8dd908",
+      "key_after": "699300283172d3ee9348e6c00ee4be86de478e07d889d327aa58e1c84d549f8e"
+    },
+    "verifier_source_sha256": {
+      "console_form.py": "5648f2d7f6f26efd8185caea63c744da620757c50e004390787b45b21a2b2625",
+      "newcomer_reply_receipt.py": "8fbaf31ae762e0e55a560de17867c08a1bfec1fcf3d54e213ecac90bd5426deb",
+      "platform_gate.py": "f3a2beb5239a43107c9337243bcd02333da4d80227f1d31655558f39d6cad3c1",
+      "gateway_lifecycle.py": "cf9ca170d1535d73f185c8a729b6220dc3bd35a7ed7c3372ecb216a11ebaeb22",
+      "gateway_browser.py": "c8e70e146965392603525f0713be91391cec9c1dd950ac7c0851c80c65237ed7",
+      "export_lifecycle.py": "5cc56d8067b82cf3072b551f3ffe5b4046563665aeee7c46e7ede2e1cd533124",
+      "platform_preflight.py": "395580e5dcb1500985143a890dfea893bface73f4396ea7d9d6e2eb593779ad3"
+    }
+  }
+}

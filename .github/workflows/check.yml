@@ -35,8 +35,10 @@ jobs:
         run: |
           python3 scripts/build_diagrams.py
           git diff --exit-code -- assets/
-      - name: Verify article numbers and figures against public measurements
-        run: python3 scripts/article_results.py --check
+      - name: Verify retained H100 and RTX article measurements
+        run: python3 scripts/article_results.py --scope h100-rtx --check
+      - name: Verify PRO capacity-only publication against all four fresh bundles
+        run: python3 scripts/article_results.py --scope pro-capacity-only --check
       - run: python3 -m unittest discover -s tests -v
       - run: python3 scripts/check_public.py
       - run: python3 scripts/check_docs.py

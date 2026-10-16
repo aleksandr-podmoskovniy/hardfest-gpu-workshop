@@ -1,0 +1,78 @@
+{
+  "vllm_version": "0.31.0",
+  "runtime_image_digest": "sha256:f7cb9820c7e92eb78a4b3f60033e240c87a16bf99117471aba347fdd69eaca2d",
+  "gpu": "2 × NVIDIA GeForce RTX 5060 Ti, 16311 MiB each",
+  "served_model_names": ["rtx-qwen35-9b"],
+  "launch_provenance": {
+    "mode": "ai-inference",
+    "owner_chain_kinds": ["Pod", "StatefulSet", "InferenceService"],
+    "owner_uids_verified": true,
+    "order_name": "rtx-qwen35-tp2",
+    "launch_strategy": "Throughput",
+    "evidence": "Archived workload snapshot, measured Pod and pre-stop InferenceService; both owner UID links match."
+  },
+  "model": {
+    "repository": "Qwen/Qwen3.5-9B",
+    "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+    "artifact_digest_in_actual_pod": "sha256:8472f515598f666e97019d046135ff4e58ffc3843a6b5059a74dec5f00d7e440",
+    "identity_check": "Model status source revision and artifact digest checked after the run; digest matches the archived measured Pod and revision matches catalog/rtx.yaml."
+  },
+  "driver_observation": {
+    "version": "580.76.05",
+    "gpu_indices": [0, 1],
+    "timing": "Observed on the same node after the 128K run, during the subsequent 256K run on 2026-10-15. No driver changes were made."
+  },
+  "startup_log": {
+    "available_kv_memory_gib_per_rank": 5.59,
+    "gpu_kv_pool_tokens": 603518,
+    "estimated_max_concurrency_for_131072_tokens": 4.60,
+    "padding_layers": 3,
+    "maximum_padding_waste_percent": 12.50,
+    "claim_limit": "Startup estimate, not measured concurrent full-context decoding."
+  },
+  "server_flags_from_actual_pod": {
+    "--enable-prefix-caching": true,
+    "--attention-backend": "TRITON_ATTN",
+    "--disable-custom-all-reduce": true,
+    "--distributed-executor-backend": "mp",
+    "--dtype": "bfloat16",
+    "--enable-chunked-prefill": true,
+    "--no-enforce-eager": true,
+    "--gpu-memory-utilization": "0.95",
+    "--language-model-only": true,
+    "--max-cudagraph-capture-size": "16",
+    "--max-num-batched-tokens": "512",
+    "--speculative-config": "{\"method\":\"qwen3_next_mtp\",\"num_speculative_tokens\":1}",
+    "--max-model-len": "131072",
+    "--kv-offloading-size": "16",
+    "--kv-offloading-backend": "native",
+    "--kv-cache-dtype": "fp8",
+    "--max-num-seqs": "8",
+    "--tensor-parallel-size": "2"
+  },
+  "runtime_configuration_source": "Pod command-line arguments",
+  "selected_env_from_actual_pod": {
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "0,1",
+    "HF_HUB_OFFLINE": "1",
+    "VLLM_CACHE_ROOT": "/data/.cache"
+  },
+  "shared_memory_from_actual_pod": {
+    "mount_path": "/dev/shm",
+    "medium": "Memory",
+    "size_limit": "24Gi"
+  },
+  "resources": {
+    "requests": {"cpu": "4", "memory": "40Gi"},
+    "limits": {"cpu": "4", "memory": "40Gi"}
+  },
+  "runtime_restart_count_after": 0,
+  "local_health_watcher": "Partial coverage; full interval is separately exported from Prometheus.",
+  "client": "Separate CPU node; private direct HTTP completions; 10 threads, unique early prefixes, repeated filler, temperature 0, ignore_eos true",
+  "client_script_sha256": {
+    "inference-probe.py": "2249e57137861d358e36abad5340e4d684d73314fbef73b89e3a9b0a9f02bc28",
+    "probe_transport.py": "5da9922162ab3971d934c9d280694902a340e5caccc7ec9bf022e5b09640e17f",
+    "run_probe_with_hold.py": "3c2dd5e5fb7a1f207c6aaef0489803a4304c5f62f699336f3a7f5ee360aaeff9"
+  },
+  "not_tested": "Chat quality, WebUI/Bifrost path, real-world MTP acceptance, multi-hour fault recovery"
+}

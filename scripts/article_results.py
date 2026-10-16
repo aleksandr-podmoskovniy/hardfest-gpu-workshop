@@ -4,13 +4,18 @@ import argparse
 import json
 from pathlib import Path
 import re
-import sys
 
-from build_diagrams import Diagram, BLUE, TEAL, AMBER, MUTED, GRAY, MINT, PALE
+from build_diagrams import Diagram, BLUE, TEAL, MUTED, GRAY, MINT, PALE
+import pro6000_capacity_results as pro6000
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "results/pro6000/tools"))
-from summarize_matched_chat import summarize
+SCOPES = ("all", "h100-rtx", "pro", "pro-capacity-only")
+CAPACITY_ONLY_CHAT_NOTICE = (
+    "Сопоставимая серия обычных ответов Base, Cache и Tune ещё не завершена; "
+    "её численные результаты здесь не публикуются.\n\n"
+    "Проверки вместимости используют разные окна, а нагрузки на узел пересекались. "
+    "По ним нельзя вычислять ускорение настроек или судить о задержках обычного чата."
+)
 
 
 def read(name):
@@ -49,17 +54,6 @@ def rtx_results(report):
     return result
 
 
-def validate_capacity(summary, input_tokens):
-    expected = {"completed": 10, "submitted_concurrently": 10, "output_tokens_each": 32768,
-                "input_tokens_each": input_tokens, "window_tokens": input_tokens + 32768,
-                "synthetic_ignore_eos": True}
-    if any(summary.get(key) != value for key, value in expected.items()):
-        raise ValueError("Capacity summary does not match the fixed article protocol")
-    if len(summary.get("requests", [])) != 10:
-        raise ValueError("Capacity summary lacks ten completed request records")
-    return summary
-
-
 def score_figure(name, title, subtitle, columns, rows, notes, footer):
     """Aligned score rows, not misleading bars with incompatible time scales."""
     d = Diagram(name, title, subtitle)
@@ -78,7 +72,8 @@ def score_figure(name, title, subtitle, columns, rows, notes, footer):
     return "\n".join(d.parts + ["</svg>"]) + "\n"
 
 
-def build():
+def build_h100_rtx():
+    """Independent retained H100/RTX sections; never reads PRO measurements."""
     blocks, figures = {}, {}
     # H100 is one first-use/replay pair with offload ON in both requests, not A/B.
     h = read("results/kv-ram/observations.json")
@@ -153,59 +148,40 @@ def build():
           number(r["dp-128k-short", series]["output_throughput"])]
          for series, name in ((0, "Первый проход"), (1, "Повтор"))])
 
-    matched = summarize(read("results/pro6000/gemma-matched-chat-final.json"))
-    pairs = list(zip(matched["waves"][::2], matched["waves"][1::2]))
-    labels = ("Короткий вход, 98 токенов", "Длинный вход, первое обращение", "Тот же длинный вход, повтор")
-    rows, chart_rows = [], []
-    for label, (a, b) in zip(labels, pairs):
-        av, bv = (w["client_ttft_visible_answer_s"]["median"] for w in (a, b))
-        delta = bv - av
-        rows.append([label, number(av, 3), number(bv, 3),
-                     f"на {number(abs(delta), 3)} с {'позже' if delta > 0 else 'раньше'}"])
-        chart_rows.append((label.replace(", ", "\n").splitlines(), [number(av, 3), number(bv, 3)]))
-    blocks["pro-chat"] = table(["Одинаковый запрос A/B", "Base, с", "Tune, с", "Изменение"], rows)
-    # Use separate numeric cells: no compressed warm bar or hidden log scale.
-    d = Diagram("pro6000-chat-result", "PRO 6000: когда тюнинг помогает",
-                "До первого видимого ответа, секунды. Медиана 10 запросов в каждой волне; меньше лучше.")
-    for x, label in ((48, "Запрос"), (616, "Base"), (904, "Tune")):
-        d.text(x + 20, 173, label, 20, MUTED, True, width=230)
-    for i, (label, values) in enumerate(chart_rows):
-        y = 197 + 130 * i
-        d.rect(48, y, 1104, 108, GRAY)
-        d.text(68, y + 41, label, 23, bold=True, width=520)
-        d.text(636, y + 61, values[0], 35, MUTED, True, width=230)
-        d.text(924, y + 61, values[1], 35, AMBER if i == 0 else TEAL, True, width=208)
-    d.text(48, 627, ["Длинный вход — 98 268 токенов. Фактический ответ — 13–14 токенов, не 32K.",
-                    "Общий префикс внутри волны. Все 60/60 ответов завершены; путь напрямую в vLLM."],
-           20, MUTED, width=1104)
-    d.footer("Источник: results/pro6000/gemma-matched-chat-final.json. Один эксперимент, не гарантия.")
-    figures[d.name] = "\n".join(d.parts + ["</svg>"]) + "\n"
-
-    capacity = [validate_capacity(read(f"results/pro6000/gemma-{stage}-sse32k-validated-summary.json"), tokens)
-                for stage, tokens in (("a", 134752), ("b", 229376))]
-    blocks["pro-capacity"] = table(
-        ["Gemma / проверка вместимости", "Base", "Tune"],
-        [["Вход + выход на запрос", *(f'{number(s["input_tokens_each"], 0)} + 32 768' for s in capacity)],
-         ["Завершено / подано одновременно", "10 / 10", "10 / 10"],
-         ["Максимум активных по метрикам", *(number(s["sampled_max_running"], 0) for s in capacity)],
-         ["Максимальный TTFT, мин", *(number(s["client_ttft_max_seconds"] / 60, 1) for s in capacity)],
-         ["Время всей серии, мин", *(number(s["wall_seconds"] / 60, 1) for s in capacity)]])
-    q = validate_capacity(read("results/pro6000/qwen-10x256k-summary.json"), 229376)
-    blocks["pro-qwen"] = table(
-        ["Qwen TP2: полное окно", "Измерено"],
-        [["Завершено / подано одновременно", "10 / 10"],
-         ["Максимум активных по метрикам", number(q["observed_max_running"], 0)],
-         ["Время всей серии, мин", number(q["wall_seconds"] / 60, 2)],
-         ["Максимальный TTFT, мин", number(q["client_ttft_max_seconds"] / 60, 2)],
-         ["Средний TPOT движка, мс", number(q["engine_mean_tpot_seconds"] * 1000)],
-         ["Вытеснения активных запросов (preemptions)", number(q["preemptions"], 0)]])
     return blocks, figures
 
 
-def outputs():
-    blocks, figures = build()
-    documents = {"README.md": ["h100-replay"], "RTX5060.md": ["rtx-stages", "rtx-platform"],
-                 "RTXPRO6000.md": ["pro-chat", "pro-capacity", "pro-qwen"]}
+def build(scope="all", pro_folder=pro6000.DEFAULT_FOLDER, source_root=ROOT):
+    """Full PRO requires capacity and matched; omission is an explicit scope only."""
+    if scope not in SCOPES:
+        raise ValueError("Unknown article results scope")
+    blocks, figures = {}, {}
+    if scope in ("all", "pro", "pro-capacity-only"):
+        blocks, figures = pro6000.build(pro_folder)
+        if scope == "pro-capacity-only":
+            # Never hide a completed or malformed export behind a missing-results notice.
+            if (Path(pro_folder) / "gemma-matched-chat.json").exists():
+                raise ValueError("Matched evidence exists; use --scope pro to validate it")
+            blocks["pro-chat"] = CAPACITY_ONLY_CHAT_NOTICE
+        else:
+            chat_blocks, chat_figures = pro6000.build_matched(pro_folder, source_root)
+            blocks.update(chat_blocks)
+            figures.update(chat_figures)
+    if scope in ("all", "h100-rtx"):
+        retained_blocks, retained_figures = build_h100_rtx()
+        blocks.update(retained_blocks)
+        figures.update(retained_figures)
+    return blocks, figures
+
+
+def outputs(scope="all", pro_folder=pro6000.DEFAULT_FOLDER, source_root=ROOT):
+    # Validate the entire selected scope before preparing any output file.
+    blocks, figures = build(scope, pro_folder, source_root)
+    documents = {}
+    if scope in ("all", "h100-rtx"):
+        documents.update({"README.md": ["h100-replay"], "RTX5060.md": ["rtx-stages", "rtx-platform"]})
+    if scope in ("all", "pro", "pro-capacity-only"):
+        documents["RTXPRO6000.md"] = ["pro-chat", "pro-capacity", "pro-qwen"]
     output = {ROOT / f"assets/{name}.svg": content for name, content in figures.items()}
     for name, keys in documents.items():
         path = ROOT / name
@@ -223,13 +199,23 @@ def outputs():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Check without modifying files")
+    parser.add_argument("--scope", choices=SCOPES, default="all",
+                        help="all/pro require four fresh capacity bundles and matched chat; "
+                             "h100-rtx excludes PRO; pro-capacity-only requires all four capacity "
+                             "bundles and explicitly replaces missing matched chat with a notice")
+    parser.add_argument("--pro-folder", type=Path, default=pro6000.DEFAULT_FOLDER)
     args = parser.parse_args()
     changed = []
-    for path, expected in outputs().items():
+    try:
+        prepared = outputs(args.scope, args.pro_folder)
+    except (ValueError, FileNotFoundError) as error:
+        raise SystemExit("Article results blocked: " + str(error)) from error
+    for path, expected in prepared.items():
         if not path.exists() or path.read_text() != expected:
             changed.append(str(path.relative_to(ROOT)))
             if not args.check:
                 path.write_text(expected)
     if args.check and changed:
         raise SystemExit("Stale article results: " + ", ".join(changed))
-    print("Article results match public measurements." if args.check else "Updated: " + ", ".join(changed))
+    print("Article results match public measurements (scope: " + args.scope + ")." if args.check
+          else "Updated (scope: " + args.scope + "): " + ", ".join(changed))

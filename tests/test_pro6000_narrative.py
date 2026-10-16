@@ -22,20 +22,35 @@ class PRO6000Narrative(unittest.TestCase):
         self.assertNotIn("InferenceService", text[:platform])
         for term in ("Key–Value cache", "Dynamic Resource Allocation", "Multi-Instance GPU", "Multi-Process Service"):
             self.assertIn(term, text)
+        # Preserve exact UI labels while rejecting decorative prose separators.
+        for name in ("Gemma A — PRO 6000 · базовая", "Gemma B — PRO 6000 · KV cache", "Gemma B — PRO 6000 · полный тюнинг",
+                     "Qwen 3.8 — PRO 6000 · TP2 · 256K"):
+            text = text.replace(f"**{name}**", "")
         self.assertNotIn("·", text)
+
+    def test_optional_platform_gemma_closes_access_and_drains_before_scale(self):
+        text = (ROOT / "RTXPRO6000.md").read_text().split('<a id="platform-gemma"></a>', 1)[1]
+        text = text.split('</details>', 1)[0]
+        stop = text.index('У Deployment `selectel-gemma-a`')
+        for guard in ('`workshop.vllm/selectel-gemma-a`', '**⋯ / Make Private**',
+                      '**⋯ / Доступ / Частное**', 'разрешения участников и групп удаляются',
+                      '**Running = 0 и Waiting = 0**'):
+            self.assertLess(text.index(guard), stop)
 
     def test_visible_limits_and_long_budget(self):
         text = (ROOT / "RTXPRO6000.md").read_text()
         for value in ("229 376", "32 768", "262 144", "107,81", "207,81", "103,91"):
             self.assertIn(value, text)
-        for caveat in ("несколько настроек", "ручная B и платформенная Gemma",
+        for caveat in ("их совместный результат", "ручная B и платформенная Gemma",
                        "не попадают в учёт VK", "YAML сервиса\nне фиксирует все параметры",
                        "Десять одновременно отправленных запросов ещё не означают десять активных"):
             self.assertIn(caveat, text)
         self.assertIn("examples/pro6000-load-client/README.md", text)
-        self.assertIn("results/pro6000/README.md", text)
-        evidence = (ROOT / "results/pro6000/README.md").read_text()
-        self.assertIn("gemma-matched-chat-ttft.svg", evidence)
+        self.assertIn("results/pro6000-heavy/README.md", text)
+        self.assertNotIn("results/pro6000/", text)
+        evidence = (ROOT / "results/pro6000-heavy/README.md").read_text()
+        self.assertIn("Обычный ответ на одинаковых входах", evidence)
+        self.assertIn("gemma-matched-chat.json", evidence)
 
     def test_archived_clients_have_exact_checksums_and_parse(self):
         entries = (CLIENT / "SHA256SUMS").read_text().splitlines()
@@ -45,6 +60,34 @@ class PRO6000Narrative(unittest.TestCase):
             data = (CLIENT / name).read_bytes()
             self.assertEqual(hashlib.sha256(data).hexdigest(), checksum, name)
             ast.parse(data, filename=name)
+
+    def test_public_lifecycle_separates_functional_success_from_degraded_performance(self):
+        folder = ROOT / 'results/pro6000-heavy/qwen-console-lifecycle'
+        manifest = json.loads((folder / 'manifest.json').read_text())
+        lifecycle = manifest['lifecycle']
+        self.assertEqual(lifecycle['status'], 'passed')
+        self.assertEqual(lifecycle['acceptance_scope'], 'functional_create_delete_recreate')
+        self.assertEqual(lifecycle['performance']['status'], 'degraded')
+        self.assertFalse(lifecycle['performance']['latency_slo_accepted'])
+        self.assertFalse(lifecycle['performance']['reliability_slo_accepted'])
+        replies = lifecycle['replies']
+        self.assertEqual([r['gateway_latency_ms'] for r in replies], [6530, 135978])
+        self.assertEqual([(r['actual_usage']['prompt_tokens'], r['actual_usage']['completion_tokens'])
+                          for r in replies], [(77, 481), (77, 132)])
+        background = replies[1]['observed_background_requests']
+        self.assertEqual(background['observed_error_count'], 1)
+        self.assertFalse(background['pagination_completeness_verified'])
+        self.assertIn({'status': 'error', 'gateway_latency_ms': 133267, 'provider_key_verified': False},
+                      background['requests'])
+        self.assertEqual(manifest['image'], 'qwen-console-initial-reply.png')
+        self.assertEqual(hashlib.sha256((folder / manifest['image']).read_bytes()).hexdigest(), manifest['image_sha256'])
+        self.assertFalse(manifest['gateway_cost']['aggregate_billing_verified'])
+        for filename in ('RTXPRO6000.md', 'results/pro6000-heavy/README.md'):
+            text = (ROOT / filename).read_text()
+            for duration in ('6,530 с', '135,978 с', '133,267 с'):
+                self.assertIn(duration, text)
+            self.assertIn('не TTFT', text)
+            self.assertNotIn('Полный цикл через Console пока не подтверждён', text)
 
     def test_matched_gate_is_offline_without_execute(self):
         command = [sys.executable, str(CLIENT / "chat_comparison_probe.py")]

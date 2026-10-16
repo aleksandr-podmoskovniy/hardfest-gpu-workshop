@@ -1,0 +1,37 @@
+{
+  "captured_at": "2026-10-16T02:02:30.571Z",
+  "service": "selectel-qwen38-tp2",
+  "start_unix": 1792114320,
+  "end_unix": 1792115910,
+  "time_zone": "UTC",
+  "dashboard_uid": "dkpce-llm-live-performance",
+  "dashboard_version": 1,
+  "installed_dashboard_sha256": "e950a3f853d302ec60a6e0205118ba690012b0f34dc32b262ca0c1aaa2e3badb",
+  "panels": [
+    {
+      "panel_id": 18,
+      "title": "Concurrent requests by service",
+      "file": "panel-18.png",
+      "sha256": "378001182649855a64ecb68a7cd6710494da996c28a6e424d6b35dde58b4d1f3"
+    },
+    {
+      "panel_id": 24,
+      "title": "KV-cache fill by service",
+      "file": "panel-24.png",
+      "sha256": "aa4f9c9e325dfc27e1a5f29ac27acb1ed393f04edfa31e88812c48247a820c5e"
+    },
+    {
+      "panel_id": 33,
+      "title": "Memory footprint",
+      "file": "panel-33.png",
+      "sha256": "ac69fc58809eae25881b5072ba82ffaad96d8ed388d54a025437bf93a98bd31b"
+    },
+    {
+      "panel_id": 203,
+      "title": "TPOT после первого токена",
+      "file": "panel-203.png",
+      "sha256": "4f9f53cfd77fc04968c44951e54853625e446dc612046394fa4220ba6a90b7a2"
+    }
+  ],
+  "note": "Unmodified installed Grafana panels. UTC axes. Dashboards may resample; raw 10-second series are the numeric authority. Memory footprint includes both node GPUs; the RAM series belongs only to the selected runtime. TPOT panel is a short-window completed-request histogram: empty intervals are not zero latency."
+}

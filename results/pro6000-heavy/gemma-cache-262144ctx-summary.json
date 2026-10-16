@@ -1,0 +1,188 @@
+{
+  "run_id": "heavy-pro-gemma-cache-262144ctx-32k-10",
+  "model": "selectel-gemma-cache",
+  "service": "selectel-gemma-cache",
+  "input_tokens_each": 229376,
+  "output_tokens_each": 32768,
+  "window_tokens": 262144,
+  "submitted_concurrently": 10,
+  "completed": 10,
+  "failed": 0,
+  "wall_seconds": 11475.955067691859,
+  "aggregate_output_tokens_per_second": 28.55361475948213,
+  "synthetic_ignore_eos": true,
+  "output_counter_reconciled": true,
+  "traffic_path": "Separate CPU client to private vLLM; not WebUI/Bifrost",
+  "comparison_limit": "Repeated synthetic filler with independent session prefixes; not normal chat quality or representative speculative-decoding acceptance.",
+  "parallelism_limit": "Running counts scheduled requests, including prefill. This does not prove that ten full contexts decoded simultaneously.",
+  "client_ttft_median_seconds": 4806.311837622663,
+  "client_ttft_max_seconds": 9467.016480703838,
+  "client_mean_decode_seconds_per_token": 0.06519432669605041,
+  "preemptions": 0.0,
+  "monitoring_step_seconds": 10,
+  "requests": [
+    {
+      "session": 0,
+      "ttft_s": 145.80932353809476,
+      "elapsed_s": 2296.910104634706,
+      "last_content_s": 2296.909808835946,
+      "submitted_at": 1792080824.063835,
+      "completed_at": 1792083120.9739404,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 1,
+      "ttft_s": 7028.4532254021615,
+      "elapsed_s": 9179.29506355524,
+      "last_content_s": 9179.294720668346,
+      "submitted_at": 1792080824.0220563,
+      "completed_at": 1792090003.3171184,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 2,
+      "ttft_s": 2440.893192259129,
+      "elapsed_s": 4590.862129945308,
+      "last_content_s": 4590.861506158952,
+      "submitted_at": 1792080823.8148024,
+      "completed_at": 1792085414.676931,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 3,
+      "ttft_s": 7172.351037113927,
+      "elapsed_s": 9323.089165923651,
+      "last_content_s": 9323.088684259914,
+      "submitted_at": 1792080823.9502127,
+      "completed_at": 1792090147.0393775,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 4,
+      "ttft_s": 9323.152759509627,
+      "elapsed_s": 11474.100544865709,
+      "last_content_s": 11474.100375270005,
+      "submitted_at": 1792080823.885965,
+      "completed_at": 1792092297.9865088,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 5,
+      "ttft_s": 4734.497018418275,
+      "elapsed_s": 6884.821356037166,
+      "last_content_s": 6884.819433909375,
+      "submitted_at": 1792080823.9224164,
+      "completed_at": 1792087708.7437727,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 6,
+      "ttft_s": 4878.126656827051,
+      "elapsed_s": 7028.351850398816,
+      "last_content_s": 7028.351079637185,
+      "submitted_at": 1792080824.123641,
+      "completed_at": 1792087852.4754906,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 7,
+      "ttft_s": 9467.016480703838,
+      "elapsed_s": 11475.837038623635,
+      "last_content_s": 11475.836434923578,
+      "submitted_at": 1792080823.845025,
+      "completed_at": 1792092299.682063,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 8,
+      "ttft_s": 291.15799165610224,
+      "elapsed_s": 2440.5488267401233,
+      "last_content_s": 2440.548488794826,
+      "submitted_at": 1792080824.1592429,
+      "completed_at": 1792083264.7080684,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    },
+    {
+      "session": 9,
+      "ttft_s": 2584.7618852211162,
+      "elapsed_s": 4734.63485063985,
+      "last_content_s": 4734.634066686034,
+      "submitted_at": 1792080823.784803,
+      "completed_at": 1792085558.4196537,
+      "usage": {
+        "prompt_tokens": 229376,
+        "total_tokens": 262144,
+        "completion_tokens": 32768
+      },
+      "finish_reason": "length",
+      "done": true
+    }
+  ],
+  "sampled_max_running": 2.0,
+  "sampled_max_waiting": 9.0,
+  "sampled_max_gpu_kv_fraction": 0.9891395936710046,
+  "engine_mean_ttft_seconds": 4803.62167801857,
+  "engine_mean_tpot_seconds": 0.06519727293325603,
+  "engine_mean_queue_seconds": 4659.0529856258,
+  "engine_mean_prefill_seconds": 143.85425281750037,
+  "engine_mean_decode_seconds": 2136.3190422039997,
+  "engine_mean_e2e_seconds": 6939.941455173493,
+  "source_sha256": {
+    "client": "cd0128c759ebec5ed17eb38ee2919b532f83a0d89475717c3207f11fc1895e44",
+    "monitor": "dad014f619262d2e2f139f9d8f7f1f2cf769f9dbc524659cdc4c0ca38256fb34"
+  }
+}

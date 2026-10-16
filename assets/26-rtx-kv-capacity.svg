@@ -17,39 +17,39 @@
 <text x="48" y="259" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700">
 <tspan x="48" dy="0">BF16</tspan>
 </text>
-<rect x="166" y="228" width="85.0" height="44" rx="6" fill="#eef4ff" stroke="#1554dc" stroke-width="1.5"/>
-<text x="273.0" y="259" font-size="26" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="278">
-<tspan x="273.0" dy="0">774 MiB</tspan>
+<rect x="166" y="228" width="68.0" height="44" rx="6" fill="#eef4ff" stroke="#1554dc" stroke-width="1.5"/>
+<text x="256.0" y="259" font-size="26" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="278">
+<tspan x="256.0" dy="0">774 MiB</tspan>
 </text>
 <text x="48" y="323" font-size="25" fill="#087d78" text-anchor="start" font-weight="700">
 <tspan x="48" dy="0">FP8</tspan>
 </text>
-<rect x="166" y="292" width="42.5" height="44" rx="6" fill="#eaf7f3" stroke="#087d78" stroke-width="1.5"/>
-<text x="230.5" y="323" font-size="26" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="278">
-<tspan x="230.5" dy="0">387 MiB</tspan>
+<rect x="166" y="292" width="34.0" height="44" rx="6" fill="#eaf7f3" stroke="#087d78" stroke-width="1.5"/>
+<text x="222.0" y="323" font-size="26" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="278">
+<tspan x="222.0" dy="0">387 MiB</tspan>
 </text>
 <text x="48" y="436" font-size="29" fill="#17243b" text-anchor="start" font-weight="700" data-max-width="1104">
-<tspan x="48" dy="0">8 независимых историй × 128K токенов</tspan>
+<tspan x="48" dy="0">10 независимых историй × 128K токенов</tspan>
 </text>
 <text x="48" y="505" font-size="25" fill="#1554dc" text-anchor="start" font-weight="700">
 <tspan x="48" dy="0">BF16</tspan>
 </text>
 <rect x="166" y="474" width="680.0" height="44" rx="6" fill="#eef4ff" stroke="#1554dc" stroke-width="1.5"/>
 <text x="868.0" y="505" font-size="26" fill="#1554dc" text-anchor="start" font-weight="700" data-max-width="278">
-<tspan x="868.0" dy="0">6192 MiB</tspan>
+<tspan x="868.0" dy="0">7740 MiB</tspan>
 </text>
 <text x="48" y="569" font-size="25" fill="#087d78" text-anchor="start" font-weight="700">
 <tspan x="48" dy="0">FP8</tspan>
 </text>
 <rect x="166" y="538" width="340.0" height="44" rx="6" fill="#eaf7f3" stroke="#087d78" stroke-width="1.5"/>
 <text x="528.0" y="569" font-size="26" fill="#087d78" text-anchor="start" font-weight="700" data-max-width="278">
-<tspan x="528.0" dy="0">3096 MiB</tspan>
+<tspan x="528.0" dy="0">3870 MiB</tspan>
 </text>
 <text x="48" y="652" font-size="26" fill="#17243b" text-anchor="start" font-weight="700">
 <tspan x="48" dy="0">FP8: 1 байт на элемент вместо 2 в BF16 → вдвое меньше KV.</tspan>
 </text>
 <path d="M48 698 H1152" fill="none" stroke="#d9e2ee" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="48" y="731" font-size="20" fill="#536278" text-anchor="start" data-max-width="1104">
-<tspan x="48" dy="0">128K — максимум этой E2B. 8 историй — расчёт; Tune допускает 2 активные последовательности.</tspan>
+<tspan x="48" dy="0">128K — максимум этой E2B. Веса, assistant и буферы отдельно; параллельность проверяем нагрузкой.</tspan>
 </text>
 </svg>

@@ -1,0 +1,70 @@
+{
+  "kind": "sanitized_existing_measurement",
+  "new_run": false,
+  "model": "gemma-4-31b",
+  "hardware": "one H100 per runtime, tensor parallel size 1",
+  "purpose": "Reference only; not a 10-client full-context or 32K-output benchmark",
+  "source_privacy": "Only timings, token counts and runtime settings are exported. Full source snapshots remain private.",
+  "dataset_sha256": "5e3ab957cee11046052c6ba885054669b49c4ca9e92238c0fd48695e2bc32967",
+  "common": {
+    "runtime_image": "docker.io/vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40",
+    "max_model_len": 65536,
+    "max_num_seqs": 32,
+    "gpu_memory_utilization": 0.9,
+    "weight_dtype": "bfloat16",
+    "tensor_parallel_size": 1,
+    "enable_chunked_prefill": true,
+    "max_num_batched_tokens": 4096,
+    "language_model_only": true,
+    "temperature": 0,
+    "fixed_output": true,
+    "clients": 1,
+    "requests": 1,
+    "input_tokens_each": 32768,
+    "output_tokens_each": 2048
+  },
+  "runs": [
+    {
+      "label": "A with chunked prefill, not the current Base",
+      "source_result_sha256": "832250d9079f8cccb3e12a4dd76ef596381e1d679c971f8d343f55eb10f1d4eb",
+      "source_snapshot_sha256": "ab0078569a91be52a4f4a55099971953a3f1bb71b75bb82fd4c1bd619c78b47b",
+      "kv_cache_dtype": "auto",
+      "enforce_eager": true,
+      "enable_prefix_caching": false,
+      "kv_offload_configured": false,
+      "speculative_config_present": false,
+      "completed": 1,
+      "errors": 0,
+      "finish_reason": "length",
+      "ttft_seconds": 16.0994412091095,
+      "e2e_seconds": 151.06745366705582,
+      "wall_seconds": 151.08260275004432,
+      "aggregate_output_tokens_per_second": 13.55549853339682
+    },
+    {
+      "label": "FP8 KV, prefix cache and CUDA graphs; no offload or MTP",
+      "source_result_sha256": "11f80ec53e8c73334de9bba25236ad231a708650115537658a9fba477a902f2d",
+      "source_snapshot_sha256": "11548c5fc8377827b45cb83bd6f0d9f733da4ba891b1b249b34bf3c6158da524",
+      "kv_cache_dtype": "fp8",
+      "attention_backend": "TRITON_ATTN",
+      "enforce_eager": false,
+      "max_cudagraph_capture_size": 32,
+      "enable_prefix_caching": true,
+      "kv_offload_configured": false,
+      "speculative_config_present": false,
+      "completed": 1,
+      "errors": 0,
+      "finish_reason": "length",
+      "ttft_seconds": 19.276970291975886,
+      "e2e_seconds": 96.75767175015062,
+      "wall_seconds": 96.83693520817906,
+      "aggregate_output_tokens_per_second": 21.148955154324437
+    }
+  ],
+  "limits": [
+    "One request per configuration: no useful tail-latency distribution",
+    "The first-token delay increased in the tuned reference although end-to-end duration decreased",
+    "Do not extrapolate these timings linearly to 10 clients, 128K/256K contexts or 32K output",
+    "These settings differ from the current Base/Cache/Tune recipes"
+  ]
+}

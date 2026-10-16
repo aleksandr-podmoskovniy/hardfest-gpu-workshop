@@ -1,0 +1,26 @@
+{
+  "kind": "Functional RAM-to-GPU replay after the independent-prefix capacity series",
+  "model": "selectel-gemma-cache",
+  "capacity_run_id": "heavy-pro-gemma-cache-262144ctx-32k-10",
+  "capacity_client_sha256": "cd0128c759ebec5ed17eb38ee2919b532f83a0d89475717c3207f11fc1895e44",
+  "runtime_sha256": "c41a0b629bccbfc87949a738e15c826c300747a8fd9813f76f872258b9f4e8aa",
+  "started_at": 1792092472.5619466,
+  "ended_at": 1792092476.4459407,
+  "session_replayed": 3,
+  "usage": {
+    "prompt_tokens": 229376,
+    "total_tokens": 229377,
+    "completion_tokens": 1,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": null
+  },
+  "elapsed_s": 3.6993669867515564,
+  "cpu_to_gpu_bytes_before": 0.0,
+  "cpu_to_gpu_bytes_after": 9813360640.0,
+  "cpu_to_gpu_bytes_delta": 9813360640.0,
+  "restore_proved": true,
+  "limitations": [
+    "One output token. This is not a repeat of the 32K-output series.",
+    "Positive transfer proves RAM was read; it does not isolate an offload-only speedup."
+  ]
+}

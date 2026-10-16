@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "experiment": "RTX 5060 Ti Gemma Base startup capacity",
+  "model": "google/gemma-4-E2B-it",
+  "model_revision": "3e22461f65e89153144f8adb70e3b8c2cc9845a7",
+  "launch_method": "manual-deployment",
+  "load_requests_sent": 0,
+  "claim_limit": "These are startup failures of the selected Base profile, not ten-client benchmark results or a general model limit.",
+  "attempts": [
+    {
+      "window_tokens": 131072,
+      "observed_at_unix": 1792074557.470392,
+      "phase": "startup",
+      "failure": "CUDA OOM",
+      "guard_observation": "runtime_restarted",
+      "replicas_zero_verified": true,
+      "runtime_image_digest": "sha256:f7cb9820c7e92eb78a4b3f60033e240c87a16bf99117471aba347fdd69eaca2d",
+      "server_flags": {
+        "dtype": "bfloat16",
+        "enforce-eager": true,
+        "generation-config": "vllm",
+        "gpu-memory-utilization": 0.9,
+        "kv-cache-dtype": "auto",
+        "language-model-only": true,
+        "max-model-len": 131072,
+        "max-num-batched-tokens": 131072,
+        "max-num-seqs": 10,
+        "no-enable-chunked-prefill": true,
+        "no-enable-prefix-caching": true,
+        "safetensors-load-strategy": "lazy",
+        "tensor-parallel-size": 1
+      },
+      "resources": {
+        "claims": [
+          {
+            "name": "gpu"
+          }
+        ],
+        "limits": {
+          "ephemeral-storage": "8Gi",
+          "memory": "18Gi"
+        },
+        "requests": {
+          "cpu": "2",
+          "ephemeral-storage": "1Gi",
+          "memory": "12Gi"
+        }
+      },
+      "error_excerpt": "torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.19 GiB. GPU 0 has a total capacity of 15.48 GiB of which 1.63 GiB is free. Including non-PyTorch memory, this process has 13.84 GiB memory in use. Of the allocated memory 13.58 GiB is allocated by PyTorch, and 54.80 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+      "runtime_warning": "This model does not officially support disabling chunked prefill. Disabling this manually may cause the engine to crash or produce incorrect outputs.",
+      "source_log_sha256": "848be0bd92aa926cae7893cf5722b11b36b7682f0b893432b72b7310678ebf42"
+    },
+    {
+      "window_tokens": 65536,
+      "observed_at_unix": 1792074820.094721,
+      "phase": "startup",
+      "failure": "CUDA OOM",
+      "guard_observation": "runtime_restarted",
+      "replicas_zero_verified": true,
+      "runtime_image_digest": "sha256:f7cb9820c7e92eb78a4b3f60033e240c87a16bf99117471aba347fdd69eaca2d",
+      "server_flags": {
+        "dtype": "bfloat16",
+        "enforce-eager": true,
+        "generation-config": "vllm",
+        "gpu-memory-utilization": 0.9,
+        "kv-cache-dtype": "auto",
+        "language-model-only": true,
+        "max-model-len": 65536,
+        "max-num-batched-tokens": 65536,
+        "max-num-seqs": 10,
+        "no-enable-chunked-prefill": true,
+        "no-enable-prefix-caching": true,
+        "safetensors-load-strategy": "lazy",
+        "tensor-parallel-size": 1
+      },
+      "resources": {
+        "claims": [
+          {
+            "name": "gpu"
+          }
+        ],
+        "limits": {
+          "ephemeral-storage": "8Gi",
+          "memory": "18Gi"
+        },
+        "requests": {
+          "cpu": "2",
+          "ephemeral-storage": "1Gi",
+          "memory": "12Gi"
+        }
+      },
+      "error_excerpt": "torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 3.00 GiB. GPU 0 has a total capacity of 15.48 GiB of which 2.49 GiB is free. Including non-PyTorch memory, this process has 12.98 GiB memory in use. Of the allocated memory 12.70 GiB is allocated by PyTorch, and 56.24 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+      "runtime_warning": "This model does not officially support disabling chunked prefill. Disabling this manually may cause the engine to crash or produce incorrect outputs.",
+      "source_log_sha256": "6d2a73c10adeca351aa0d2da9f94b49464300a060cdec6047796bb351fe9ab32"
+    },
+    {
+      "window_tokens": 49152,
+      "observed_at_unix": 1792075095.163627,
+      "phase": "startup",
+      "failure": "CUDA OOM",
+      "guard_observation": "runtime_restarted",
+      "replicas_zero_verified": true,
+      "runtime_image_digest": "sha256:f7cb9820c7e92eb78a4b3f60033e240c87a16bf99117471aba347fdd69eaca2d",
+      "server_flags": {
+        "dtype": "bfloat16",
+        "enforce-eager": true,
+        "generation-config": "vllm",
+        "gpu-memory-utilization": 0.9,
+        "kv-cache-dtype": "auto",
+        "language-model-only": true,
+        "max-model-len": 49152,
+        "max-num-batched-tokens": 49152,
+        "max-num-seqs": 10,
+        "no-enable-chunked-prefill": true,
+        "no-enable-prefix-caching": true,
+        "safetensors-load-strategy": "lazy",
+        "tensor-parallel-size": 1
+      },
+      "resources": {
+        "claims": [
+          {
+            "name": "gpu"
+          }
+        ],
+        "limits": {
+          "ephemeral-storage": "8Gi",
+          "memory": "18Gi"
+        },
+        "requests": {
+          "cpu": "2",
+          "ephemeral-storage": "1Gi",
+          "memory": "12Gi"
+        }
+      },
+      "error_excerpt": "torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 144.00 MiB. GPU 0 has a total capacity of 15.48 GiB of which 78.06 MiB is free. Including non-PyTorch memory, this process has 15.39 GiB memory in use. Of the allocated memory 15.12 GiB is allocated by PyTorch, and 56.44 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+      "runtime_warning": "This model does not officially support disabling chunked prefill. Disabling this manually may cause the engine to crash or produce incorrect outputs.",
+      "source_log_sha256": "afe27ebb04f8c2bd812545f45af0d26e07f2db00478d0ca1a9526c7792c4b334"
+    },
+    {
+      "window_tokens": 40960,
+      "observed_at_unix": 1792076125.642314,
+      "phase": "startup",
+      "failure": "insufficient KV cache budget",
+      "guard_observation": "runtime_restarted",
+      "replicas_zero_verified": true,
+      "runtime_image_digest": "sha256:f7cb9820c7e92eb78a4b3f60033e240c87a16bf99117471aba347fdd69eaca2d",
+      "server_flags": {
+        "dtype": "bfloat16",
+        "enforce-eager": true,
+        "generation-config": "vllm",
+        "gpu-memory-utilization": 0.9,
+        "kv-cache-dtype": "auto",
+        "language-model-only": true,
+        "max-model-len": 40960,
+        "max-num-batched-tokens": 40960,
+        "max-num-seqs": 10,
+        "no-enable-chunked-prefill": true,
+        "no-enable-prefix-caching": true,
+        "safetensors-load-strategy": "lazy",
+        "tensor-parallel-size": 1
+      },
+      "resources": {
+        "claims": [
+          {
+            "name": "gpu"
+          }
+        ],
+        "limits": {
+          "ephemeral-storage": "8Gi",
+          "memory": "18Gi"
+        },
+        "requests": {
+          "cpu": "2",
+          "ephemeral-storage": "1Gi",
+          "memory": "12Gi"
+        }
+      },
+      "error_excerpt": "ValueError: No available memory for the cache blocks. Try increasing `gpu_memory_utilization` when initializing the engine (this flag also controls CPU memory reservation on the CPU backend, despite its name). See https://docs.vllm.ai/en/latest/configuration/conserving_memory/ for more details.",
+      "memory_budget_excerpt": "Available KV cache memory: -0.41 GiB",
+      "runtime_warning": "This model does not officially support disabling chunked prefill. Disabling this manually may cause the engine to crash or produce incorrect outputs.",
+      "source_log_sha256": "d74087436a843ddb3452437bef9e4038d79295e674dd086099cd6b32b0e0ff94"
+    },
+    {
+      "window_tokens": 36864,
+      "observed_at_unix": 1792076375.320315,
+      "phase": "startup",
+      "failure": "insufficient KV cache budget",
+      "guard_observation": "runtime_restarted",
+      "replicas_zero_verified": true,
+      "runtime_image_digest": "sha256:f7cb9820c7e92eb78a4b3f60033e240c87a16bf99117471aba347fdd69eaca2d",
+      "server_flags": {
+        "dtype": "bfloat16",
+        "enforce-eager": true,
+        "generation-config": "vllm",
+        "gpu-memory-utilization": 0.9,
+        "kv-cache-dtype": "auto",
+        "language-model-only": true,
+        "max-model-len": 36864,
+        "max-num-batched-tokens": 36864,
+        "max-num-seqs": 10,
+        "no-enable-chunked-prefill": true,
+        "no-enable-prefix-caching": true,
+        "safetensors-load-strategy": "lazy",
+        "tensor-parallel-size": 1
+      },
+      "resources": {
+        "claims": [
+          {
+            "name": "gpu"
+          }
+        ],
+        "limits": {
+          "ephemeral-storage": "8Gi",
+          "memory": "18Gi"
+        },
+        "requests": {
+          "cpu": "2",
+          "ephemeral-storage": "1Gi",
+          "memory": "12Gi"
+        }
+      },
+      "error_excerpt": "ValueError: To serve at least one request with the model's max seq len (36864), (0.63 GiB KV cache is needed, which is larger than the available KV cache memory (0.12 GiB). Based on the available memory, the estimated maximum model length is 6976. Try increasing `gpu_memory_utilization` (which also controls CPU memory on the CPU backend) or decreasing `max_model_len` when initializing the engine. See https://docs.vllm.ai/en/latest/configuration/conserving_memory/ for more details.",
+      "memory_budget_excerpt": "Available KV cache memory: 0.12 GiB",
+      "runtime_warning": "This model does not officially support disabling chunked prefill. Disabling this manually may cause the engine to crash or produce incorrect outputs.",
+      "source_log_sha256": "a183fe5eb583f2d35679b5e75aa5511b81901b3ac42056aa8b0e0023c8045d9b"
+    }
+  ]
+}

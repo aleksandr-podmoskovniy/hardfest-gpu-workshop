@@ -1,0 +1,12 @@
+{
+  "source_sha256": "17f49302c6cc22609dce6038bf07c09647d8e2da0402c0d62a99969be7ad5511",
+  "start_unix": 1792080240,
+  "end_unix": 1792100310,
+  "step_seconds": 10,
+  "series_count": 21,
+  "fully_covered": true,
+  "affected_series": 0,
+  "missing_evaluations": 0,
+  "gaps": [],
+  "meaning": "Evaluation-grid coverage, not continuous observation or source scrape cadence. Missing samples are unknown, never interpolated."
+}

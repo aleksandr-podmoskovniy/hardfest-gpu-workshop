@@ -1,0 +1,82 @@
+{
+  "source_sha256": "04966f380da509ba6f3f749014437adcdcee7a0b111e0560253fda834d368dad",
+  "start_unix": 1792063800,
+  "end_unix": 1792074172,
+  "step_seconds": 10,
+  "series_count": 19,
+  "fully_covered": false,
+  "affected_series": 5,
+  "missing_evaluations": 15,
+  "gaps": [
+    {
+      "group": "conditions",
+      "labels": {
+        "__name__": "kube_node_status_condition",
+        "condition": "DiskPressure",
+        "status": "true"
+      },
+      "missing_evaluations": 3,
+      "missing_timestamps_unix": [
+        1792068060,
+        1792068070,
+        1792068080
+      ]
+    },
+    {
+      "group": "conditions",
+      "labels": {
+        "__name__": "kube_node_status_condition",
+        "condition": "MemoryPressure",
+        "status": "true"
+      },
+      "missing_evaluations": 3,
+      "missing_timestamps_unix": [
+        1792068060,
+        1792068070,
+        1792068080
+      ]
+    },
+    {
+      "group": "conditions",
+      "labels": {
+        "__name__": "kube_node_status_condition",
+        "condition": "PIDPressure",
+        "status": "true"
+      },
+      "missing_evaluations": 3,
+      "missing_timestamps_unix": [
+        1792068060,
+        1792068070,
+        1792068080
+      ]
+    },
+    {
+      "group": "conditions",
+      "labels": {
+        "__name__": "kube_node_status_condition",
+        "condition": "Ready",
+        "status": "true"
+      },
+      "missing_evaluations": 3,
+      "missing_timestamps_unix": [
+        1792068060,
+        1792068070,
+        1792068080
+      ]
+    },
+    {
+      "group": "restarts",
+      "labels": {
+        "__name__": "kube_pod_container_status_restarts_total",
+        "container": "runtime"
+      },
+      "missing_evaluations": 3,
+      "missing_timestamps_unix": [
+        1792068060,
+        1792068070,
+        1792068080
+      ]
+    }
+  ],
+  "meaning": "Evaluation-grid coverage, not continuous observation or source scrape cadence. Missing samples are unknown, never interpolated."
+}
