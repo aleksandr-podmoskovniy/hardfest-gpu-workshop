@@ -1,36 +1,43 @@
 {
-  "schema_version": 1,
-  "observed_at_utc": "2026-10-16T03:41:07Z",
-  "scope": "One isolated ordinary-user Base request through the WebUI API and Bifrost; no UI autotitle or follow-up jobs",
-  "configured_models": ["Gemma Base", "Gemma Cache", "Gemma Tune", "Qwen TP2"],
+  "schema_version": 2,
+  "observed_at_utc": "2026-10-16T16:24:57Z",
+  "scope": "One ordinary-user Base SSE through the WebUI API, followed by one targeted Base SSE on each of the three current Bifrost Pods using the same fixture key. Pricing verified after refreshing existing overrides without changing rates.",
+  "configured_models": ["Gemma Base", "Gemma Cache", "Gemma Tune", "Qwen TP2", "Platform Gemma"],
   "tariff_usd_per_million_tokens": {"input": "10", "output": "15"},
   "request": {
     "model": "Gemma Base",
     "status": "success",
     "sse_done": true,
-    "prompt_tokens": 37,
-    "completion_tokens": 35,
-    "total_tokens": 72,
-    "expected_cost_usd": "0.000895",
-    "gateway_cost_usd": "0.000895",
-    "gateway_duration_ms": 1700,
+    "prompt_tokens": 30,
+    "completion_tokens": 62,
+    "total_tokens": 92,
+    "expected_cost_usd": "0.00123",
+    "gateway_cost_usd": "0.0012300000000000002",
+    "gateway_duration_ms": 2887,
     "cost_formula_verified": true
   },
+  "gateway_replica_count": 3,
+  "base_pricing_verified_on_current_replicas": 3,
+  "replica_checks": [
+    {"replica": 1, "sse_done": true, "prompt_tokens": 25, "completion_tokens": 4, "total_tokens": 29, "expected_cost_usd": "0.00031", "gateway_cost_usd": "0.00031", "request_id_matched_to_log": true},
+    {"replica": 2, "sse_done": true, "prompt_tokens": 25, "completion_tokens": 4, "total_tokens": 29, "expected_cost_usd": "0.00031", "gateway_cost_usd": "0.00031", "request_id_matched_to_log": true},
+    {"replica": 3, "sse_done": true, "prompt_tokens": 25, "completion_tokens": 4, "total_tokens": 29, "expected_cost_usd": "0.00031", "gateway_cost_usd": "0.00031", "request_id_matched_to_log": true}
+  ],
   "aggregate_budget_verified": false,
-  "all_replica_pricing_caches_verified": false,
+  "pricing_cache_after_restart_verified": false,
   "stopped_models_new_request_cost_verified": false,
   "budget_usage_manually_changed": false,
   "limitations": [
-    "One successful price calculation does not prove convergence across gateway replicas.",
-    "The persisted budget and replica-local counters differed within the same reset period.",
-    "Cache, Tune and Qwen tariffs were configured but their stopped runtimes were not started for this check.",
+    "The first Base request returned zero cost despite configured rates; old zero-cost log entries were not rewritten.",
+    "Targeted successful Base requests cover the three observed Pods, not a future restart or proof of the root cause.",
+    "The prior discrepancy between persisted budget and replica-local counters was not repaired or revalidated here.",
+    "Cache, Tune, Qwen and Platform Gemma overrides were refreshed, but their stopped runtimes were not started for this check.",
     "The configured USD tariff is illustrative, not the GPU provider's bill or a claim about the UI display currency.",
     "Gateway duration is not TTFT. This was not a capacity or external-network test."
   ],
   "private_source_sha256": {
-    "webui_sse_response": "fdd859b7ab44eaf531eeee25e8ff11e8468b8a6f532046c3c9ccf6ef69743506",
-    "gateway_log_followup": "4e974c6953c1ae83a3ea0d3347af4e3ed3332dde024a54978c9d590c8f20421e",
-    "tariff_configuration_readback": "31d80579cc8c9ff8194d2ec63a61db3796a44ee74e5b8ea54775d294af1c4459",
-    "budget_db_and_memory_observation": "151869cd05b8ba5c816e0f36d09b10f3cf4fa4bf47a46b132c338309ba456968"
+    "webui_sse_response": "089cdd43e751e490316f01263bbcea1c2b7456f68d6d6a5614e66daa5f7b900e",
+    "gateway_log_followup": "54c88d2e1ebfc09550514d76830f3f2657be79c4cc4e46a17e892d29452ce169",
+    "targeted_replica_checks_and_tariff_readback": "dce4e050578d7d4859888737c25e806c8aa71f909987f07bdfaeefbbf51aa1bf"
   }
 }

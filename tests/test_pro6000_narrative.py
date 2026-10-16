@@ -19,12 +19,24 @@ class PRO6000Narrative(unittest.TestCase):
         request, tariff = receipt['request'], receipt['tariff_usd_per_million_tokens']
         expected = (Decimal(request['prompt_tokens']) * Decimal(tariff['input'])
                     + Decimal(request['completion_tokens']) * Decimal(tariff['output'])) / Decimal(1000000)
-        self.assertEqual(expected, Decimal(request['gateway_cost_usd']))
+        self.assertLess(abs(expected - Decimal(request['gateway_cost_usd'])), Decimal('0.000000000001'))
         self.assertEqual(expected, Decimal(request['expected_cost_usd']))
         self.assertEqual(request['total_tokens'], request['prompt_tokens'] + request['completion_tokens'])
         self.assertTrue(request['sse_done'])
         self.assertFalse(receipt['aggregate_budget_verified'])
-        self.assertFalse(receipt['all_replica_pricing_caches_verified'])
+        self.assertEqual(receipt['base_pricing_verified_on_current_replicas'], receipt['gateway_replica_count'])
+        checks = receipt['replica_checks']
+        self.assertEqual(len(checks), receipt['gateway_replica_count'])
+        self.assertEqual(len({r['replica'] for r in checks}), len(checks))
+        for row in checks:
+            cost = (Decimal(row['prompt_tokens']) * Decimal(tariff['input'])
+                    + Decimal(row['completion_tokens']) * Decimal(tariff['output'])) / Decimal(1000000)
+            self.assertEqual(cost, Decimal(row['expected_cost_usd']))
+            self.assertEqual(cost, Decimal(row['gateway_cost_usd']))
+            self.assertEqual(row['total_tokens'], row['prompt_tokens'] + row['completion_tokens'])
+            self.assertTrue(row['sse_done'])
+            self.assertTrue(row['request_id_matched_to_log'])
+        self.assertFalse(receipt['pricing_cache_after_restart_verified'])
         self.assertFalse(receipt['stopped_models_new_request_cost_verified'])
         self.assertFalse(receipt['budget_usage_manually_changed'])
 
