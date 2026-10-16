@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "observed_at_utc": "2026-10-16T03:41:07Z",
+  "scope": "One isolated ordinary-user Base request through the WebUI API and Bifrost; no UI autotitle or follow-up jobs",
+  "configured_models": ["Gemma Base", "Gemma Cache", "Gemma Tune", "Qwen TP2"],
+  "tariff_usd_per_million_tokens": {"input": "10", "output": "15"},
+  "request": {
+    "model": "Gemma Base",
+    "status": "success",
+    "sse_done": true,
+    "prompt_tokens": 37,
+    "completion_tokens": 35,
+    "total_tokens": 72,
+    "expected_cost_usd": "0.000895",
+    "gateway_cost_usd": "0.000895",
+    "gateway_duration_ms": 1700,
+    "cost_formula_verified": true
+  },
+  "aggregate_budget_verified": false,
+  "all_replica_pricing_caches_verified": false,
+  "stopped_models_new_request_cost_verified": false,
+  "budget_usage_manually_changed": false,
+  "limitations": [
+    "One successful price calculation does not prove convergence across gateway replicas.",
+    "The persisted budget and replica-local counters differed within the same reset period.",
+    "Cache, Tune and Qwen tariffs were configured but their stopped runtimes were not started for this check.",
+    "The configured USD tariff is illustrative, not the GPU provider's bill or a claim about the UI display currency.",
+    "Gateway duration is not TTFT. This was not a capacity or external-network test."
+  ],
+  "private_source_sha256": {
+    "webui_sse_response": "fdd859b7ab44eaf531eeee25e8ff11e8468b8a6f532046c3c9ccf6ef69743506",
+    "gateway_log_followup": "4e974c6953c1ae83a3ea0d3347af4e3ed3332dde024a54978c9d590c8f20421e",
+    "tariff_configuration_readback": "31d80579cc8c9ff8194d2ec63a61db3796a44ee74e5b8ea54775d294af1c4459",
+    "budget_db_and_memory_observation": "151869cd05b8ba5c816e0f36d09b10f3cf4fa4bf47a46b132c338309ba456968"
+  }
+}

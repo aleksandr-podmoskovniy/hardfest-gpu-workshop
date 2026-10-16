@@ -1,5 +1,6 @@
 """Keep the PRO6000 route readable, honest, and runnable without cluster access."""
 import ast
+from decimal import Decimal
 import hashlib
 import json
 from pathlib import Path
@@ -13,6 +14,20 @@ CLIENT = ROOT / "examples/pro6000-load-client"
 
 
 class PRO6000Narrative(unittest.TestCase):
+    def test_base_tariff_receipt_does_not_accept_aggregate_billing(self):
+        receipt = json.loads((ROOT / 'results/pro6000-heavy/base-tariff-check.json').read_text())
+        request, tariff = receipt['request'], receipt['tariff_usd_per_million_tokens']
+        expected = (Decimal(request['prompt_tokens']) * Decimal(tariff['input'])
+                    + Decimal(request['completion_tokens']) * Decimal(tariff['output'])) / Decimal(1000000)
+        self.assertEqual(expected, Decimal(request['gateway_cost_usd']))
+        self.assertEqual(expected, Decimal(request['expected_cost_usd']))
+        self.assertEqual(request['total_tokens'], request['prompt_tokens'] + request['completion_tokens'])
+        self.assertTrue(request['sse_done'])
+        self.assertFalse(receipt['aggregate_budget_verified'])
+        self.assertFalse(receipt['all_replica_pricing_caches_verified'])
+        self.assertFalse(receipt['stopped_models_new_request_cost_verified'])
+        self.assertFalse(receipt['budget_usage_manually_changed'])
+
     def test_story_order_and_terms(self):
         text = (ROOT / "RTXPRO6000.md").read_text()
         self.assertIn("# Инференс без простоя GPU: чиним LLM-сервис руками и делим карту на живом кластере", text)
