@@ -612,6 +612,27 @@ nvidia-smi mig -lci
 
 ### Те же документы, теперь через поиск
 
+<details>
+<summary>Пересоздать три сервиса A30 через Console</summary>
+
+В кластере A30, проекте `hardfest-demo`, удаляется только выбранный
+сервис инференса. После исчезновения сервиса и его Pod в **Создать → YAML** вставляется
+готовый файл:
+
+| Имя сервиса | YAML |
+| --- | --- |
+| `hf-embedding` | [Эмбеддер](platform/a30/embedding.yaml) |
+| `hf-reranker` | [Реранкер](platform/a30/reranker.yaml) |
+| `hf-whisper` | [Whisper](platform/a30/whisper.yaml) |
+
+Веса и базы знаний не удаляются. После **Ready** нужен контрольный запрос:
+смена адреса может дать переходную задержку. Whisper переподключается
+автоматически: проверка раз в минуту, затем обновление прокси.
+Настройки Bifrost и WebUI остаются прежними.
+[Полный порядок и проверка файлом и голосом](docs/CHAT_AND_ACCESS.md#пересоздание-эмбеддера-реранкера-и-whisper).
+
+</details>
+
 Чат-модель здесь — проверенная и открытая участникам **Gemma B Tune**.
 Если она не готова, используется **Gemma A**. Embedder и reranker работают
 за поиском; выбирать их вместо чат-модели не нужно.
@@ -707,7 +728,7 @@ spec:
     src: ai-models
     ref:
       kind: Model
-      name: qwen3-8-flash-next-nvfp4
+      name: qwen3-8-flash-next-nvfp4-catalog
   launchStrategy: Latency
   resources:
     accelerator:
@@ -914,7 +935,7 @@ Running — наблюдавшийся пик активных запросов,
 | --- | --- |
 | Проект | `hardfest-demo` |
 | Имя сервиса | **`selectel-gemma31`** |
-| Модель из каталога | `gemma-4-31b` |
+| Модель из каталога | `gemma-4-31b-catalog` |
 | Класс сервиса | `hardfest-selectel-gemma31` |
 | Стратегия | `Latency` |
 | Класс устройства | `hardfest-selectel-blackwell` |

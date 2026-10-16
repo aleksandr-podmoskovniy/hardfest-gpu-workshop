@@ -106,8 +106,8 @@ class PRO6000Profiles(unittest.TestCase):
 
     def test_platform_reference_orders_use_actual_schema_without_argo_owner(self):
         for filename, name, model in (
-                ("gemma.yaml", "selectel-gemma31", "gemma-4-31b"),
-                ("qwen.yaml", "selectel-qwen38-tp2", "qwen3-8-flash-next-nvfp4")):
+                ("gemma.yaml", "selectel-gemma31", "gemma-4-31b-catalog"),
+                ("qwen.yaml", "selectel-qwen38-tp2", "qwen3-8-flash-next-nvfp4-catalog")):
             order = checker.load(ROOT / "platform/pro6000" / filename)
             self.assertEqual(order["apiVersion"], "ai.deckhouse.io/v1alpha1")
             self.assertEqual(order["kind"], "InferenceService")

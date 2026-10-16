@@ -1,0 +1,13 @@
+apiVersion: ai.deckhouse.io/v1alpha1
+kind: InferenceService
+metadata:
+  name: hf-whisper
+  namespace: hardfest-demo
+spec:
+  inferenceServiceClassName: hardfest-a30-speech
+  launchStrategy: Latency
+  model:
+    src: ai-models
+    ref:
+      kind: Model
+      name: whisper-large-v3-catalog

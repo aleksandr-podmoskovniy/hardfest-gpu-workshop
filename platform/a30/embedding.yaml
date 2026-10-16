@@ -1,0 +1,17 @@
+apiVersion: ai.deckhouse.io/v1alpha1
+kind: InferenceService
+metadata:
+  name: hf-embedding
+  namespace: hardfest-demo
+spec:
+  inferenceServiceClassName: hardfest-a30-embedding
+  launchStrategy: Throughput
+  model:
+    src: ai-models
+    ref:
+      kind: Model
+      name: qwen3-embedding-4b-w4a16-catalog
+  resources:
+    accelerator:
+      deviceClasses:
+        - cb-a30-2g12gb-mps-percent

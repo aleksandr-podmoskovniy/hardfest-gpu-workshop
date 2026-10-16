@@ -13,7 +13,7 @@ spec:
     src: ai-models
     ref:
       kind: Model
-      name: gemma-4-31b
+      name: gemma-4-31b-catalog
   launchStrategy: Latency
   resources:
     accelerator:

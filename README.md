@@ -1007,15 +1007,17 @@ unset MODEL_API_KEY
 **Нужны свободные ресурсы, поддержка драйвера и заранее включённый MIG mode.
 Чужие партиции не переразмечаются.**
 
-| Values | Application |
+| Имя сервиса | Готовый YAML для Console |
 | --- | --- |
-| `platform/embedding.yaml` | `hardfest-embedding-platform` |
-| `platform/reranker.yaml` | `hardfest-reranker-platform` |
-| `platform/whisper.yaml` | `hardfest-whisper-platform` |
+| `hf-embedding` | [Эмбеддер](platform/a30/embedding.yaml) |
+| `hf-reranker` | [Реранкер](platform/a30/reranker.yaml) |
+| `hf-whisper` | [Whisper](platform/a30/whisper.yaml) |
 
-Примеры Helm values сначала [рендерятся в YAML заказа](docs/SETUP.md#console-order).
-Заказы создаются в Console **кластера A30**, с указанными именами моделей и
-классов. Если сервисы уже существуют, второй владелец им не добавляется.
+Файл целиком вставляется в **Создать → YAML**, проект `hardfest-demo`
+в Console **кластера A30**. Для пересоздания сначала удаляется только нужный
+InferenceService; веса и базы знаний сохраняются.
+[Порядок и проверка](docs/CHAT_AND_ACCESS.md#пересоздание-эмбеддера-реранкера-и-whisper).
+Для другого кластера — [подготовка собственного заказа](docs/SETUP.md#console-order).
 Проверяются три готовых сервиса и их ответы.
 `nvidia-smi` фиксирует одну ноду до и после: если части существовали раньше,
 наблюдается выделение, не новая нарезка.

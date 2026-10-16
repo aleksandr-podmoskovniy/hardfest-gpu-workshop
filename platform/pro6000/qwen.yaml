@@ -14,7 +14,7 @@ spec:
     src: ai-models
     ref:
       kind: Model
-      name: qwen3-8-flash-next-nvfp4
+      name: qwen3-8-flash-next-nvfp4-catalog
   launchStrategy: Latency
   resources:
     accelerator:
