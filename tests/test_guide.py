@@ -32,8 +32,8 @@ class Guide(unittest.TestCase):
         self.assertIn("Александр Подмосковный, Флант / Deckhouse Platform", readme)
         top = readme.split("# " + title, 1)[0]
         self.assertIn('src="assets/workshop-qr.svg"', top)
-        self.assertIn('<p align="center">', top)
-        self.assertIn('width="250" height="250"', top)
+        self.assertIn('<table>', top)
+        self.assertIn('width="200" height="200"', top)
         self.assertIn(f'href="{url}"', top)
         for section in ('<a id="contents"></a>', '<a id="setup"></a>',
                         "## 1.", "## 2.", '<a id="cleanup"></a>'):
@@ -42,6 +42,42 @@ class Guide(unittest.TestCase):
         self.assertEqual(svg.find("{http://www.w3.org/2000/svg}desc").text, url)
         self.assertEqual(svg.find("{http://www.w3.org/2000/svg}title").text, title)
         self.assertNotIn("<script", (ROOT / "assets/workshop-qr.svg").read_text())
+
+    def test_all_workshop_pages_have_three_labeled_qrs_and_a_short_bio(self):
+        base = "https://github.com/aleksandr-podmoskovniy/hardfest-gpu-workshop"
+        feedback = "https://app.talkmeter.ru/r/HF26/01a0d1e0-33d5-7d71-9e10-c7cfd1996a32"
+        variants = {
+            "README.md": (base, "workshop-qr.svg"),
+            "RTX5060.md": (base + "/blob/main/RTX5060.md", "workshop-rtx5060-qr.svg"),
+            "RTXPRO6000.md": (base + "/blob/main/RTXPRO6000.md", "workshop-pro6000-qr.svg"),
+        }
+        bios = []
+        for filename, (page_url, page_qr) in variants.items():
+            with self.subTest(page=filename):
+                article = (ROOT / filename).read_text()
+                top = article.split("\n# ", 1)[0]
+                links = re.findall(r'<a href="([^"]+)">\s*<img src="([^"]+)"', top)
+                self.assertEqual(links, [
+                    (page_url, "assets/" + page_qr),
+                    ("https://ai.ap4y.ru", "assets/workshop-chat-qr.svg"),
+                    (feedback, "assets/workshop-feedback-qr.svg"),
+                ])
+                self.assertEqual(top.count('<td align="center"'), 3)
+                for caption in ("Материалы на GitHub", "Эта страница", "Чат мастер-класса", "Отзыв о докладе"):
+                    self.assertIn(caption, top)
+                for url, asset in links:
+                    raw = (ROOT / asset).read_text()
+                    svg = ET.fromstring(raw)
+                    self.assertEqual(svg.find("{http://www.w3.org/2000/svg}desc").text, url)
+                    self.assertIsNotNone(svg.find("{http://www.w3.org/2000/svg}title"))
+                    self.assertNotIn("<script", raw)
+                bio = re.search(r'<details>\s*<summary>Немного обо мне</summary>(.*?)</details>', article, re.S)
+                self.assertIsNotNone(bio)
+                bios.append(bio.group(1))
+                self.assertLess(len(bio.group(1).split()), 60)
+                for fact in ("Александр Подмосковный", "директор продуктового направления ML/AI/GPU", "Фланте", "2020", "2024", "собственный кластер"):
+                    self.assertIn(fact, bio.group(1))
+        self.assertEqual(len(set(bios)), 1)
 
     def test_illustrations_are_local_accessible_and_self_contained(self):
         readme = (ROOT / "README.md").read_text()

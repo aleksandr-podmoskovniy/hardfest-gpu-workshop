@@ -1,12 +1,39 @@
-<p align="center">
-  <a href="https://github.com/aleksandr-podmoskovniy/hardfest-gpu-workshop">
-    <img src="assets/workshop-qr.svg" width="250" height="250" alt="QR-код: материалы мастер-класса">
-  </a>
-</p>
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <a href="https://github.com/aleksandr-podmoskovniy/hardfest-gpu-workshop/blob/main/RTXPRO6000.md">
+        <img src="assets/workshop-pro6000-qr.svg" width="200" height="200" alt="QR-код: эта статья на GitHub"><br>
+        <strong>Материалы на GitHub</strong>
+      </a><br>Эта страница
+    </td>
+    <td align="center" width="33%">
+      <a href="https://ai.ap4y.ru">
+        <img src="assets/workshop-chat-qr.svg" width="200" height="200" alt="QR-код: чат ai.ap4y.ru"><br>
+        <strong>Чат мастер-класса</strong>
+      </a><br>ai.ap4y.ru
+    </td>
+    <td align="center" width="33%">
+      <a href="https://app.talkmeter.ru/r/HF26/01a0d1e0-33d5-7d71-9e10-c7cfd1996a32">
+        <img src="assets/workshop-feedback-qr.svg" width="200" height="200" alt="QR-код: оставить отзыв о докладе в TalkMeter"><br>
+        <strong>Отзыв о докладе</strong>
+      </a><br>TalkMeter
+    </td>
+  </tr>
+</table>
 
 # Инференс без простоя GPU: чиним LLM-сервис руками и делим карту на живом кластере
 
 Александр Подмосковный, Флант / Deckhouse Platform
+
+<details>
+<summary>Немного обо мне</summary>
+
+**Александр Подмосковный** — директор продуктового направления ML/AI/GPU во «Фланте».
+
+С Kubernetes и DevOps работаю с 2020 года, с ИИ-инфраструктурой — с 2024-го.
+Для экспериментов держу собственный кластер.
+
+</details>
 
 **Вариант для двух RTX PRO 6000 Blackwell по 96 GB.** На сервере 240 GB RAM.
 На этих картах запускаются Gemma 31B и Qwen3.8; небольшие модели работают
