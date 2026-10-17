@@ -32,7 +32,7 @@ class Guide(unittest.TestCase):
         self.assertIn("Александр Подмосковный, Флант / Deckhouse Platform", readme)
         top = readme.split("# " + title, 1)[0]
         self.assertIn('src="assets/workshop-qr.svg"', top)
-        self.assertIn('<table>', top)
+        self.assertIn('<table align="center">', top)
         self.assertIn('width="200" height="200"', top)
         self.assertIn(f'href="{url}"', top)
         for section in ('<a id="contents"></a>', '<a id="setup"></a>',
@@ -56,6 +56,7 @@ class Guide(unittest.TestCase):
             with self.subTest(page=filename):
                 article = (ROOT / filename).read_text()
                 top = article.split("\n# ", 1)[0]
+                self.assertTrue(top.startswith('<table align="center">'))
                 links = re.findall(r'<a href="([^"]+)">\s*<img src="([^"]+)"', top)
                 self.assertEqual(links, [
                     (page_url, "assets/" + page_qr),

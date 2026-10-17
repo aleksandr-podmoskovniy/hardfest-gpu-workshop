@@ -1,4 +1,4 @@
-<table>
+<table align="center">
   <tr>
     <td align="center" width="33%">
       <a href="https://github.com/aleksandr-podmoskovniy/hardfest-gpu-workshop">
