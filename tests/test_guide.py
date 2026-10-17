@@ -74,10 +74,18 @@ class Guide(unittest.TestCase):
                 bio = re.search(r'<details>\s*<summary>Немного обо мне</summary>(.*?)</details>', article, re.S)
                 self.assertIsNotNone(bio)
                 bios.append(bio.group(1))
-                self.assertLess(len(bio.group(1).split()), 60)
-                for fact in ("Александр Подмосковный", "директор продуктового направления ML/AI/GPU", "Фланте", "2020", "2024", "собственный кластер"):
-                    self.assertIn(fact, bio.group(1))
+                bio_text = re.sub(r"<[^>]+>", "", bio.group(1)).lower()
+                self.assertLess(len(bio_text.split()), 60)
+                for fact in ("александр подмосковный", "директор продуктового направления ml/ai/gpu", "фланте", "2020", "2024", "собственный кластер"):
+                    self.assertIn(fact, bio_text)
+                self.assertIn("<h2>Александр Подмосковный</h2>", bio.group(1))
+                self.assertEqual(bio.group(1).count("<h3>"), 3)
+                self.assertIn('src="assets/aleksandr-podmoskovniy.png" width="280"', bio.group(1))
+                self.assertNotIn("<details open", article)
         self.assertEqual(len(set(bios)), 1)
+        portrait = ROOT / "assets/aleksandr-podmoskovniy.png"
+        self.assertTrue(portrait.is_file())
+        self.assertEqual(portrait.read_bytes()[:8], b"\x89PNG\r\n\x1a\n")
 
     def test_illustrations_are_local_accessible_and_self_contained(self):
         readme = (ROOT / "README.md").read_text()
